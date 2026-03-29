@@ -1,0 +1,22 @@
+# Environment variables
+.env
+.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+dist/
+build/
+
+# Node
+frontend/node_modules/
+frontend/.next/
+frontend/.env.local
+
+# Docker volumes
+postgres_data/
+
+# Claude Code
+.claude/

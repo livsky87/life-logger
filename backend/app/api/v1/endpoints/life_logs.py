@@ -1,0 +1,73 @@
+from uuid import UUID
+
+from fastapi import APIRouter, HTTPException, Query
+
+from app.api.deps import LifeLogServiceDep
+from app.api.schemas.life_log import LifeLogCreate, LifeLogEndEvent, LifeLogResponse
+
+router = APIRouter()
+
+
+@router.post("", response_model=LifeLogResponse, status_code=201)
+async def ingest_log(body: LifeLogCreate, service: LifeLogServiceDep):
+    """Ingest a new life log event. Real-time entry point."""
+    log = await service.ingest(
+        user_id=body.user_id,
+        location_id=body.location_id,
+        category=body.category,
+        event_type=body.event_type,
+        started_at=body.started_at,
+        ended_at=body.ended_at,
+        data=body.data,
+    )
+    return LifeLogResponse.model_validate(log)
+
+
+@router.patch("/{log_id}/end", response_model=LifeLogResponse)
+async def end_event(log_id: int, body: LifeLogEndEvent, service: LifeLogServiceDep):
+    """Close an open event by setting its ended_at."""
+    log = await service.close_event(log_id, body.ended_at)
+    if not log:
+        raise HTTPException(status_code=404, detail="Log not found")
+    return LifeLogResponse.model_validate(log)
+
+
+@router.get("/timeline")
+async def get_timeline(
+    service: LifeLogServiceDep,
+    date: str = Query(..., description="Date in YYYY-MM-DD format"),
+    location_ids: list[UUID] = Query(default=[], alias="location_id"),
+):
+    """
+    Core dashboard endpoint. Returns Gantt-style events grouped by location > user.
+    Events overlap: started_at < day_end AND (ended_at IS NULL OR ended_at > day_start).
+    """
+    return await service.get_timeline(date, location_ids or None)
+
+
+@router.get("", response_model=list[LifeLogResponse])
+async def list_logs(
+    service: LifeLogServiceDep,
+    user_id: UUID | None = None,
+    location_id: UUID | None = None,
+    category: str | None = None,
+    limit: int = Query(default=50, le=200),
+    cursor: int | None = None,
+):
+    logs = await service.get_paginated(user_id, location_id, category, limit, cursor)
+    return [LifeLogResponse.model_validate(log) for log in logs]
+
+
+@router.get("/{log_id}", response_model=LifeLogResponse)
+async def get_log(log_id: int, service: LifeLogServiceDep):
+    log = await service.get_by_id(log_id)
+    if not log:
+        raise HTTPException(status_code=404, detail="Log not found")
+    return LifeLogResponse.model_validate(log)
+
+
+@router.delete("/{log_id}", status_code=204)
+async def delete_log(log_id: int, service: LifeLogServiceDep):
+    deleted = await service.delete(log_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Log not found")
