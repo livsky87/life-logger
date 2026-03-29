@@ -9,7 +9,7 @@ interface UserRowProps {
 
 export function UserRow({ user, timezone, isLast }: UserRowProps) {
   return (
-    <div className={`flex h-10 ${isLast ? "" : "border-b border-gray-100"}`}>
+    <div className={`flex h-12 ${isLast ? "" : "border-b border-gray-100"}`}>
       {/* User name label */}
       <div className="w-[220px] shrink-0 flex items-center px-3 border-r border-gray-200 bg-gray-50">
         <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold mr-2 shrink-0">
