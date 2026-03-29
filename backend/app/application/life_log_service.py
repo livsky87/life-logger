@@ -34,15 +34,13 @@ class LifeLogService:
     async def close_event(self, log_id: int, ended_at: datetime) -> LifeLog | None:
         return await self._repo.update_ended_at(log_id, ended_at)
 
-    async def get_timeline(self, date_str: str, location_ids: list[UUID] | None) -> dict:
+    async def get_timeline(self, start_str: str, end_str: str, location_ids: list[UUID] | None) -> dict:
         """
         Returns Gantt-style timeline data bucketed by location then user.
-        Events span from started_at to ended_at (or point-in-time if ended_at is None).
+        start_str / end_str: YYYY-MM-DD (inclusive start, exclusive end).
         """
-        # Parse the requested date and build UTC window
-        date = datetime.strptime(date_str, "%Y-%m-%d")
-        day_start = date.replace(tzinfo=timezone.utc)
-        day_end = day_start + timedelta(days=1)
+        day_start = datetime.strptime(start_str, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        day_end = datetime.strptime(end_str, "%Y-%m-%d").replace(tzinfo=timezone.utc)
 
         # If no location filter, get all locations
         if not location_ids:
@@ -90,7 +88,7 @@ class LifeLogService:
                 loc["users"] = list(loc["users"].values())
                 locations_out.append(loc)
 
-        return {"date": date_str, "locations": locations_out}
+        return {"start": start_str, "end": end_str, "locations": locations_out}
 
     async def get_paginated(
         self,

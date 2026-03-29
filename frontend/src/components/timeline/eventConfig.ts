@@ -15,14 +15,16 @@ const locationStyles: Record<string, EventStyle> = {
 
 // context: duration-based states (shown as timeline bars, can overlap)
 const contextStyles: Record<string, EventStyle> = {
-  sleep:    { label: "수면",   color: "bg-slate-400",  textColor: "text-white" },
-  meal:     { label: "식사",   color: "bg-yellow-400", textColor: "text-white" },
-  shower:   { label: "샤워",   color: "bg-sky-400",    textColor: "text-white" },
-  tv:       { label: "TV",     color: "bg-purple-400", textColor: "text-white" },
-  cooking:  { label: "요리",   color: "bg-red-300",    textColor: "text-white" },
-  work:     { label: "업무",   color: "bg-indigo-400", textColor: "text-white" },
-  exercise: { label: "운동",   color: "bg-green-400",  textColor: "text-white" },
-  rest:     { label: "휴식",   color: "bg-teal-300",   textColor: "text-white" },
+  sleep:           { label: "수면",     color: "bg-slate-400",   textColor: "text-white" },
+  meal:            { label: "식사",     color: "bg-yellow-400",  textColor: "text-white" },
+  shower:          { label: "샤워",     color: "bg-sky-400",     textColor: "text-white" },
+  cooking:         { label: "요리",     color: "bg-red-300",     textColor: "text-white" },
+  work:            { label: "업무",     color: "bg-indigo-400",  textColor: "text-white" },
+  exercise:        { label: "운동",     color: "bg-green-400",   textColor: "text-white" },
+  rest:            { label: "휴식",     color: "bg-teal-300",    textColor: "text-white" },
+  video:           { label: "영상 시청", color: "bg-purple-400",  textColor: "text-white" },
+  music:           { label: "음악 시청", color: "bg-pink-400",    textColor: "text-white" },
+  pet_walk:        { label: "펫 산책",  color: "bg-lime-400",    textColor: "text-white" },
 };
 
 // event: instantaneous actions (shown as dots)
@@ -34,6 +36,8 @@ const eventStyles: Record<string, EventStyle> = {
   light:           { label: "조명",      color: "bg-yellow-300", textColor: "text-gray-800" },
   tv_on:           { label: "TV 켬",    color: "bg-purple-400", textColor: "text-white" },
   tv_off:          { label: "TV 끔",    color: "bg-purple-200", textColor: "text-gray-700" },
+  ac_on:           { label: "에어컨 켬", color: "bg-blue-300",   textColor: "text-white" },
+  ac_off:          { label: "에어컨 끔", color: "bg-blue-100",   textColor: "text-blue-700" },
 };
 
 // legacy activity styles (backwards compat)

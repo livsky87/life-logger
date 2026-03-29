@@ -2,14 +2,18 @@
 
 import { useTimeline } from "@/application/useTimeline";
 import { LocationGroup } from "./LocationGroup";
+import { format } from "date-fns";
 
 interface TimelineGridProps {
-  date: string;
+  rangeStart: Date;
+  rangeEnd: Date;
   locationIds: string[];
 }
 
-export function TimelineGrid({ date, locationIds }: TimelineGridProps) {
-  const { data, isLoading, isError, error } = useTimeline(date, locationIds);
+export function TimelineGrid({ rangeStart, rangeEnd, locationIds }: TimelineGridProps) {
+  const start = format(rangeStart, "yyyy-MM-dd");
+  const end = format(rangeEnd, "yyyy-MM-dd");
+  const { data, isLoading, isError, error } = useTimeline(start, end, locationIds);
 
   if (isLoading) {
     return (
@@ -34,42 +38,21 @@ export function TimelineGrid({ date, locationIds }: TimelineGridProps) {
   if (!data || data.locations.length === 0) {
     return (
       <div className="flex items-center justify-center h-64 text-gray-400">
-        선택한 날짜에 기록이 없습니다
+        선택한 기간에 기록이 없습니다
       </div>
     );
   }
 
   return (
     <div>
-      {/* Legend */}
-      <div className="flex flex-wrap gap-2 mb-4 text-xs">
-        <LegendItem color="bg-blue-500" label="집" />
-        <LegendItem color="bg-indigo-500" label="회사" />
-        <LegendItem color="bg-sky-400" label="외출" />
-        <div className="w-px bg-gray-200 mx-1" />
-        <LegendItem color="bg-cyan-400" label="세탁기" />
-        <LegendItem color="bg-teal-400" label="냉장고" />
-        <LegendItem color="bg-purple-500" label="TV" />
-        <LegendItem color="bg-slate-500" label="수면" />
-        <div className="w-px bg-gray-200 mx-1" />
-        <LegendItem color="bg-emerald-500" label="GET" />
-        <LegendItem color="bg-amber-500" label="POST" />
-        <LegendItem color="bg-red-500" label="DELETE" />
-      </div>
-
-      {/* Timeline groups */}
       {data.locations.map((location) => (
-        <LocationGroup key={location.location_id} location={location} />
+        <LocationGroup
+          key={location.location_id}
+          location={location}
+          rangeStart={rangeStart}
+          rangeEnd={rangeEnd}
+        />
       ))}
-    </div>
-  );
-}
-
-function LegendItem({ color, label }: { color: string; label: string }) {
-  return (
-    <div className="flex items-center gap-1">
-      <div className={`w-3 h-3 rounded ${color}`} />
-      <span className="text-gray-600">{label}</span>
     </div>
   );
 }

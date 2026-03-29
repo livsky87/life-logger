@@ -27,7 +27,8 @@ export interface TimelineLocation {
 }
 
 export interface TimelineResponse {
-  date: string;
+  start: string;
+  end: string;
   locations: TimelineLocation[];
 }
 

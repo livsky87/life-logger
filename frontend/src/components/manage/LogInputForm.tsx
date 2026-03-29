@@ -19,10 +19,12 @@ const EVENT_TYPES: Record<Category, { value: string; label: string }[]> = {
     { value: "meal", label: "🍚 식사" },
     { value: "cooking", label: "🍳 요리" },
     { value: "shower", label: "🚿 샤워" },
-    { value: "tv", label: "📺 TV 시청" },
     { value: "work", label: "💼 업무" },
     { value: "exercise", label: "🏃 운동" },
     { value: "rest", label: "🛋 휴식" },
+    { value: "video", label: "🎬 영상 시청" },
+    { value: "music", label: "🎵 음악 시청" },
+    { value: "pet_walk", label: "🐾 펫 산책" },
   ],
   event: [
     { value: "fridge", label: "🧊 냉장고" },
@@ -32,6 +34,8 @@ const EVENT_TYPES: Record<Category, { value: string; label: string }[]> = {
     { value: "light", label: "💡 조명" },
     { value: "tv_on", label: "📺 TV 켬" },
     { value: "tv_off", label: "📺 TV 끔" },
+    { value: "ac_on", label: "❄️ 에어컨 켬" },
+    { value: "ac_off", label: "❄️ 에어컨 끔" },
   ],
   activity: [
     { value: "sleep", label: "😴 수면" },

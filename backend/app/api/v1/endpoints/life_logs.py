@@ -35,14 +35,15 @@ async def end_event(log_id: int, body: LifeLogEndEvent, service: LifeLogServiceD
 @router.get("/timeline")
 async def get_timeline(
     service: LifeLogServiceDep,
-    date: str = Query(..., description="Date in YYYY-MM-DD format"),
+    start: str = Query(..., description="Range start in YYYY-MM-DD format"),
+    end: str = Query(..., description="Range end (exclusive) in YYYY-MM-DD format"),
     location_ids: list[UUID] = Query(default=[], alias="location_id"),
 ):
     """
     Core dashboard endpoint. Returns Gantt-style events grouped by location > user.
-    Events overlap: started_at < day_end AND (ended_at IS NULL OR ended_at > day_start).
+    start/end define the time window (end is exclusive).
     """
-    return await service.get_timeline(date, location_ids or None)
+    return await service.get_timeline(start, end, location_ids or None)
 
 
 @router.get("", response_model=list[LifeLogResponse])
