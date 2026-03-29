@@ -14,6 +14,25 @@ const EVENT_TYPES: Record<Category, { value: string; label: string }[]> = {
     { value: "gym", label: "💪 헬스장" },
     { value: "outside", label: "🚶 외출" },
   ],
+  context: [
+    { value: "sleep", label: "😴 수면" },
+    { value: "meal", label: "🍚 식사" },
+    { value: "cooking", label: "🍳 요리" },
+    { value: "shower", label: "🚿 샤워" },
+    { value: "tv", label: "📺 TV 시청" },
+    { value: "work", label: "💼 업무" },
+    { value: "exercise", label: "🏃 운동" },
+    { value: "rest", label: "🛋 휴식" },
+  ],
+  event: [
+    { value: "fridge", label: "🧊 냉장고" },
+    { value: "microwave", label: "📡 전자레인지" },
+    { value: "washing_machine", label: "🫧 세탁기" },
+    { value: "door", label: "🚪 현관문" },
+    { value: "light", label: "💡 조명" },
+    { value: "tv_on", label: "📺 TV 켬" },
+    { value: "tv_off", label: "📺 TV 끔" },
+  ],
   activity: [
     { value: "sleep", label: "😴 수면" },
     { value: "meal", label: "🍚 식사" },
@@ -33,8 +52,10 @@ const EVENT_TYPES: Record<Category, { value: string; label: string }[]> = {
 };
 
 const CATEGORY_LABELS: Record<Category, string> = {
-  location: "📍 위치 이동",
-  activity: "⚡ 생활 활동",
+  location:    "📍 위치 이동",
+  context:     "🌀 컨텍스트",
+  event:       "⚡ 이벤트",
+  activity:    "🔧 활동 (레거시)",
   api_request: "🔌 API 요청",
 };
 
@@ -147,11 +168,11 @@ export function LogInputForm({ onSuccess, onError }: Props) {
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">카테고리</label>
         <div className="flex gap-2">
-          {(Object.keys(CATEGORY_LABELS) as Category[]).map((cat) => (
+          {(["location", "context", "event", "api_request"] as Category[]).map((cat) => (
             <button
               key={cat}
               type="button"
-              onClick={() => { setCategory(cat); setEventType(""); }}
+              onClick={() => { setCategory(cat); setEventType(""); setHasEndTime(cat === "context"); }}
               className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium border transition ${
                 category === cat
                   ? "bg-indigo-600 border-indigo-600 text-white"

@@ -1,5 +1,37 @@
 import type { LifeLogEvent } from "@/domain/types";
 
+/**
+ * Assigns a vertical lane index to each context event so overlapping events
+ * are rendered in separate lanes. Returns Map<event.id, laneIndex>.
+ */
+export function assignContextLanes(events: LifeLogEvent[], timezone: string): Map<number, number> {
+  const sorted = [...events].sort(
+    (a, b) => new Date(a.started_at).getTime() - new Date(b.started_at).getTime(),
+  );
+  const laneEndMin: number[] = []; // tracks the end minute of the last event in each lane
+  const lanes = new Map<number, number>();
+
+  for (const ev of sorted) {
+    const startMin = toMinutesOfDay(ev.started_at, timezone);
+    const endMin = ev.ended_at ? toMinutesOfDay(ev.ended_at, timezone) : startMin + 120;
+
+    let assigned = -1;
+    for (let i = 0; i < laneEndMin.length; i++) {
+      if (laneEndMin[i] <= startMin) {
+        assigned = i;
+        laneEndMin[i] = endMin;
+        break;
+      }
+    }
+    if (assigned === -1) {
+      assigned = laneEndMin.length;
+      laneEndMin.push(endMin);
+    }
+    lanes.set(ev.id, assigned);
+  }
+  return lanes;
+}
+
 export const HOUR_WIDTH_PX = 80; // px per hour column
 export const DAY_MINUTES = 24 * 60;
 

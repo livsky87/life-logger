@@ -11,14 +11,18 @@ import { getEventStyle } from "@/components/timeline/eventConfig";
 import type { Category, LifeLog } from "@/domain/types";
 
 const CATEGORY_LABELS: Record<Category, string> = {
-  location: "위치",
-  activity: "활동",
+  location:    "위치",
+  context:     "컨텍스트",
+  event:       "이벤트",
+  activity:    "활동",
   api_request: "API",
 };
 
 const CATEGORY_COLORS: Record<Category, string> = {
-  location: "bg-blue-100 text-blue-700",
-  activity: "bg-purple-100 text-purple-700",
+  location:    "bg-blue-100 text-blue-700",
+  context:     "bg-violet-100 text-violet-700",
+  event:       "bg-amber-100 text-amber-700",
+  activity:    "bg-purple-100 text-purple-700",
   api_request: "bg-emerald-100 text-emerald-700",
 };
 
@@ -104,7 +108,9 @@ export function LogManager({ onSuccess, onError }: Props) {
           >
             <option value="">전체</option>
             <option value="location">위치</option>
-            <option value="activity">활동</option>
+            <option value="context">컨텍스트</option>
+            <option value="event">이벤트</option>
+            <option value="activity">활동 (레거시)</option>
             <option value="api_request">API 요청</option>
           </select>
         </div>
