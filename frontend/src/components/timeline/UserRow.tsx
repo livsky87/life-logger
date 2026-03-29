@@ -30,9 +30,11 @@ export function UserRow({ user, timezone, isLast }: UserRowProps) {
         ))}
 
         {/* Event bars */}
-        {user.events.map((event) => (
-          <EventBar key={event.id} event={event} timezone={timezone} />
-        ))}
+        {user.events
+          .filter((e) => !(e.category === "location" && e.event_type !== "home"))
+          .map((event) => (
+            <EventBar key={event.id} event={event} timezone={timezone} />
+          ))}
       </div>
     </div>
   );
