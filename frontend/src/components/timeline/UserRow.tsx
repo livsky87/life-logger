@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { format } from "date-fns";
 import type { LifeLogEvent, TimelineUser } from "@/domain/types";
 import { getEventStyle, type EventStyle } from "./eventConfig";
@@ -79,21 +79,53 @@ function EventDot({ event, rangeStart, rangeEnd, centerY }: {
   );
 }
 
+function getApiStatusBadge(status: unknown): { bg: string; icon: React.ReactNode } {
+  const code = typeof status === "number" ? status : null;
+  if (code === null) return { bg: "bg-gray-400", icon: <span className="text-white text-[8px] font-bold leading-none">?</span> };
+  if (code < 300) return {
+    bg: "bg-emerald-500",
+    icon: <svg viewBox="0 0 10 10" className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg>,
+  };
+  if (code < 400) return {
+    bg: "bg-blue-400",
+    icon: <svg viewBox="0 0 10 10" className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="2,5 8,5 5.5,2.5"/><line x1="8" y1="5" x2="5.5" y2="7.5"/></svg>,
+  };
+  if (code < 500) return {
+    bg: "bg-amber-400",
+    icon: <svg viewBox="0 0 10 10" className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="2" x2="5" y2="6.5"/><circle cx="5" cy="8.5" r="0.5" fill="currentColor" stroke="none"/></svg>,
+  };
+  return {
+    bg: "bg-red-500",
+    icon: <svg viewBox="0 0 10 10" className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><line x1="2" y1="2" x2="8" y2="8"/><line x1="8" y1="2" x2="2" y2="8"/></svg>,
+  };
+}
+
 function ApiLine({ event, rangeStart, rangeEnd, rowHeight }: {
   event: LifeLogEvent; rangeStart: Date; rangeEnd: Date; rowHeight: number;
 }) {
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
   const style = getEventStyle(event.category, event.event_type);
   const { leftPct } = positionEvent(event, rangeStart, rangeEnd);
+  const badge = getApiStatusBadge(event.data.status);
+  const lineHeight = rowHeight - LOC_H - 7; // leave room for badge
+
   return (
     <>
       <div
-        className={`absolute cursor-pointer opacity-70 hover:opacity-100 transition-opacity`}
-        style={{ left: `${leftPct}%`, top: 0, width: 2, height: rowHeight - LOC_H, transform: "translateX(-1px)" }}
+        className="absolute cursor-pointer opacity-70 hover:opacity-100 transition-opacity"
+        style={{ left: `${leftPct}%`, top: 0, width: 14, transform: "translateX(-7px)" }}
         onMouseMove={(e) => setPos({ x: e.clientX, y: e.clientY })}
         onMouseLeave={() => setPos(null)}
       >
-        <div className={`w-full h-full ${style.color}`} />
+        {/* Vertical line */}
+        <div
+          className={`mx-auto w-0.5 ${style.color}`}
+          style={{ height: lineHeight }}
+        />
+        {/* Status badge */}
+        <div className={`mx-auto w-3.5 h-3.5 rounded-full ${badge.bg} flex items-center justify-center mt-px`}>
+          {badge.icon}
+        </div>
       </div>
       {pos && <Tooltip event={event} style={style} pos={pos} />}
     </>
