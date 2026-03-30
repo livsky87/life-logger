@@ -38,12 +38,14 @@ async def get_timeline(
     start: str = Query(..., description="Range start in YYYY-MM-DD format"),
     end: str = Query(..., description="Range end (exclusive) in YYYY-MM-DD format"),
     location_ids: list[UUID] = Query(default=[], alias="location_id"),
+    period: str = Query(default="1d", description="View period: 1d | 1w | 1m"),
 ):
     """
     Core dashboard endpoint. Returns Gantt-style events grouped by location > user.
     start/end define the time window (end is exclusive).
+    period controls event sampling density to handle large datasets.
     """
-    return await service.get_timeline(start, end, location_ids or None)
+    return await service.get_timeline(start, end, location_ids or None, period)
 
 
 @router.get("", response_model=list[LifeLogResponse])

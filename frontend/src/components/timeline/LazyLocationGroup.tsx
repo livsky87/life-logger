@@ -44,7 +44,7 @@ export function LazyLocationGroup({ location, start, end, rangeStart, rangeEnd, 
 
   const { data, isLoading } = useQuery({
     queryKey: ["timeline", location.id, start, end],
-    queryFn: () => fetchTimeline(start, end, [location.id]),
+    queryFn: () => fetchTimeline(start, end, [location.id], period),
     enabled: isVisible,
     staleTime: config.staleTime,
     refetchInterval: config.refetchInterval,

@@ -151,15 +151,35 @@ function LocationBar({ event, rangeStart, rangeEnd, rowHeight }: {
   );
 }
 
+/**
+ * Minimum event duration to render (in ms).
+ * Events narrower than ~1.5px on a typical 900px-wide timeline are skipped.
+ * Formula: rangeMs / 600 ≈ 1.5px on a 900px container.
+ */
+function minVisibleMs(rangeStart: Date, rangeEnd: Date): number {
+  return (rangeEnd.getTime() - rangeStart.getTime()) / 600;
+}
+
+function isWideEnough(ev: LifeLogEvent, rangeStart: Date, rangeEnd: Date): boolean {
+  const minMs = minVisibleMs(rangeStart, rangeEnd);
+  const startMs = new Date(ev.started_at).getTime();
+  const endMs = ev.ended_at ? new Date(ev.ended_at).getTime() : startMs + 5 * 60 * 1000;
+  return (endMs - startMs) >= minMs;
+}
+
 export function UserRow({ user, rangeStart, rangeEnd, timezone, isLast }: Props) {
-  const locEvents = user.events.filter((e) => e.category === "location" && e.event_type === "home");
+  const locEvents = user.events.filter(
+    (e) => e.category === "location" && e.event_type === "home" && isWideEnough(e, rangeStart, rangeEnd),
+  );
   const ctxEvents = user.events.filter(
-    (e) => e.category === "context" || (e.category === "activity" && e.ended_at),
+    (e) => (e.category === "context" || (e.category === "activity" && e.ended_at)) && isWideEnough(e, rangeStart, rangeEnd),
   );
   const dotEvents = user.events.filter(
-    (e) => e.category === "event" || (e.category === "activity" && !e.ended_at),
+    (e) => (e.category === "event" || (e.category === "activity" && !e.ended_at)) && isWideEnough(e, rangeStart, rangeEnd),
   );
-  const apiEvents = user.events.filter((e) => e.category === "api_request");
+  const apiEvents = user.events.filter(
+    (e) => e.category === "api_request" && isWideEnough(e, rangeStart, rangeEnd),
+  );
 
   const ctxLanes = assignContextLanes(ctxEvents);
   const numLanes = ctxEvents.length > 0 ? Math.max(...Array.from(ctxLanes.values())) + 1 : 1;
