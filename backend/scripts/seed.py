@@ -23,6 +23,8 @@ DB_URL = os.getenv("DATABASE_URL", "postgresql://life_logger:changeme@localhost:
 
 SEOUL = timezone(timedelta(hours=9))
 
+API_ENDPOINTS = ["/api/v1/life-logs", "/api/v1/users", "/api/v1/locations", "/api/v1/events"]
+
 
 async def main():
     conn = await asyncpg.connect(DB_URL)
@@ -77,7 +79,7 @@ async def main():
     events = [
         # ── 김민준 (소프트웨어 엔지니어, 출근) ───────────────────────────────
         # 수면: 23:30(전날) ~ 07:00
-        (minjun, kim_home_id, "activity",    "sleep",           ts(-0, 30),  ts(7)),      # 00:30~07:00 (실제론 전날 23:30)
+        (minjun, kim_home_id, "activity",    "sleep",           ts(-0, 30),  ts(7)),
         (minjun, kim_home_id, "activity",    "shower",          ts(7, 10),   ts(7, 30)),
         (minjun, kim_home_id, "activity",    "meal",            ts(7, 35),   ts(7, 55)),   # 아침
         (minjun, kim_home_id, "location",    "home",            ts(0),       ts(8, 40)),
@@ -183,7 +185,7 @@ async def main():
             endpoints = ["/api/v1/life-logs", "/api/v1/users", "/api/v1/locations"]
             data = {
                 "endpoint": random.choice(endpoints),
-                "status": random.choices(statuses, weights=[40,10,10,10,5,5,8,7,5])[0],
+                "status": random.choices(statuses, weights=[40, 10, 10, 10, 5, 5, 8, 7, 5])[0],
                 "method": event_type,
             }
         elif event_type == "fridge":

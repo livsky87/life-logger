@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react"; // useState used by Tooltip/ContextBar/etc
+import React, { useState } from "react";
 import { format } from "date-fns";
 import type { LifeLogEvent, TimelineUser, TimelineFilter } from "@/domain/types";
 import { getEventStyle, type EventStyle } from "./eventConfig";
@@ -108,7 +108,7 @@ function ApiLine({ event, rangeStart, rangeEnd, rowHeight }: {
   const style = getEventStyle(event.category, event.event_type);
   const { leftPct } = positionEvent(event, rangeStart, rangeEnd);
   const badge = getApiStatusBadge(event.data.status);
-  const lineHeight = rowHeight - LOC_H - 7; // leave room for badge
+  const lineHeight = rowHeight - LOC_H - 7;
 
   return (
     <>
@@ -152,26 +152,43 @@ function LocationBar({ event, rangeStart, rangeEnd, rowHeight }: {
   );
 }
 
+/**
+ * Minimum event duration to render (in ms).
+ * Events narrower than ~1.5px on a typical 900px-wide timeline are skipped.
+ */
+function minVisibleMs(rangeStart: Date, rangeEnd: Date): number {
+  return (rangeEnd.getTime() - rangeStart.getTime()) / 600;
+}
+
+function isWideEnough(ev: LifeLogEvent, rangeStart: Date, rangeEnd: Date): boolean {
+  const minMs = minVisibleMs(rangeStart, rangeEnd);
+  const startMs = new Date(ev.started_at).getTime();
+  const endMs = ev.ended_at ? new Date(ev.ended_at).getTime() : startMs + 5 * 60 * 1000;
+  return (endMs - startMs) >= minMs;
+}
+
 export function UserRow({ user, rangeStart, rangeEnd, timezone, isLast, filter }: Props) {
   const locEvents = filter.showLocation
-    ? user.events.filter((e) => e.category === "location" && e.event_type === "home")
+    ? user.events.filter((e) => e.category === "location" && e.event_type === "home" && isWideEnough(e, rangeStart, rangeEnd))
     : [];
   const ctxEvents = filter.showContext
     ? user.events.filter(
         (e) =>
           (e.category === "context" || (e.category === "activity" && e.ended_at)) &&
-          (filter.contextTypes.size === 0 || filter.contextTypes.has(e.event_type)),
+          (filter.contextTypes.size === 0 || filter.contextTypes.has(e.event_type)) &&
+          isWideEnough(e, rangeStart, rangeEnd),
       )
     : [];
   const dotEvents = filter.showEvent
     ? user.events.filter(
         (e) =>
           (e.category === "event" || (e.category === "activity" && !e.ended_at)) &&
-          (filter.eventTypes.size === 0 || filter.eventTypes.has(e.event_type)),
+          (filter.eventTypes.size === 0 || filter.eventTypes.has(e.event_type)) &&
+          isWideEnough(e, rangeStart, rangeEnd),
       )
     : [];
   const apiEvents = filter.showApi
-    ? user.events.filter((e) => e.category === "api_request")
+    ? user.events.filter((e) => e.category === "api_request" && isWideEnough(e, rangeStart, rangeEnd))
     : [];
 
   const ctxLanes = assignContextLanes(ctxEvents);
@@ -186,9 +203,9 @@ export function UserRow({ user, rangeStart, rangeEnd, timezone, isLast, filter }
           {user.user_name[0]?.toUpperCase()}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-sm text-gray-700 truncate">{user.user_name}</div>
+          <div className="text-sm text-gray-800 font-medium truncate">{user.user_name}</div>
           {user.user_job && (
-            <div className="text-[10px] text-gray-400 truncate">{user.user_job}</div>
+            <div className="text-[10px] text-gray-400 truncate leading-tight">{user.user_job}</div>
           )}
         </div>
       </div>

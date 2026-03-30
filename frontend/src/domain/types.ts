@@ -1,4 +1,5 @@
 export type Category = "location" | "activity" | "api_request" | "event" | "context";
+export type Period = "1d" | "1w" | "1m";
 
 export interface TimelineFilter {
   showLocation: boolean;

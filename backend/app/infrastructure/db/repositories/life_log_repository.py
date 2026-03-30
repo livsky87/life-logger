@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import and_, select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.models.life_log import LifeLog
@@ -68,22 +68,13 @@ class SQLAlchemyLifeLogRepository(LifeLogRepository):
         location_ids: list[UUID],
         start: datetime,
         end: datetime,
-        categories: list[str] | None = None,
     ) -> list[dict]:
         """
         Returns events that overlap [start, end] window, enriched with user/location names.
-        An event overlaps if started_at < end AND (ended_at IS NULL OR ended_at > start).
-        Pass categories to restrict which event types are loaded — critical for keeping
-        weekly/monthly queries fast.
+        - Duration-based events (location, context, activity): overlap if started_at < end AND ended_at > start
+        - Ongoing duration events (ended_at IS NULL, not api_request/event): always shown if started_at < end
+        - Point events (api_request, event with ended_at NULL): only shown if within [start, end]
         """
-        conditions = [
-            LifeLogORM.location_id.in_(location_ids),
-            LifeLogORM.started_at < end,
-            (LifeLogORM.ended_at == None) | (LifeLogORM.ended_at > start),  # noqa: E711
-        ]
-        if categories:
-            conditions.append(LifeLogORM.category.in_(categories))
-
         q = (
             select(
                 LifeLogORM.id,
@@ -101,7 +92,27 @@ class SQLAlchemyLifeLogRepository(LifeLogRepository):
             )
             .join(UserORM, UserORM.id == LifeLogORM.user_id)
             .join(LocationORM, LocationORM.id == LifeLogORM.location_id)
-            .where(and_(*conditions))
+            .where(
+                and_(
+                    LifeLogORM.location_id.in_(location_ids),
+                    LifeLogORM.started_at < end,
+                    or_(
+                        # 기간 있는 이벤트: 윈도우와 겹치는지 확인
+                        and_(LifeLogORM.ended_at != None, LifeLogORM.ended_at > start),  # noqa: E711
+                        # 진행 중인 location/context: started_at < end 이면 표시 (위에서 이미 필터)
+                        and_(
+                            LifeLogORM.ended_at == None,  # noqa: E711
+                            LifeLogORM.category.not_in(["api_request", "event"]),
+                        ),
+                        # point 이벤트(api_request, event): 해당 윈도우 내에서만 표시
+                        and_(
+                            LifeLogORM.ended_at == None,  # noqa: E711
+                            LifeLogORM.category.in_(["api_request", "event"]),
+                            LifeLogORM.started_at >= start,
+                        ),
+                    ),
+                )
+            )
             .order_by(LifeLogORM.location_id, LifeLogORM.started_at)
         )
         result = await self._session.execute(q)

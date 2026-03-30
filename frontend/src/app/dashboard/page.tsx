@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import {
   format, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths,
   startOfWeek, startOfMonth, startOfDay,
@@ -8,8 +8,8 @@ import {
 import { ko } from "date-fns/locale";
 import { useLocations } from "@/application/useLocations";
 import { TimelineGrid } from "@/components/timeline/TimelineGrid";
-import { FilterPanel, makeDefaultFilter, type Period } from "@/components/timeline/FilterPanel";
-import type { TimelineFilter } from "@/domain/types";
+import { FilterPanel, makeDefaultFilter } from "@/components/timeline/FilterPanel";
+import type { Period, TimelineFilter } from "@/domain/types";
 
 const PERIOD_LABELS: Record<Period, string> = { "1d": "1일", "1w": "1주일", "1m": "1달" };
 
@@ -40,10 +40,17 @@ function formatRangeLabel(start: Date, end: Date, period: Period): string {
 }
 
 export default function DashboardPage() {
-  const [period, setPeriod]   = useState<Period>("1d");
-  const [rangeStart, setRangeStart] = useState<Date>(() => startOfDay(new Date()));
+  const [period, setPeriod] = useState<Period>("1d");
+  const [rangeStart, setRangeStart] = useState<Date>(new Date(0)); // 서버/클라이언트 hydration mismatch 방지
+  const [mounted, setMounted] = useState(false);
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
-  const [filter, setFilter]   = useState<TimelineFilter>(() => makeDefaultFilter("1d"));
+  const [filter, setFilter] = useState<TimelineFilter>(() => makeDefaultFilter("1d"));
+
+  useEffect(() => {
+    setRangeStart(startOfDay(new Date()));
+    setMounted(true);
+  }, []);
+
   const { data: locations } = useLocations();
 
   const rangeEnd = useMemo(() => getRangeEnd(rangeStart, period), [rangeStart, period]);
@@ -52,7 +59,7 @@ export default function DashboardPage() {
   const handlePeriodChange = useCallback((p: Period) => {
     setPeriod(p);
     setRangeStart(todayStart(p));
-    setFilter(makeDefaultFilter(p));   // ← period별 안전한 기본값으로 리셋
+    setFilter(makeDefaultFilter(p));
   }, []);
 
   const handleShift = useCallback((dir: 1 | -1) => {
@@ -70,6 +77,8 @@ export default function DashboardPage() {
   }, []);
 
   const activeLocations = selectedLocations.length > 0 ? selectedLocations : [];
+
+  if (!mounted) return null;
 
   return (
     <div className="p-6">
@@ -160,6 +169,7 @@ export default function DashboardPage() {
         rangeStart={rangeStart}
         rangeEnd={rangeEnd}
         locationIds={activeLocations}
+        period={period}
         filter={filter}
       />
     </div>
