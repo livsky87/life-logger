@@ -6,7 +6,7 @@ export interface TimelineFilter {
   contextTypes: Set<string>;   // empty = show all
   showEvent: boolean;
   eventTypes: Set<string>;     // empty = show all
-  // API 표시는 유저별 토글로 관리 (UserRow 컴포넌트 내 로컬 상태)
+  showApi: boolean;
 }
 
 // location:    'home' | 'office' | 'gym' | 'outside' | ...
@@ -25,6 +25,7 @@ export interface LifeLogEvent {
 export interface TimelineUser {
   user_id: string;
   user_name: string;
+  user_job: string | null;
   events: LifeLogEvent[];
 }
 

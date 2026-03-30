@@ -28,6 +28,8 @@ function filterToCategories(filter: TimelineFilter): string[] {
     cats.add("activity");
     cats.add("event");
   }
+  // api_request is always fetched — per-user show/hide is handled locally in UserRow
+  cats.add("api_request");
   return Array.from(cats);
 }
 

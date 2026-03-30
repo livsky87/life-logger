@@ -89,6 +89,7 @@ class SQLAlchemyLifeLogRepository(LifeLogRepository):
                 LifeLogORM.id,
                 LifeLogORM.user_id,
                 UserORM.name.label("user_name"),
+                UserORM.job.label("user_job"),
                 LifeLogORM.location_id,
                 LocationORM.name.label("location_name"),
                 LocationORM.timezone.label("location_timezone"),

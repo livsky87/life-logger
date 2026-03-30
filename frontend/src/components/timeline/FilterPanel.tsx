@@ -47,6 +47,7 @@ export function makeDefaultFilter(period: Period = "1d"): TimelineFilter {
     contextTypes: new Set(),
     showEvent:    period === "1d",   // 1d: ON  /  1w·1m: OFF
     eventTypes:   new Set(),
+    showApi:      false,             // 기본 숨김
   };
 }
 
@@ -78,6 +79,7 @@ export function FilterPanel({ filter, onChange, period }: Props) {
     !filter.showLocation,
     !filter.showContext || filter.contextTypes.size > 0,
     !filter.showEvent   || filter.eventTypes.size   > 0,
+    filter.showApi,
   ].filter(Boolean).length;
 
   const heavy = isHeavy(filter, period);
@@ -173,6 +175,13 @@ export function FilterPanel({ filter, onChange, period }: Props) {
               />
             )}
           </Section>
+
+          {/* API */}
+          <Section
+            label="🔌 API 요청"
+            checked={filter.showApi}
+            onToggle={() => onChange({ ...filter, showApi: !filter.showApi })}
+          />
         </div>
       )}
     </div>

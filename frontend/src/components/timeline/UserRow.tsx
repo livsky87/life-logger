@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState } from "react"; // useState used by Tooltip/ContextBar/etc
 import { format } from "date-fns";
 import type { LifeLogEvent, TimelineUser, TimelineFilter } from "@/domain/types";
 import { getEventStyle, type EventStyle } from "./eventConfig";
@@ -153,8 +153,6 @@ function LocationBar({ event, rangeStart, rangeEnd, rowHeight }: {
 }
 
 export function UserRow({ user, rangeStart, rangeEnd, timezone, isLast, filter }: Props) {
-  const [showApi, setShowApi] = useState(false);
-
   const locEvents = filter.showLocation
     ? user.events.filter((e) => e.category === "location" && e.event_type === "home")
     : [];
@@ -172,7 +170,7 @@ export function UserRow({ user, rangeStart, rangeEnd, timezone, isLast, filter }
           (filter.eventTypes.size === 0 || filter.eventTypes.has(e.event_type)),
       )
     : [];
-  const apiEvents = showApi
+  const apiEvents = filter.showApi
     ? user.events.filter((e) => e.category === "api_request")
     : [];
 
@@ -187,18 +185,12 @@ export function UserRow({ user, rangeStart, rangeEnd, timezone, isLast, filter }
         <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold shrink-0">
           {user.user_name[0]?.toUpperCase()}
         </div>
-        <span className="text-sm text-gray-700 truncate flex-1">{user.user_name}</span>
-        <button
-          onClick={() => setShowApi((v) => !v)}
-          title={showApi ? "API 숨기기" : "API 보기"}
-          className={`shrink-0 px-1.5 py-0.5 rounded text-[10px] font-semibold border transition ${
-            showApi
-              ? "bg-emerald-500 border-emerald-500 text-white"
-              : "border-gray-300 text-gray-400 hover:border-emerald-400 hover:text-emerald-500"
-          }`}
-        >
-          API
-        </button>
+        <div className="flex-1 min-w-0">
+          <div className="text-sm text-gray-700 truncate">{user.user_name}</div>
+          {user.user_job && (
+            <div className="text-[10px] text-gray-400 truncate">{user.user_job}</div>
+          )}
+        </div>
       </div>
 
       <div className="relative flex-1 bg-white">
