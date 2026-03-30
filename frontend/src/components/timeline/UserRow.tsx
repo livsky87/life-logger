@@ -151,15 +151,35 @@ function LocationBar({ event, rangeStart, rangeEnd, rowHeight }: {
   );
 }
 
+/**
+ * Minimum event duration to render (in ms).
+ * Events narrower than ~1.5px on a typical 900px-wide timeline are skipped.
+ * Formula: rangeMs / 600 ≈ 1.5px on a 900px container.
+ */
+function minVisibleMs(rangeStart: Date, rangeEnd: Date): number {
+  return (rangeEnd.getTime() - rangeStart.getTime()) / 600;
+}
+
+function isWideEnough(ev: LifeLogEvent, rangeStart: Date, rangeEnd: Date): boolean {
+  const minMs = minVisibleMs(rangeStart, rangeEnd);
+  const startMs = new Date(ev.started_at).getTime();
+  const endMs = ev.ended_at ? new Date(ev.ended_at).getTime() : startMs + 5 * 60 * 1000;
+  return (endMs - startMs) >= minMs;
+}
+
 export function UserRow({ user, rangeStart, rangeEnd, timezone, isLast }: Props) {
-  const locEvents = user.events.filter((e) => e.category === "location" && e.event_type === "home");
+  const locEvents = user.events.filter(
+    (e) => e.category === "location" && e.event_type === "home" && isWideEnough(e, rangeStart, rangeEnd),
+  );
   const ctxEvents = user.events.filter(
-    (e) => e.category === "context" || (e.category === "activity" && e.ended_at),
+    (e) => (e.category === "context" || (e.category === "activity" && e.ended_at)) && isWideEnough(e, rangeStart, rangeEnd),
   );
   const dotEvents = user.events.filter(
-    (e) => e.category === "event" || (e.category === "activity" && !e.ended_at),
+    (e) => (e.category === "event" || (e.category === "activity" && !e.ended_at)) && isWideEnough(e, rangeStart, rangeEnd),
   );
-  const apiEvents = user.events.filter((e) => e.category === "api_request");
+  const apiEvents = user.events.filter(
+    (e) => e.category === "api_request" && isWideEnough(e, rangeStart, rangeEnd),
+  );
 
   const ctxLanes = assignContextLanes(ctxEvents);
   const numLanes = ctxEvents.length > 0 ? Math.max(...Array.from(ctxLanes.values())) + 1 : 1;
@@ -172,7 +192,12 @@ export function UserRow({ user, rangeStart, rangeEnd, timezone, isLast }: Props)
         <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold mr-2 shrink-0">
           {user.user_name[0]?.toUpperCase()}
         </div>
-        <span className="text-sm text-gray-700 truncate">{user.user_name}</span>
+        <div className="min-w-0">
+          <span className="text-sm text-gray-800 font-medium truncate block">{user.user_name}</span>
+          {user.user_job && (
+            <span className="text-[11px] text-gray-400 truncate block leading-tight">{user.user_job}</span>
+          )}
+        </div>
       </div>
 
       <div className="relative flex-1 bg-white">

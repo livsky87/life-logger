@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import and_, select
+from sqlalchemy import and_, case, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.models.life_log import LifeLog
@@ -78,6 +78,7 @@ class SQLAlchemyLifeLogRepository(LifeLogRepository):
                 LifeLogORM.id,
                 LifeLogORM.user_id,
                 UserORM.name.label("user_name"),
+                UserORM.job.label("user_job"),
                 LifeLogORM.location_id,
                 LocationORM.name.label("location_name"),
                 LocationORM.timezone.label("location_timezone"),
@@ -93,7 +94,21 @@ class SQLAlchemyLifeLogRepository(LifeLogRepository):
                 and_(
                     LifeLogORM.location_id.in_(location_ids),
                     LifeLogORM.started_at < end,
-                    (LifeLogORM.ended_at == None) | (LifeLogORM.ended_at > start),  # noqa: E711
+                    or_(
+                        # 기간 있는 이벤트: 윈도우와 겹치는지 확인
+                        and_(LifeLogORM.ended_at != None, LifeLogORM.ended_at > start),  # noqa: E711
+                        # 진행 중인 location/context: started_at < end 이면 표시 (위에서 이미 필터)
+                        and_(
+                            LifeLogORM.ended_at == None,  # noqa: E711
+                            LifeLogORM.category.not_in(["api_request", "event"]),
+                        ),
+                        # point 이벤트(api_request, event): 해당 윈도우 내에서만 표시
+                        and_(
+                            LifeLogORM.ended_at == None,  # noqa: E711
+                            LifeLogORM.category.in_(["api_request", "event"]),
+                            LifeLogORM.started_at >= start,
+                        ),
+                    ),
                 )
             )
             .order_by(LifeLogORM.location_id, LifeLogORM.started_at)

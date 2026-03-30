@@ -3,3 +3,14 @@ services:
     volumes:
       - ./backend:/app
     command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+  frontend:
+    build:
+      context: ./frontend
+      target: deps      # deps 스테이지까지만 빌드 (npm install까지)
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: sh -c "npm run dev"
+    environment:
+      NEXT_PUBLIC_API_URL: http://backend:8000

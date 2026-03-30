@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { format, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths,
          startOfWeek, startOfMonth, startOfDay } from "date-fns";
 import { ko } from "date-fns/locale";
 import { useLocations } from "@/application/useLocations";
 import { TimelineGrid } from "@/components/timeline/TimelineGrid";
-
-type Period = "1d" | "1w" | "1m";
+import type { Period } from "@/domain/types";
 
 const PERIOD_LABELS: Record<Period, string> = { "1d": "1일", "1w": "1주일", "1m": "1달" };
 
@@ -39,8 +38,14 @@ function formatRangeLabel(start: Date, end: Date, period: Period): string {
 
 export default function DashboardPage() {
   const [period, setPeriod] = useState<Period>("1d");
-  const [rangeStart, setRangeStart] = useState<Date>(() => startOfDay(new Date()));
+  const [rangeStart, setRangeStart] = useState<Date>(new Date(0)); // 서버/클라이언트 hydration mismatch 방지
+  const [mounted, setMounted] = useState(false);
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
+
+  useEffect(() => {
+    setRangeStart(startOfDay(new Date()));
+    setMounted(true);
+  }, []);
   const { data: locations } = useLocations();
 
   const rangeEnd = useMemo(() => getRangeEnd(rangeStart, period), [rangeStart, period]);
@@ -65,6 +70,8 @@ export default function DashboardPage() {
   }, []);
 
   const activeLocations = selectedLocations.length > 0 ? selectedLocations : [];
+
+  if (!mounted) return null;
 
   return (
     <div className="p-6">
@@ -145,7 +152,7 @@ export default function DashboardPage() {
         )}
       </div>
 
-      <TimelineGrid rangeStart={rangeStart} rangeEnd={rangeEnd} locationIds={activeLocations} />
+      <TimelineGrid rangeStart={rangeStart} rangeEnd={rangeEnd} locationIds={activeLocations} period={period} />
     </div>
   );
 }
