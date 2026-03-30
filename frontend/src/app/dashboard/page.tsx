@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
-import { format, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths,
-         startOfWeek, startOfMonth, startOfDay } from "date-fns";
+import {
+  format, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths,
+  startOfWeek, startOfMonth, startOfDay,
+} from "date-fns";
 import { ko } from "date-fns/locale";
 import { useLocations } from "@/application/useLocations";
 import { TimelineGrid } from "@/components/timeline/TimelineGrid";
-
-type Period = "1d" | "1w" | "1m";
+import { FilterPanel, makeDefaultFilter, type Period } from "@/components/timeline/FilterPanel";
+import type { TimelineFilter } from "@/domain/types";
 
 const PERIOD_LABELS: Record<Period, string> = { "1d": "1일", "1w": "1주일", "1m": "1달" };
 
@@ -38,16 +40,19 @@ function formatRangeLabel(start: Date, end: Date, period: Period): string {
 }
 
 export default function DashboardPage() {
-  const [period, setPeriod] = useState<Period>("1d");
+  const [period, setPeriod]   = useState<Period>("1d");
   const [rangeStart, setRangeStart] = useState<Date>(() => startOfDay(new Date()));
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
+  const [filter, setFilter]   = useState<TimelineFilter>(() => makeDefaultFilter("1d"));
   const { data: locations } = useLocations();
 
   const rangeEnd = useMemo(() => getRangeEnd(rangeStart, period), [rangeStart, period]);
 
+  /** Period 변경 시 날짜 범위와 filter 기본값을 함께 리셋 */
   const handlePeriodChange = useCallback((p: Period) => {
     setPeriod(p);
     setRangeStart(todayStart(p));
+    setFilter(makeDefaultFilter(p));   // ← period별 안전한 기본값으로 리셋
   }, []);
 
   const handleShift = useCallback((dir: 1 | -1) => {
@@ -60,7 +65,7 @@ export default function DashboardPage() {
 
   const toggleLocation = useCallback((id: string) => {
     setSelectedLocations((prev) =>
-      prev.includes(id) ? prev.filter((l) => l !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((l) => l !== id) : [...prev, id],
     );
   }, []);
 
@@ -117,35 +122,46 @@ export default function DashboardPage() {
           {formatRangeLabel(rangeStart, rangeEnd, period)}
         </span>
 
-        {/* Location filter */}
-        {locations && locations.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2 ml-auto">
-            {locations.map((loc) => {
-              const active = selectedLocations.includes(loc.id);
-              return (
+        {/* Location chips + FilterPanel */}
+        <div className="flex flex-wrap items-center gap-2 ml-auto">
+          {locations && locations.length > 0 && (
+            <>
+              {locations.map((loc) => {
+                const active = selectedLocations.includes(loc.id);
+                return (
+                  <button
+                    key={loc.id}
+                    onClick={() => toggleLocation(loc.id)}
+                    className={`px-3 py-1.5 text-sm rounded-full border transition ${
+                      active
+                        ? "bg-indigo-600 border-indigo-600 text-white"
+                        : "border-gray-200 text-gray-600 hover:bg-gray-100"
+                    }`}
+                  >
+                    {loc.name}
+                  </button>
+                );
+              })}
+              {selectedLocations.length > 0 && (
                 <button
-                  key={loc.id}
-                  onClick={() => toggleLocation(loc.id)}
-                  className={`px-3 py-1.5 text-sm rounded-full border transition ${
-                    active
-                      ? "bg-indigo-600 border-indigo-600 text-white"
-                      : "border-gray-200 text-gray-600 hover:bg-gray-100"
-                  }`}
+                  onClick={() => setSelectedLocations([])}
+                  className="text-xs text-gray-400 hover:text-gray-600 underline"
                 >
-                  {loc.name}
+                  전체
                 </button>
-              );
-            })}
-            {selectedLocations.length > 0 && (
-              <button onClick={() => setSelectedLocations([])} className="text-xs text-gray-400 hover:text-gray-600 underline">
-                전체
-              </button>
-            )}
-          </div>
-        )}
+              )}
+            </>
+          )}
+          <FilterPanel filter={filter} onChange={setFilter} period={period} />
+        </div>
       </div>
 
-      <TimelineGrid rangeStart={rangeStart} rangeEnd={rangeEnd} locationIds={activeLocations} />
+      <TimelineGrid
+        rangeStart={rangeStart}
+        rangeEnd={rangeEnd}
+        locationIds={activeLocations}
+        filter={filter}
+      />
     </div>
   );
 }

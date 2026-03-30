@@ -34,7 +34,13 @@ class LifeLogService:
     async def close_event(self, log_id: int, ended_at: datetime) -> LifeLog | None:
         return await self._repo.update_ended_at(log_id, ended_at)
 
-    async def get_timeline(self, start_str: str, end_str: str, location_ids: list[UUID] | None) -> dict:
+    async def get_timeline(
+        self,
+        start_str: str,
+        end_str: str,
+        location_ids: list[UUID] | None,
+        categories: list[str] | None = None,
+    ) -> dict:
         """
         Returns Gantt-style timeline data bucketed by location then user.
         start_str / end_str: YYYY-MM-DD (inclusive start, exclusive end).
@@ -48,9 +54,9 @@ class LifeLogService:
             location_ids = [loc.id for loc in all_locations]
 
         if not location_ids:
-            return {"date": date_str, "locations": []}
+            return {"start": start_str, "end": end_str, "locations": []}
 
-        rows = await self._repo.get_timeline(location_ids, day_start, day_end)
+        rows = await self._repo.get_timeline(location_ids, day_start, day_end, categories)
 
         # Group by location
         by_location: dict[str, dict] = {}

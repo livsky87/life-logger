@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { TimelineLocation } from "@/domain/types";
+import type { TimelineLocation, TimelineFilter } from "@/domain/types";
 import { UserRow } from "./UserRow";
 import { getTimeTicks } from "./timelineUtils";
 
@@ -7,9 +7,10 @@ interface Props {
   location: TimelineLocation;
   rangeStart: Date;
   rangeEnd: Date;
+  filter: TimelineFilter;
 }
 
-export function LocationGroup({ location, rangeStart, rangeEnd }: Props) {
+export function LocationGroup({ location, rangeStart, rangeEnd, filter }: Props) {
   const [collapsed, setCollapsed] = useState(false);
   const ticks = getTimeTicks(rangeStart, rangeEnd, location.timezone);
 
@@ -55,6 +56,7 @@ export function LocationGroup({ location, rangeStart, rangeEnd }: Props) {
             rangeEnd={rangeEnd}
             timezone={location.timezone}
             isLast={idx === location.users.length - 1}
+            filter={filter}
           />
         ))}
 

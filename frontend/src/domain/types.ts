@@ -1,5 +1,14 @@
 export type Category = "location" | "activity" | "api_request" | "event" | "context";
 
+export interface TimelineFilter {
+  showLocation: boolean;
+  showContext: boolean;
+  contextTypes: Set<string>;   // empty = show all
+  showEvent: boolean;
+  eventTypes: Set<string>;     // empty = show all
+  // API 표시는 유저별 토글로 관리 (UserRow 컴포넌트 내 로컬 상태)
+}
+
 // location:    'home' | 'office' | 'gym' | 'outside' | ...
 // activity:    'washing_machine' | 'fridge' | 'tv' | 'shower' | ...
 // api_request: 'GET' | 'POST' | 'PUT' | 'DELETE'

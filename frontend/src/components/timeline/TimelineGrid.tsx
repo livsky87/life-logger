@@ -3,17 +3,19 @@
 import { useTimeline } from "@/application/useTimeline";
 import { LocationGroup } from "./LocationGroup";
 import { format } from "date-fns";
+import type { TimelineFilter } from "@/domain/types";
 
 interface TimelineGridProps {
   rangeStart: Date;
   rangeEnd: Date;
   locationIds: string[];
+  filter: TimelineFilter;
 }
 
-export function TimelineGrid({ rangeStart, rangeEnd, locationIds }: TimelineGridProps) {
+export function TimelineGrid({ rangeStart, rangeEnd, locationIds, filter }: TimelineGridProps) {
   const start = format(rangeStart, "yyyy-MM-dd");
   const end = format(rangeEnd, "yyyy-MM-dd");
-  const { data, isLoading, isError, error } = useTimeline(start, end, locationIds);
+  const { data, isLoading, isError, error } = useTimeline(start, end, locationIds, filter);
 
   if (isLoading) {
     return (
@@ -51,6 +53,7 @@ export function TimelineGrid({ rangeStart, rangeEnd, locationIds }: TimelineGrid
           location={location}
           rangeStart={rangeStart}
           rangeEnd={rangeEnd}
+          filter={filter}
         />
       ))}
     </div>

@@ -1,9 +1,17 @@
 import type { Category, LifeLog, TimelineResponse } from "@/domain/types";
 import { apiFetch } from "./client";
 
-export function fetchTimeline(start: string, end: string, locationIds: string[]): Promise<TimelineResponse> {
+export function fetchTimeline(
+  start: string,
+  end: string,
+  locationIds: string[],
+  categories: string[] = [],
+): Promise<TimelineResponse> {
   const params = new URLSearchParams({ start, end });
   locationIds.forEach((id) => params.append("location_id", id));
+  // Only send the categories the UI actually needs — keeps payloads small
+  // for weekly / monthly views where unrestricted queries can be very large.
+  categories.forEach((c) => params.append("category", c));
   return apiFetch<TimelineResponse>(`/api/v1/life-logs/timeline?${params}`);
 }
 

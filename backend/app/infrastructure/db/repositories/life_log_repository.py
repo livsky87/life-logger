@@ -68,11 +68,22 @@ class SQLAlchemyLifeLogRepository(LifeLogRepository):
         location_ids: list[UUID],
         start: datetime,
         end: datetime,
+        categories: list[str] | None = None,
     ) -> list[dict]:
         """
         Returns events that overlap [start, end] window, enriched with user/location names.
         An event overlaps if started_at < end AND (ended_at IS NULL OR ended_at > start).
+        Pass categories to restrict which event types are loaded — critical for keeping
+        weekly/monthly queries fast.
         """
+        conditions = [
+            LifeLogORM.location_id.in_(location_ids),
+            LifeLogORM.started_at < end,
+            (LifeLogORM.ended_at == None) | (LifeLogORM.ended_at > start),  # noqa: E711
+        ]
+        if categories:
+            conditions.append(LifeLogORM.category.in_(categories))
+
         q = (
             select(
                 LifeLogORM.id,
@@ -89,13 +100,7 @@ class SQLAlchemyLifeLogRepository(LifeLogRepository):
             )
             .join(UserORM, UserORM.id == LifeLogORM.user_id)
             .join(LocationORM, LocationORM.id == LifeLogORM.location_id)
-            .where(
-                and_(
-                    LifeLogORM.location_id.in_(location_ids),
-                    LifeLogORM.started_at < end,
-                    (LifeLogORM.ended_at == None) | (LifeLogORM.ended_at > start),  # noqa: E711
-                )
-            )
+            .where(and_(*conditions))
             .order_by(LifeLogORM.location_id, LifeLogORM.started_at)
         )
         result = await self._session.execute(q)
