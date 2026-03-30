@@ -1,19 +1,25 @@
 "use client";
 
-import { useTimeline } from "@/application/useTimeline";
-import { LocationGroup } from "./LocationGroup";
+import { useLocations } from "@/application/useLocations";
+import { LazyLocationGroup } from "./LazyLocationGroup";
 import { format } from "date-fns";
+import type { Period } from "@/domain/types";
 
 interface TimelineGridProps {
   rangeStart: Date;
   rangeEnd: Date;
   locationIds: string[];
+  period: Period;
 }
 
-export function TimelineGrid({ rangeStart, rangeEnd, locationIds }: TimelineGridProps) {
+export function TimelineGrid({ rangeStart, rangeEnd, locationIds, period }: TimelineGridProps) {
   const start = format(rangeStart, "yyyy-MM-dd");
   const end = format(rangeEnd, "yyyy-MM-dd");
-  const { data, isLoading, isError, error } = useTimeline(start, end, locationIds);
+  const { data: allLocations, isLoading } = useLocations();
+
+  const locations = (allLocations ?? []).filter(
+    (loc) => locationIds.length === 0 || locationIds.includes(loc.id)
+  );
 
   if (isLoading) {
     return (
@@ -27,30 +33,27 @@ export function TimelineGrid({ rangeStart, rangeEnd, locationIds }: TimelineGrid
     );
   }
 
-  if (isError) {
-    return (
-      <div className="flex items-center justify-center h-64 text-red-500">
-        오류: {error instanceof Error ? error.message : "데이터를 불러올 수 없습니다"}
-      </div>
-    );
-  }
-
-  if (!data || data.locations.length === 0) {
+  if (locations.length === 0) {
     return (
       <div className="flex items-center justify-center h-64 text-gray-400">
-        선택한 기간에 기록이 없습니다
+        {allLocations && allLocations.length > 0
+          ? "선택한 위치가 없습니다"
+          : "등록된 위치가 없습니다"}
       </div>
     );
   }
 
   return (
     <div>
-      {data.locations.map((location) => (
-        <LocationGroup
-          key={location.location_id}
+      {locations.map((location) => (
+        <LazyLocationGroup
+          key={location.id}
           location={location}
+          start={start}
+          end={end}
           rangeStart={rangeStart}
           rangeEnd={rangeEnd}
+          period={period}
         />
       ))}
     </div>

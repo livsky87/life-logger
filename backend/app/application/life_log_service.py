@@ -69,6 +69,7 @@ class LifeLogService:
                 loc_data["users"][user_id] = {
                     "user_id": user_id,
                     "user_name": row["user_name"],
+                    "user_job": row["user_job"],
                     "events": [],
                 }
             loc_data["users"][user_id]["events"].append({

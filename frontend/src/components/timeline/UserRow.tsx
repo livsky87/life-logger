@@ -172,7 +172,12 @@ export function UserRow({ user, rangeStart, rangeEnd, timezone, isLast }: Props)
         <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold mr-2 shrink-0">
           {user.user_name[0]?.toUpperCase()}
         </div>
-        <span className="text-sm text-gray-700 truncate">{user.user_name}</span>
+        <div className="min-w-0">
+          <span className="text-sm text-gray-800 font-medium truncate block">{user.user_name}</span>
+          {user.user_job && (
+            <span className="text-[11px] text-gray-400 truncate block leading-tight">{user.user_job}</span>
+          )}
+        </div>
       </div>
 
       <div className="relative flex-1 bg-white">
