@@ -4,7 +4,7 @@ import { useRef, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { LocationGroup } from "./LocationGroup";
 import { fetchTimeline } from "@/infrastructure/api/lifeLogApi";
-import type { Location, TimelineLocation, Period } from "@/domain/types";
+import type { Location, TimelineLocation, Period, TimelineFilter } from "@/domain/types";
 
 const PERIOD_QUERY_CONFIG: Record<Period, { staleTime: number; refetchInterval: number | false }> = {
   "1d": { staleTime: 30_000,       refetchInterval: 60_000 },
@@ -19,9 +19,10 @@ interface Props {
   rangeStart: Date;
   rangeEnd: Date;
   period: Period;
+  filter: TimelineFilter;
 }
 
-export function LazyLocationGroup({ location, start, end, rangeStart, rangeEnd, period }: Props) {
+export function LazyLocationGroup({ location, start, end, rangeStart, rangeEnd, period, filter }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const config = PERIOD_QUERY_CONFIG[period];
@@ -43,7 +44,7 @@ export function LazyLocationGroup({ location, start, end, rangeStart, rangeEnd, 
   }, []);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["timeline", location.id, start, end],
+    queryKey: ["timeline", location.id, start, end, period],
     queryFn: () => fetchTimeline(start, end, [location.id], period),
     enabled: isVisible,
     staleTime: config.staleTime,
@@ -70,12 +71,13 @@ export function LazyLocationGroup({ location, start, end, rangeStart, rangeEnd, 
           )}
         </div>
       ) : locationData ? (
-        <LocationGroup location={locationData} rangeStart={rangeStart} rangeEnd={rangeEnd} />
+        <LocationGroup location={locationData} rangeStart={rangeStart} rangeEnd={rangeEnd} filter={filter} />
       ) : (
         <LocationGroup
           location={{ location_id: location.id, name: location.name, timezone: location.timezone, users: [] }}
           rangeStart={rangeStart}
           rangeEnd={rangeEnd}
+          filter={filter}
         />
       )}
     </div>

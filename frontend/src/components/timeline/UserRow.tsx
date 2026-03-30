@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { format } from "date-fns";
-import type { LifeLogEvent, TimelineUser } from "@/domain/types";
+import type { LifeLogEvent, TimelineUser, TimelineFilter } from "@/domain/types";
 import { getEventStyle, type EventStyle } from "./eventConfig";
 import { positionEvent, assignContextLanes } from "./timelineUtils";
 
@@ -18,6 +18,7 @@ interface Props {
   rangeEnd: Date;
   timezone: string;
   isLast: boolean;
+  filter: TimelineFilter;
 }
 
 function Tooltip({ event, style, pos }: { event: LifeLogEvent; style: EventStyle; pos: { x: number; y: number } }) {
@@ -107,7 +108,7 @@ function ApiLine({ event, rangeStart, rangeEnd, rowHeight }: {
   const style = getEventStyle(event.category, event.event_type);
   const { leftPct } = positionEvent(event, rangeStart, rangeEnd);
   const badge = getApiStatusBadge(event.data.status);
-  const lineHeight = rowHeight - LOC_H - 7; // leave room for badge
+  const lineHeight = rowHeight - LOC_H - 7;
 
   return (
     <>
@@ -154,7 +155,6 @@ function LocationBar({ event, rangeStart, rangeEnd, rowHeight }: {
 /**
  * Minimum event duration to render (in ms).
  * Events narrower than ~1.5px on a typical 900px-wide timeline are skipped.
- * Formula: rangeMs / 600 ≈ 1.5px on a 900px container.
  */
 function minVisibleMs(rangeStart: Date, rangeEnd: Date): number {
   return (rangeEnd.getTime() - rangeStart.getTime()) / 600;
@@ -167,19 +167,29 @@ function isWideEnough(ev: LifeLogEvent, rangeStart: Date, rangeEnd: Date): boole
   return (endMs - startMs) >= minMs;
 }
 
-export function UserRow({ user, rangeStart, rangeEnd, timezone, isLast }: Props) {
-  const locEvents = user.events.filter(
-    (e) => e.category === "location" && e.event_type === "home" && isWideEnough(e, rangeStart, rangeEnd),
-  );
-  const ctxEvents = user.events.filter(
-    (e) => (e.category === "context" || (e.category === "activity" && e.ended_at)) && isWideEnough(e, rangeStart, rangeEnd),
-  );
-  const dotEvents = user.events.filter(
-    (e) => (e.category === "event" || (e.category === "activity" && !e.ended_at)) && isWideEnough(e, rangeStart, rangeEnd),
-  );
-  const apiEvents = user.events.filter(
-    (e) => e.category === "api_request" && isWideEnough(e, rangeStart, rangeEnd),
-  );
+export function UserRow({ user, rangeStart, rangeEnd, timezone, isLast, filter }: Props) {
+  const locEvents = filter.showLocation
+    ? user.events.filter((e) => e.category === "location" && e.event_type === "home" && isWideEnough(e, rangeStart, rangeEnd))
+    : [];
+  const ctxEvents = filter.showContext
+    ? user.events.filter(
+        (e) =>
+          (e.category === "context" || (e.category === "activity" && e.ended_at)) &&
+          (filter.contextTypes.size === 0 || filter.contextTypes.has(e.event_type)) &&
+          isWideEnough(e, rangeStart, rangeEnd),
+      )
+    : [];
+  const dotEvents = filter.showEvent
+    ? user.events.filter(
+        (e) =>
+          (e.category === "event" || (e.category === "activity" && !e.ended_at)) &&
+          (filter.eventTypes.size === 0 || filter.eventTypes.has(e.event_type)) &&
+          isWideEnough(e, rangeStart, rangeEnd),
+      )
+    : [];
+  const apiEvents = filter.showApi
+    ? user.events.filter((e) => e.category === "api_request" && isWideEnough(e, rangeStart, rangeEnd))
+    : [];
 
   const ctxLanes = assignContextLanes(ctxEvents);
   const numLanes = ctxEvents.length > 0 ? Math.max(...Array.from(ctxLanes.values())) + 1 : 1;
@@ -188,14 +198,14 @@ export function UserRow({ user, rangeStart, rangeEnd, timezone, isLast }: Props)
 
   return (
     <div className={`flex ${isLast ? "" : "border-b border-gray-100"}`} style={{ height: rowHeight }}>
-      <div className="w-[220px] shrink-0 flex items-center px-3 border-r border-gray-200 bg-gray-50">
-        <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold mr-2 shrink-0">
+      <div className="w-[220px] shrink-0 flex items-center px-3 border-r border-gray-200 bg-gray-50 gap-2">
+        <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold shrink-0">
           {user.user_name[0]?.toUpperCase()}
         </div>
-        <div className="min-w-0">
-          <span className="text-sm text-gray-800 font-medium truncate block">{user.user_name}</span>
+        <div className="flex-1 min-w-0">
+          <div className="text-sm text-gray-800 font-medium truncate">{user.user_name}</div>
           {user.user_job && (
-            <span className="text-[11px] text-gray-400 truncate block leading-tight">{user.user_job}</span>
+            <div className="text-[10px] text-gray-400 truncate leading-tight">{user.user_job}</div>
           )}
         </div>
       </div>

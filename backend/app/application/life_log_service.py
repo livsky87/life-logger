@@ -77,7 +77,7 @@ class LifeLogService:
             location_ids = [loc.id for loc in all_locations]
 
         if not location_ids:
-            return {"date": date_str, "locations": []}
+            return {"start": start_str, "end": end_str, "locations": []}
 
         rows = await self._repo.get_timeline(location_ids, day_start, day_end)
         rows = self._sample_rows(rows, period)

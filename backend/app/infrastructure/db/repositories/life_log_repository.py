@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import and_, case, or_, select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.models.life_log import LifeLog
@@ -71,7 +71,9 @@ class SQLAlchemyLifeLogRepository(LifeLogRepository):
     ) -> list[dict]:
         """
         Returns events that overlap [start, end] window, enriched with user/location names.
-        An event overlaps if started_at < end AND (ended_at IS NULL OR ended_at > start).
+        - Duration-based events (location, context, activity): overlap if started_at < end AND ended_at > start
+        - Ongoing duration events (ended_at IS NULL, not api_request/event): always shown if started_at < end
+        - Point events (api_request, event with ended_at NULL): only shown if within [start, end]
         """
         q = (
             select(

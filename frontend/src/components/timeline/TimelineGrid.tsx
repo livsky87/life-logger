@@ -3,16 +3,17 @@
 import { useLocations } from "@/application/useLocations";
 import { LazyLocationGroup } from "./LazyLocationGroup";
 import { format } from "date-fns";
-import type { Period } from "@/domain/types";
+import type { Period, TimelineFilter } from "@/domain/types";
 
 interface TimelineGridProps {
   rangeStart: Date;
   rangeEnd: Date;
   locationIds: string[];
   period: Period;
+  filter: TimelineFilter;
 }
 
-export function TimelineGrid({ rangeStart, rangeEnd, locationIds, period }: TimelineGridProps) {
+export function TimelineGrid({ rangeStart, rangeEnd, locationIds, period, filter }: TimelineGridProps) {
   const start = format(rangeStart, "yyyy-MM-dd");
   const end = format(rangeEnd, "yyyy-MM-dd");
   const { data: allLocations, isLoading } = useLocations();
@@ -54,6 +55,7 @@ export function TimelineGrid({ rangeStart, rangeEnd, locationIds, period }: Time
           rangeStart={rangeStart}
           rangeEnd={rangeEnd}
           period={period}
+          filter={filter}
         />
       ))}
     </div>
