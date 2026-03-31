@@ -7,6 +7,13 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://life_logger:changeme@localhost:5432/life_logger"
     cors_origins: str = "http://localhost:3000"
 
+    # SmartThings Personal Access Token
+    smartthings_token: str = ""
+
+    # Home Data Engine base URL (without trailing slash)
+    # e.g. https://your-home-engine-host
+    home_data_engine_url: str = ""
+
     @property
     def cors_origins_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(",")]

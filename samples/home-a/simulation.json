@@ -1,0 +1,19 @@
+{
+  "name": "집 A (강남구 아파트)",
+  "location_id": "8fa7df77-61b0-4978-a13c-916c9616920b",
+  "devices": [
+    {"deviceId": "fridge-a-001", "name": "냉장고", "label": "냉장고", "roomId": "부엌", "type": "refrigerator", "status": {"switch": "on"}},
+    {"deviceId": "microwave-a-001", "name": "전자레인지", "label": "전자레인지", "roomId": "부엌", "type": "microwave", "status": {"switch": "off"}},
+    {"deviceId": "light-kitchen-a", "name": "부엌 조명", "label": "부엌 조명", "roomId": "부엌", "type": "light", "status": {"switch": "off"}},
+    {"deviceId": "tv-a-001", "name": "거실 TV", "label": "거실 TV", "roomId": "거실", "type": "tv", "status": {"switch": "off"}},
+    {"deviceId": "ac-a-001", "name": "에어컨", "label": "거실 에어컨", "roomId": "거실", "type": "ac", "status": {"switch": "off"}},
+    {"deviceId": "speaker-a-001", "name": "스피커", "label": "스마트 스피커", "roomId": "거실", "type": "speaker", "status": {"switch": "on"}},
+    {"deviceId": "light-living-a", "name": "거실 조명", "label": "거실 조명", "roomId": "거실", "type": "light", "status": {"switch": "off"}},
+    {"deviceId": "washer-a-001", "name": "세탁기", "label": "세탁기", "roomId": "베란다", "type": "washer", "status": {"switch": "off"}},
+    {"deviceId": "light-veranda-a", "name": "베란다 조명", "label": "베란다 조명", "roomId": "베란다", "type": "light", "status": {"switch": "off"}},
+    {"deviceId": "light-bedroom-a", "name": "침실 조명", "label": "침실 조명", "roomId": "침실", "type": "light", "status": {"switch": "off"}},
+    {"deviceId": "ac-bedroom-a", "name": "침실 에어컨", "label": "침실 에어컨", "roomId": "침실", "type": "ac", "status": {"switch": "off"}},
+    {"deviceId": "light-bathroom-a", "name": "욕실 조명", "label": "욕실 조명", "roomId": "화장실", "type": "light", "status": {"switch": "off"}}
+  ],
+  "metadata": {}
+}

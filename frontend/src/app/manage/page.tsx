@@ -1,31 +1,35 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { LogInputForm } from "@/components/manage/LogInputForm";
 import { LocationUserManager } from "@/components/manage/LocationUserManager";
 import { LogManager } from "@/components/manage/LogManager";
+import { ScheduleLog } from "@/components/manage/ScheduleLog";
+import { SimulationView } from "@/components/manage/SimulationView";
 import { Toast, type ToastType } from "@/components/ui/Toast";
 
-type Tab = "input" | "settings" | "logs";
+type Tab = "schedule" | "simulation" | "settings" | "logs";
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
-  { id: "input", label: "이벤트 입력", icon: "✏️" },
-  { id: "settings", label: "위치·사용자 관리", icon: "⚙️" },
-  { id: "logs", label: "로그 목록", icon: "📋" },
+  { id: "schedule",   label: "스케줄",          icon: "🗓️" },
+  { id: "simulation", label: "시뮬레이션",        icon: "🏠" },
+  { id: "settings",  label: "위치·사용자 관리",   icon: "⚙️" },
+  { id: "logs",      label: "로그 목록",          icon: "📋" },
 ];
 
 export default function ManagePage() {
-  const [tab, setTab] = useState<Tab>("input");
+  const [tab, setTab] = useState<Tab>("schedule");
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
 
   const showSuccess = useCallback((msg: string) => setToast({ message: msg, type: "success" }), []);
   const showError = useCallback((msg: string) => setToast({ message: msg, type: "error" }), []);
 
+  const isWide = tab === "simulation";
+
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className={`${isWide ? "max-w-full" : "max-w-4xl"} mx-auto p-6`}>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">라이프로그 관리</h1>
-        <p className="text-gray-500 text-sm mt-1">이벤트를 입력하고 기록을 관리합니다</p>
+        <p className="text-gray-500 text-sm mt-1">스케줄과 시뮬레이션을 관리합니다</p>
       </div>
 
       {/* Tab bar */}
@@ -47,12 +51,12 @@ export default function ManagePage() {
       </div>
 
       {/* Tab content */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6">
-        {tab === "input" && (
-          <>
-            <h2 className="font-semibold text-gray-800 mb-4">이벤트 기록</h2>
-            <LogInputForm onSuccess={showSuccess} onError={showError} />
-          </>
+      <div className={`bg-white rounded-2xl border border-gray-200 ${tab === "simulation" ? "overflow-hidden" : "p-6"}`}>
+        {tab === "schedule" && (
+          <ScheduleLog onSuccess={showSuccess} onError={showError} />
+        )}
+        {tab === "simulation" && (
+          <SimulationView onSuccess={showSuccess} onError={showError} />
         )}
         {tab === "settings" && (
           <>
