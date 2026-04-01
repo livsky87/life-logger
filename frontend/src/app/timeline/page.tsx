@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { format, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths,
          startOfWeek, startOfMonth, startOfDay } from "date-fns";
 import { ko } from "date-fns/locale";
 import { useLocations } from "@/application/useLocations";
 import { TimelineGrid } from "@/components/timeline/TimelineGrid";
-
-type Period = "1d" | "1w" | "1m";
+import { makeDefaultFilter } from "@/components/timeline/FilterPanel";
+import type { Period, TimelineFilter } from "@/domain/types";
 
 const PERIOD_LABELS: Record<Period, string> = { "1d": "1일", "1w": "1주일", "1m": "1달" };
 
@@ -39,19 +39,29 @@ function formatRangeLabel(start: Date, end: Date, period: Period): string {
 
 export default function TimelinePage() {
   const [period, setPeriod] = useState<Period>("1d");
-  const [rangeStart, setRangeStart] = useState<Date>(() => startOfDay(new Date()));
+  const [filter, setFilter] = useState<TimelineFilter>(() => makeDefaultFilter("1d"));
+  /** SSR과 클라이언트의 TZ/시각 차이로 "오늘"이 달라지면 hydration 오류가 나므로, 마운트 후에만 설정 */
+  const [rangeStart, setRangeStart] = useState<Date | null>(null);
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const { data: locations } = useLocations();
 
-  const rangeEnd = useMemo(() => getRangeEnd(rangeStart, period), [rangeStart, period]);
+  useEffect(() => {
+    setRangeStart(todayStart("1d"));
+  }, []);
+
+  const rangeEnd = useMemo(
+    () => (rangeStart != null ? getRangeEnd(rangeStart, period) : null),
+    [rangeStart, period]
+  );
 
   const handlePeriodChange = useCallback((p: Period) => {
     setPeriod(p);
     setRangeStart(todayStart(p));
+    setFilter(makeDefaultFilter(p));
   }, []);
 
   const handleShift = useCallback((dir: 1 | -1) => {
-    setRangeStart((s) => shiftStart(s, period, dir));
+    setRangeStart((s) => shiftStart(s ?? todayStart(period), period, dir));
   }, [period]);
 
   const handleToday = useCallback(() => {
@@ -113,8 +123,10 @@ export default function TimelinePage() {
         </div>
 
         {/* Range label */}
-        <span className="text-sm font-medium text-gray-700">
-          {formatRangeLabel(rangeStart, rangeEnd, period)}
+        <span className="text-sm font-medium text-gray-700 tabular-nums">
+          {rangeStart != null && rangeEnd != null
+            ? formatRangeLabel(rangeStart, rangeEnd, period)
+            : "\u00a0"}
         </span>
 
         {/* Location filter */}
@@ -145,7 +157,17 @@ export default function TimelinePage() {
         )}
       </div>
 
-      <TimelineGrid rangeStart={rangeStart} rangeEnd={rangeEnd} locationIds={activeLocations} />
+      {rangeStart != null && rangeEnd != null ? (
+        <TimelineGrid
+          rangeStart={rangeStart}
+          rangeEnd={rangeEnd}
+          locationIds={activeLocations}
+          period={period}
+          filter={filter}
+        />
+      ) : (
+        <div className="h-64" aria-hidden />
+      )}
     </div>
   );
 }
