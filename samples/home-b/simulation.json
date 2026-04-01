@@ -1,0 +1,17 @@
+{
+  "name": "집 B (마포구 오피스텔)",
+  "location_id": "8fa7df77-61b0-4978-a13c-916c9616920b",
+  "devices": [
+    {"deviceId": "fridge-b-001", "name": "냉장고", "label": "주방 냉장고", "roomId": "부엌", "type": "refrigerator", "status": {"switch": "on"}},
+    {"deviceId": "light-kitchen-b", "name": "주방 조명", "label": "주방 조명", "roomId": "부엌", "type": "light", "status": {"switch": "off"}},
+    {"deviceId": "tv-b-001", "name": "TV", "label": "거실 TV", "roomId": "거실", "type": "tv", "status": {"switch": "off"}},
+    {"deviceId": "light-living-b", "name": "거실 조명", "label": "거실 조명", "roomId": "거실", "type": "light", "status": {"switch": "off"}},
+    {"deviceId": "ac-b-001", "name": "에어컨", "label": "거실 에어컨", "roomId": "거실", "type": "ac", "status": {"switch": "off"}},
+    {"deviceId": "speaker-b-001", "name": "스마트 스피커", "label": "구글 홈", "roomId": "거실", "type": "speaker", "status": {"switch": "on"}},
+    {"deviceId": "light-room1-b", "name": "방 조명", "label": "방1 조명", "roomId": "방1", "type": "light", "status": {"switch": "off"}},
+    {"deviceId": "plug-room1-b", "name": "스마트 플러그", "label": "컴퓨터 플러그", "roomId": "방1", "type": "plug", "status": {"switch": "off"}},
+    {"deviceId": "light-room2-b", "name": "서재 조명", "label": "서재 조명", "roomId": "방2", "type": "light", "status": {"switch": "off"}},
+    {"deviceId": "light-bathroom-b", "name": "욕실 조명", "label": "욕실 조명", "roomId": "욕실", "type": "light", "status": {"switch": "off"}}
+  ],
+  "metadata": {}
+}

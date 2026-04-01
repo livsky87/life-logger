@@ -1,0 +1,61 @@
+[
+  {"date": 20260401, "hour": 7, "minute": 0, "location": "침실", "description": "기상", "is_home": true, "calls": [], "status": "normal"},
+  {"date": 20260401, "hour": 7, "minute": 10, "location": "화장실", "description": "세면 및 샤워", "is_home": true, "calls": [
+    {"method": "POST", "url": "/v1/devices/light-bathroom-a/commands", "deviceId": "light-bathroom-a", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": null}
+  ], "status": "normal"},
+  {"date": 20260401, "hour": 7, "minute": 40, "location": "부엌", "description": "아침식사 준비", "is_home": true, "calls": [
+    {"method": "POST", "url": "/v1/devices/fridge-a-001/commands", "deviceId": "fridge-a-001", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": null},
+    {"method": "POST", "url": "/v1/devices/light-kitchen-a/commands", "deviceId": "light-kitchen-a", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": null}
+  ], "status": "normal"},
+  {"date": 20260401, "hour": 8, "minute": 0, "location": "부엌", "description": "아침식사", "is_home": true, "calls": [], "status": "normal"},
+  {"date": 20260401, "hour": 8, "minute": 30, "location": "거실", "description": "뉴스 시청 및 외출 준비", "is_home": true, "calls": [
+    {"method": "POST", "url": "/v1/devices/tv-a-001/commands", "deviceId": "tv-a-001", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": null}
+  ], "status": "normal"},
+  {"date": 20260401, "hour": 9, "minute": 15, "location": "집 밖", "description": "출근 (지하철)", "is_home": false, "calls": [
+    {"method": "POST", "url": "/v1/devices/tv-a-001/commands", "deviceId": "tv-a-001", "commands": [{"capability": "switch", "command": "off"}], "dsec": 0, "result": null},
+    {"method": "POST", "url": "/v1/devices/light-living-a/commands", "deviceId": "light-living-a", "commands": [{"capability": "switch", "command": "off"}], "dsec": 0, "result": null}
+  ], "status": "normal"},
+  {"date": 20260401, "hour": 12, "minute": 30, "location": "집 밖", "description": "점심식사 (회사 근처 식당)", "is_home": false, "calls": [], "status": "normal"},
+  {"date": 20260401, "hour": 18, "minute": 30, "location": "집 밖", "description": "퇴근 (지하철)", "is_home": false, "calls": [], "status": "normal"},
+  {"date": 20260401, "hour": 19, "minute": 30, "location": "부엌", "description": "저녁식사 준비", "is_home": true, "calls": [
+    {"method": "POST", "url": "/v1/devices/fridge-a-001/commands", "deviceId": "fridge-a-001", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": null},
+    {"method": "POST", "url": "/v1/devices/light-kitchen-a/commands", "deviceId": "light-kitchen-a", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": null}
+  ], "status": "normal"},
+  {"date": 20260401, "hour": 20, "minute": 0, "location": "부엌", "description": "저녁식사", "is_home": true, "calls": [], "status": "normal"},
+  {"date": 20260401, "hour": 20, "minute": 30, "location": "거실", "description": "TV 시청 및 휴식", "is_home": true, "calls": [
+    {"method": "POST", "url": "/v1/devices/tv-a-001/commands", "deviceId": "tv-a-001", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": null},
+    {"method": "POST", "url": "/v1/devices/light-living-a/commands", "deviceId": "light-living-a", "commands": [{"capability": "switch", "command": "on"}], "dsec": 5, "result": null}
+  ], "status": "normal"},
+  {"date": 20260401, "hour": 22, "minute": 30, "location": "베란다", "description": "세탁기 돌리기", "is_home": true, "calls": [
+    {"method": "POST", "url": "/v1/devices/washer-a-001/commands", "deviceId": "washer-a-001", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": null}
+  ], "status": "normal"},
+  {"date": 20260401, "hour": 23, "minute": 0, "location": "침실", "description": "취침 준비", "is_home": true, "calls": [
+    {"method": "POST", "url": "/v1/devices/tv-a-001/commands", "deviceId": "tv-a-001", "commands": [{"capability": "switch", "command": "off"}], "dsec": 0, "result": null},
+    {"method": "POST", "url": "/v1/devices/light-bedroom-a/commands", "deviceId": "light-bedroom-a", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": null}
+  ], "status": "normal"},
+  {"date": 20260401, "hour": 23, "minute": 30, "location": "침실", "description": "취침", "is_home": true, "calls": [
+    {"method": "POST", "url": "/v1/devices/light-bedroom-a/commands", "deviceId": "light-bedroom-a", "commands": [{"capability": "switch", "command": "off"}], "dsec": 0, "result": null}
+  ], "status": "normal"},
+
+  {"date": 20260402, "hour": 7, "minute": 0, "location": "침실", "description": "기상", "is_home": true, "calls": [], "status": "normal"},
+  {"date": 20260402, "hour": 7, "minute": 15, "location": "화장실", "description": "세면", "is_home": true, "calls": [
+    {"method": "POST", "url": "/v1/devices/light-bathroom-a/commands", "deviceId": "light-bathroom-a", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": null}
+  ], "status": "normal"},
+  {"date": 20260402, "hour": 8, "minute": 0, "location": "부엌", "description": "아침식사", "is_home": true, "calls": [
+    {"method": "POST", "url": "/v1/devices/fridge-a-001/commands", "deviceId": "fridge-a-001", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": null}
+  ], "status": "normal"},
+  {"date": 20260402, "hour": 9, "minute": 0, "location": "집 밖", "description": "출근", "is_home": false, "calls": [], "status": "normal"},
+  {"date": 20260402, "hour": 12, "minute": 0, "location": "집 밖", "description": "점심식사", "is_home": false, "calls": [], "status": "normal"},
+  {"date": 20260402, "hour": 14, "minute": 0, "location": "집 밖", "description": "카페 작업", "is_home": false, "calls": [], "status": "normal"},
+  {"date": 20260402, "hour": 18, "minute": 0, "location": "집 밖", "description": "퇴근", "is_home": false, "calls": [], "status": "normal"},
+  {"date": 20260402, "hour": 19, "minute": 0, "location": "거실", "description": "귀가 휴식", "is_home": true, "calls": [
+    {"method": "POST", "url": "/v1/devices/speaker-a-001/commands", "deviceId": "speaker-a-001", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": null}
+  ], "status": "normal"},
+  {"date": 20260402, "hour": 20, "minute": 0, "location": "부엌", "description": "저녁식사 (배달)", "is_home": true, "calls": [], "status": "normal"},
+  {"date": 20260402, "hour": 21, "minute": 0, "location": "거실", "description": "영화 감상", "is_home": true, "calls": [
+    {"method": "POST", "url": "/v1/devices/tv-a-001/commands", "deviceId": "tv-a-001", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": null}
+  ], "status": "normal"},
+  {"date": 20260402, "hour": 23, "minute": 30, "location": "침실", "description": "취침", "is_home": true, "calls": [
+    {"method": "POST", "url": "/v1/devices/tv-a-001/commands", "deviceId": "tv-a-001", "commands": [{"capability": "switch", "command": "off"}], "dsec": 0, "result": null}
+  ], "status": "normal"}
+]

@@ -2,7 +2,7 @@
 
 import { useLocations } from "@/application/useLocations";
 import { LazyLocationGroup } from "./LazyLocationGroup";
-import { format } from "date-fns";
+import { differenceInDays, format } from "date-fns";
 import type { Period, TimelineFilter } from "@/domain/types";
 
 interface TimelineGridProps {
@@ -13,10 +13,17 @@ interface TimelineGridProps {
   filter: TimelineFilter;
 }
 
+function dateToInt(d: Date): number {
+  return Number(`${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`);
+}
+
 export function TimelineGrid({ rangeStart, rangeEnd, locationIds, period, filter }: TimelineGridProps) {
   const start = format(rangeStart, "yyyy-MM-dd");
   const end = format(rangeEnd, "yyyy-MM-dd");
   const { data: allLocations, isLoading } = useLocations();
+
+  const isSingleDay = differenceInDays(rangeEnd, rangeStart) <= 1;
+  const dateInt = isSingleDay ? dateToInt(rangeStart) : 0;
 
   const locations = (allLocations ?? []).filter(
     (loc) => locationIds.length === 0 || locationIds.includes(loc.id)
@@ -56,6 +63,7 @@ export function TimelineGrid({ rangeStart, rangeEnd, locationIds, period, filter
           rangeEnd={rangeEnd}
           period={period}
           filter={filter}
+          dateInt={dateInt}
         />
       ))}
     </div>
