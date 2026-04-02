@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from datetime import datetime
 from uuid import UUID
 
 from app.domain.models.schedule import Schedule
@@ -9,37 +10,46 @@ class ScheduleRepository(ABC):
     async def create(
         self,
         user_id: UUID | None,
-        date: int,
-        hour: int,
-        minute: int,
+        timestamp: datetime,
         description: str,
         calls: list,
         location: str,
         is_home: bool,
         metadata: dict,
-        status: str,
+        status: list,
     ) -> Schedule: ...
 
     @abstractmethod
     async def get_by_id(self, schedule_id: int) -> Schedule | None: ...
 
     @abstractmethod
-    async def get_by_date(self, date: int, user_id: UUID | None = None) -> list[Schedule]: ...
+    async def get_by_date(
+        self,
+        date_start: datetime,
+        date_end: datetime,
+        user_id: UUID | None = None,
+    ) -> list[Schedule]: ...
+
+    @abstractmethod
+    async def bulk_create(self, entries: list[dict]) -> list[Schedule]: ...
+
+    @abstractmethod
+    async def delete_by_user_date(
+        self, user_id: UUID, date_start: datetime, date_end: datetime
+    ) -> int: ...
 
     @abstractmethod
     async def update(
         self,
         schedule_id: int,
         user_id: UUID | None,
-        date: int | None,
-        hour: int | None,
-        minute: int | None,
+        timestamp: datetime | None,
         description: str | None,
         calls: list | None,
         location: str | None,
         is_home: bool | None,
         metadata: dict | None,
-        status: str | None,
+        status: list | None,
     ) -> Schedule | None: ...
 
     @abstractmethod

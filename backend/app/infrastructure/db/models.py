@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Integer, SmallInteger, Text, func
+from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Text, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -60,15 +60,13 @@ class ScheduleORM(Base):
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
-    date: Mapped[int] = mapped_column(Integer, nullable=False)
-    hour: Mapped[int] = mapped_column(SmallInteger, nullable=False)
-    minute: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     calls: Mapped[list] = mapped_column(JSONB, nullable=False, server_default="[]")
     location: Mapped[str] = mapped_column(Text, nullable=False, server_default="")
     is_home: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="true")
     metadata_: Mapped[dict] = mapped_column("metadata", JSONB, nullable=False, server_default="{}")
-    status: Mapped[str] = mapped_column(Text, nullable=False, server_default="normal")
+    status: Mapped[list] = mapped_column(JSONB, nullable=False, server_default="[]")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 

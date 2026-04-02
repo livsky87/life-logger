@@ -1,6 +1,7 @@
+from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.models.schedule import Schedule
@@ -8,35 +9,17 @@ from app.domain.repositories.schedule_repository import ScheduleRepository
 from app.infrastructure.db.models import ScheduleORM
 
 
-def _compute_status(calls: list) -> str:
-    """Auto-compute status from calls result fields."""
-    if not calls:
-        return "normal"
-    results = [c.get("result") for c in calls if isinstance(c, dict)]
-    non_null = [r for r in results if r is not None]
-    if not non_null:
-        return "normal"
-    failures = [r for r in non_null if r != "success"]
-    if not failures:
-        return "normal"
-    if len(failures) == len(non_null):
-        return "error"
-    return "warning"
-
-
 def _to_domain(orm: ScheduleORM) -> Schedule:
     return Schedule(
         id=orm.id,
         user_id=str(orm.user_id) if orm.user_id else None,
-        date=orm.date,
-        hour=orm.hour,
-        minute=orm.minute,
+        timestamp=orm.timestamp,
         description=orm.description,
         calls=orm.calls or [],
         location=orm.location,
         is_home=orm.is_home,
         metadata=orm.metadata_ or {},
-        status=orm.status,
+        status=orm.status if isinstance(orm.status, list) else [],
         created_at=orm.created_at,
     )
 
@@ -48,30 +31,23 @@ class SQLAlchemyScheduleRepository(ScheduleRepository):
     async def create(
         self,
         user_id: UUID | None,
-        date: int,
-        hour: int,
-        minute: int,
+        timestamp: datetime,
         description: str,
         calls: list,
         location: str,
         is_home: bool,
         metadata: dict,
-        status: str,
+        status: list,
     ) -> Schedule:
-        computed = _compute_status(calls)
-        if computed != "normal":
-            status = computed
         orm = ScheduleORM(
             user_id=user_id,
-            date=date,
-            hour=hour,
-            minute=minute,
+            timestamp=timestamp,
             description=description,
             calls=calls,
             location=location,
             is_home=is_home,
             metadata_=metadata,
-            status=status,
+            status=status if isinstance(status, list) else [],
         )
         self._session.add(orm)
         await self._session.flush()
@@ -82,46 +58,78 @@ class SQLAlchemyScheduleRepository(ScheduleRepository):
         orm = await self._session.get(ScheduleORM, schedule_id)
         return _to_domain(orm) if orm else None
 
-    async def get_by_date(self, date: int, user_id: UUID | None = None) -> list[Schedule]:
-        q = select(ScheduleORM).where(ScheduleORM.date == date)
+    async def get_by_date(
+        self,
+        date_start: datetime,
+        date_end: datetime,
+        user_id: UUID | None = None,
+    ) -> list[Schedule]:
+        q = select(ScheduleORM).where(
+            ScheduleORM.timestamp >= date_start,
+            ScheduleORM.timestamp < date_end,
+        )
         if user_id is not None:
             q = q.where(ScheduleORM.user_id == user_id)
-        q = q.order_by(ScheduleORM.hour, ScheduleORM.minute)
+        q = q.order_by(ScheduleORM.timestamp)
         result = await self._session.execute(q)
         return [_to_domain(row) for row in result.scalars()]
+
+    async def bulk_create(self, entries: list[dict]) -> list[Schedule]:
+        """Insert multiple schedule entries at once."""
+        orms = [
+            ScheduleORM(
+                user_id=e.get("user_id"),
+                timestamp=e["timestamp"],
+                description=e["description"],
+                calls=e.get("calls", []),
+                location=e.get("location", ""),
+                is_home=e.get("is_home", True),
+                metadata_=e.get("metadata", {}),
+                status=e.get("status", []) if isinstance(e.get("status"), list) else [],
+            )
+            for e in entries
+        ]
+        self._session.add_all(orms)
+        await self._session.flush()
+        for orm in orms:
+            await self._session.refresh(orm)
+        return [_to_domain(orm) for orm in orms]
+
+    async def delete_by_user_date(
+        self, user_id: UUID, date_start: datetime, date_end: datetime
+    ) -> int:
+        """Delete all schedule entries for a user within a date range. Returns count deleted."""
+        stmt = delete(ScheduleORM).where(
+            ScheduleORM.user_id == user_id,
+            ScheduleORM.timestamp >= date_start,
+            ScheduleORM.timestamp < date_end,
+        )
+        result = await self._session.execute(stmt)
+        return result.rowcount
 
     async def update(
         self,
         schedule_id: int,
         user_id: UUID | None,
-        date: int | None,
-        hour: int | None,
-        minute: int | None,
+        timestamp: datetime | None,
         description: str | None,
         calls: list | None,
         location: str | None,
         is_home: bool | None,
         metadata: dict | None,
-        status: str | None,
+        status: list | None,
     ) -> Schedule | None:
         orm = await self._session.get(ScheduleORM, schedule_id)
         if not orm:
             return None
         if user_id is not None:
             orm.user_id = user_id
-        if date is not None:
-            orm.date = date
-        if hour is not None:
-            orm.hour = hour
-        if minute is not None:
-            orm.minute = minute
+        if timestamp is not None:
+            orm.timestamp = timestamp
         if description is not None:
             orm.description = description
         if calls is not None:
             orm.calls = calls
-            computed = _compute_status(calls)
-            if computed != "normal" or status is None:
-                orm.status = computed
         if location is not None:
             orm.location = location
         if is_home is not None:
@@ -129,7 +137,7 @@ class SQLAlchemyScheduleRepository(ScheduleRepository):
         if metadata is not None:
             orm.metadata_ = metadata
         if status is not None:
-            orm.status = status
+            orm.status = status if isinstance(status, list) else []
         await self._session.flush()
         return _to_domain(orm)
 

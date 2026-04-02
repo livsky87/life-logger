@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from app.domain.models.schedule import Schedule
@@ -11,21 +12,17 @@ class ScheduleService:
     async def create(
         self,
         user_id: UUID | None,
-        date: int,
-        hour: int,
-        minute: int,
+        timestamp: datetime,
         description: str,
         calls: list,
         location: str,
         is_home: bool,
         metadata: dict,
-        status: str,
+        status: list,
     ) -> Schedule:
         return await self._repo.create(
             user_id=user_id,
-            date=date,
-            hour=hour,
-            minute=minute,
+            timestamp=timestamp,
             description=description,
             calls=calls,
             location=location,
@@ -37,29 +34,38 @@ class ScheduleService:
     async def get_by_id(self, schedule_id: int) -> Schedule | None:
         return await self._repo.get_by_id(schedule_id)
 
-    async def get_by_date(self, date: int, user_id: UUID | None = None) -> list[Schedule]:
-        return await self._repo.get_by_date(date, user_id=user_id)
+    async def get_by_date(
+        self,
+        date_start: datetime,
+        date_end: datetime,
+        user_id: UUID | None = None,
+    ) -> list[Schedule]:
+        return await self._repo.get_by_date(date_start, date_end, user_id=user_id)
+
+    async def bulk_create(self, entries: list[dict]) -> list[Schedule]:
+        return await self._repo.bulk_create(entries)
+
+    async def delete_by_user_date(
+        self, user_id: UUID, date_start: datetime, date_end: datetime
+    ) -> int:
+        return await self._repo.delete_by_user_date(user_id, date_start, date_end)
 
     async def update(
         self,
         schedule_id: int,
         user_id: UUID | None = None,
-        date: int | None = None,
-        hour: int | None = None,
-        minute: int | None = None,
+        timestamp: datetime | None = None,
         description: str | None = None,
         calls: list | None = None,
         location: str | None = None,
         is_home: bool | None = None,
         metadata: dict | None = None,
-        status: str | None = None,
+        status: list | None = None,
     ) -> Schedule | None:
         return await self._repo.update(
             schedule_id=schedule_id,
             user_id=user_id,
-            date=date,
-            hour=hour,
-            minute=minute,
+            timestamp=timestamp,
             description=description,
             calls=calls,
             location=location,

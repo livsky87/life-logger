@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import type { Schedule, ScheduleCall, ScheduleCreate, ScheduleStatus, ScheduleUpdate } from "@/domain/scheduleTypes";
+import type { Schedule, ScheduleCall, ScheduleCreate, ScheduleUpdate } from "@/domain/scheduleTypes";
 
 interface Props {
-  initialDate: number;  // YYYYMMDD
+  initialDate: number;  // YYYYMMDD — used as default date in the timestamp picker
   initialData?: Schedule;
   onSave: (data: ScheduleCreate | ScheduleUpdate) => Promise<void>;
   onClose: () => void;
@@ -12,16 +12,43 @@ interface Props {
 
 const EMPTY_CALL: ScheduleCall = { method: "POST", url: "", deviceId: "", commands: [], dsec: 0, result: null };
 
+/** Convert YYYYMMDD int + current time to datetime-local string (YYYY-MM-DDTHH:MM) */
+function dateIntToLocalDefault(dateInt: number): string {
+  const s = String(dateInt);
+  const now = new Date();
+  return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}T${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+}
+
+/** Convert ISO timestamp to datetime-local string for the input */
+function isoToLocalInput(iso: string): string {
+  const d = new Date(iso);
+  const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
+  const y = kst.getUTCFullYear();
+  const mo = String(kst.getUTCMonth() + 1).padStart(2, "0");
+  const da = String(kst.getUTCDate()).padStart(2, "0");
+  const h = String(kst.getUTCHours()).padStart(2, "0");
+  const mi = String(kst.getUTCMinutes()).padStart(2, "0");
+  return `${y}-${mo}-${da}T${h}:${mi}`;
+}
+
+/** Convert datetime-local input value to ISO 8601 with +09:00 */
+function localInputToIso(localStr: string): string {
+  // localStr is like "2026-04-02T06:57"
+  return `${localStr}:00+09:00`;
+}
+
 export function ScheduleEntryForm({ initialDate, initialData, onSave, onClose }: Props) {
   const isEdit = !!initialData;
 
-  const [date, setDate] = useState(String(initialData?.date ?? initialDate));
-  const [hour, setHour] = useState(String(initialData?.hour ?? new Date().getHours()));
-  const [minute, setMinute] = useState(String(initialData?.minute ?? new Date().getMinutes()));
+  const defaultTimestamp = initialData
+    ? isoToLocalInput(initialData.timestamp)
+    : dateIntToLocalDefault(initialDate);
+
+  const [timestamp, setTimestamp] = useState(defaultTimestamp);
   const [description, setDescription] = useState(initialData?.description ?? "");
   const [location, setLocation] = useState(initialData?.location ?? "");
   const [isHome, setIsHome] = useState(initialData?.is_home ?? true);
-  const [status, setStatus] = useState<ScheduleStatus>(initialData?.status ?? "normal");
+  const [statusInput, setStatusInput] = useState<string>(initialData?.status.join(", ") ?? "");
   const [calls, setCalls] = useState<ScheduleCall[]>(initialData?.calls ?? []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -37,17 +64,20 @@ export function ScheduleEntryForm({ initialDate, initialData, onSave, onClose }:
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!description.trim()) { setError("설명을 입력해주세요."); return; }
+    if (!timestamp) { setError("날짜/시간을 입력해주세요."); return; }
     setError("");
     setLoading(true);
     try {
+      const statusArr = statusInput
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
       await onSave({
-        date: Number(date),
-        hour: Number(hour),
-        minute: Number(minute),
+        timestamp: localInputToIso(timestamp),
         description: description.trim(),
         location: location.trim(),
         is_home: isHome,
-        status,
+        status: statusArr,
         calls,
       });
       onClose();
@@ -70,42 +100,16 @@ export function ScheduleEntryForm({ initialDate, initialData, onSave, onClose }:
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Date */}
+            {/* Timestamp */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">날짜 (YYYYMMDD)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">날짜·시간 (KST)</label>
               <input
-                type="number"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
+                type="datetime-local"
+                value={timestamp}
+                onChange={(e) => setTimestamp(e.target.value)}
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
                 required
               />
-            </div>
-
-            {/* Time */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">시 (0-23)</label>
-                <input
-                  type="number"
-                  min={0} max={23}
-                  value={hour}
-                  onChange={(e) => setHour(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">분 (0-59)</label>
-                <input
-                  type="number"
-                  min={0} max={59}
-                  value={minute}
-                  onChange={(e) => setMinute(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                  required
-                />
-              </div>
             </div>
 
             {/* Description */}
@@ -158,29 +162,16 @@ export function ScheduleEntryForm({ initialDate, initialData, onSave, onClose }:
               </div>
             </div>
 
-            {/* Status */}
+            {/* Status tags */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">상태</label>
-              <div className="flex gap-2">
-                {(["normal", "warning", "error"] as ScheduleStatus[]).map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => setStatus(s)}
-                    className={`flex-1 py-1.5 rounded-lg text-sm font-medium border transition ${
-                      status === s
-                        ? s === "normal"
-                          ? "bg-green-500 border-green-500 text-white"
-                          : s === "warning"
-                          ? "bg-yellow-400 border-yellow-400 text-white"
-                          : "bg-red-500 border-red-500 text-white"
-                        : "border-gray-200 text-gray-600 hover:bg-gray-50"
-                    }`}
-                  >
-                    {s === "normal" ? "정상" : s === "warning" ? "경고" : "오류"}
-                  </button>
-                ))}
-              </div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">활동 태그 (쉼표 구분)</label>
+              <input
+                type="text"
+                value={statusInput}
+                onChange={(e) => setStatusInput(e.target.value)}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                placeholder="예: 요리, 청소"
+              />
             </div>
 
             {/* API Calls */}

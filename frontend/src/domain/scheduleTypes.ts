@@ -1,5 +1,3 @@
-export type ScheduleStatus = "normal" | "warning" | "error";
-
 export interface ScheduleCall {
   method: string;
   url: string;
@@ -11,41 +9,72 @@ export interface ScheduleCall {
 
 export interface Schedule {
   id: number;
-  user_id: string | null;  // UUID of the associated user (nullable)
-  date: number;            // YYYYMMDD
-  hour: number;
-  minute: number;
+  user_id: string | null;
+  timestamp: string;        // ISO 8601 datetime with timezone, e.g. "2026-04-02T06:57:00+09:00"
   description: string;
   calls: ScheduleCall[];
   location: string;
   is_home: boolean;
   metadata: Record<string, unknown>;
-  status: ScheduleStatus;
+  status: string[];         // activity tags e.g. ["요리"], ["수면"], []
   created_at: string;
 }
 
 export interface ScheduleCreate {
   user_id?: string | null;
-  date: number;
-  hour: number;
-  minute: number;
+  timestamp: string;
   description: string;
   calls?: ScheduleCall[];
   location?: string;
   is_home?: boolean;
   metadata?: Record<string, unknown>;
-  status?: ScheduleStatus;
+  status?: string[];
 }
 
 export interface ScheduleUpdate {
   user_id?: string | null;
-  date?: number;
-  hour?: number;
-  minute?: number;
+  timestamp?: string;
   description?: string;
   calls?: ScheduleCall[];
   location?: string;
   is_home?: boolean;
   metadata?: Record<string, unknown>;
-  status?: ScheduleStatus;
+  status?: string[];
+}
+
+export interface ScheduleBatchCreate {
+  entries: ScheduleCreate[];
+  replace?: boolean;
+  user_name?: string;
+  location_name?: string;
+  timezone?: string;
+}
+
+export interface ScheduleBatchResult {
+  deleted: number;
+  created: number;
+  user_id: string;
+  location_id: string;
+  date: number;
+}
+
+// ── Timeline types ──
+
+export interface ScheduleTimelineUser {
+  user_id: string;
+  user_name: string;
+  user_job: string | null;
+  entries: Schedule[];
+}
+
+export interface ScheduleTimelineLocation {
+  location_id: string;
+  name: string;
+  timezone: string;
+  users: ScheduleTimelineUser[];
+}
+
+export interface ScheduleTimelineResponse {
+  date: number;
+  locations: ScheduleTimelineLocation[];
 }

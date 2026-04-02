@@ -1,102 +1,56 @@
 "use client";
 
-import { useState, useCallback, useMemo, useEffect } from "react";
-import { format, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths,
-         startOfWeek, startOfMonth, startOfDay } from "date-fns";
+import { useState, useCallback, useMemo, useEffect, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { format, addDays, subDays, startOfDay } from "date-fns";
 import { ko } from "date-fns/locale";
-import { useLocations } from "@/application/useLocations";
-import { TimelineGrid } from "@/components/timeline/TimelineGrid";
-import { makeDefaultFilter } from "@/components/timeline/FilterPanel";
-import type { Period, TimelineFilter } from "@/domain/types";
+import { ScheduleTimelineGrid } from "@/components/timeline/ScheduleTimelineGrid";
 
-const PERIOD_LABELS: Record<Period, string> = { "1d": "1일", "1w": "1주일", "1m": "1달" };
-
-function getRangeEnd(start: Date, period: Period): Date {
-  if (period === "1d") return addDays(start, 1);
-  if (period === "1w") return addDays(start, 7);
-  return addMonths(start, 1);
+function dateToInt(d: Date): number {
+  return Number(`${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`);
 }
 
-function shiftStart(start: Date, period: Period, dir: 1 | -1): Date {
-  if (period === "1d") return dir > 0 ? addDays(start, 1) : subDays(start, 1);
-  if (period === "1w") return dir > 0 ? addWeeks(start, 1) : subWeeks(start, 1);
-  return dir > 0 ? addMonths(start, 1) : subMonths(start, 1);
+function intToDate(n: number): Date {
+  const s = String(n);
+  return new Date(Number(s.slice(0, 4)), Number(s.slice(4, 6)) - 1, Number(s.slice(6, 8)));
 }
 
-function todayStart(period: Period): Date {
-  const now = new Date();
-  if (period === "1d") return startOfDay(now);
-  if (period === "1w") return startOfWeek(now, { weekStartsOn: 1 });
-  return startOfMonth(now);
-}
+function TimelineContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
-function formatRangeLabel(start: Date, end: Date, period: Period): string {
-  if (period === "1d") return format(start, "yyyy년 M월 d일 (EEE)", { locale: ko });
-  if (period === "1w")
-    return `${format(start, "yyyy년 M월 d일", { locale: ko })} ~ ${format(subDays(end, 1), "M월 d일", { locale: ko })}`;
-  return format(start, "yyyy년 M월", { locale: ko });
-}
+  const initDateInt = useMemo(() => {
+    const d = searchParams.get("date");
+    return d ? Number(d) : dateToInt(startOfDay(new Date()));
+  }, []);
 
-export default function TimelinePage() {
-  const [period, setPeriod] = useState<Period>("1d");
-  const [filter, setFilter] = useState<TimelineFilter>(() => makeDefaultFilter("1d"));
-  /** SSR과 클라이언트의 TZ/시각 차이로 "오늘"이 달라지면 hydration 오류가 나므로, 마운트 후에만 설정 */
-  const [rangeStart, setRangeStart] = useState<Date | null>(null);
-  const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
-  const { data: locations } = useLocations();
+  const [dateInt, setDateInt] = useState(initDateInt);
 
   useEffect(() => {
-    setRangeStart(todayStart("1d"));
-  }, []);
-
-  const rangeEnd = useMemo(
-    () => (rangeStart != null ? getRangeEnd(rangeStart, period) : null),
-    [rangeStart, period]
-  );
-
-  const handlePeriodChange = useCallback((p: Period) => {
-    setPeriod(p);
-    setRangeStart(todayStart(p));
-    setFilter(makeDefaultFilter(p));
-  }, []);
+    router.replace(`/timeline?date=${dateInt}`, { scroll: false });
+  }, [dateInt, router]);
 
   const handleShift = useCallback((dir: 1 | -1) => {
-    setRangeStart((s) => shiftStart(s ?? todayStart(period), period, dir));
-  }, [period]);
-
-  const handleToday = useCallback(() => {
-    setRangeStart(todayStart(period));
-  }, [period]);
-
-  const toggleLocation = useCallback((id: string) => {
-    setSelectedLocations((prev) =>
-      prev.includes(id) ? prev.filter((l) => l !== id) : [...prev, id]
-    );
+    setDateInt((prev) => {
+      const d = intToDate(prev);
+      return dateToInt(dir > 0 ? addDays(d, 1) : subDays(d, 1));
+    });
   }, []);
 
-  const activeLocations = selectedLocations.length > 0 ? selectedLocations : [];
+  const handleToday = useCallback(() => {
+    setDateInt(dateToInt(startOfDay(new Date())));
+  }, []);
+
+  const dateLabel = useMemo(() => {
+    if (!dateInt) return "";
+    return format(intToDate(dateInt), "yyyy년 M월 d일 (EEE)", { locale: ko });
+  }, [dateInt]);
 
   return (
     <div className="p-6">
       <div className="flex flex-wrap items-center gap-3 mb-6">
-        {/* Period selector */}
-        <div className="flex items-center bg-gray-100 rounded-lg p-1 gap-1">
-          {(Object.keys(PERIOD_LABELS) as Period[]).map((p) => (
-            <button
-              key={p}
-              onClick={() => handlePeriodChange(p)}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${
-                period === p
-                  ? "bg-white shadow text-gray-900"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              {PERIOD_LABELS[p]}
-            </button>
-          ))}
-        </div>
+        <h1 className="text-lg font-bold text-gray-900">타임라인</h1>
 
-        {/* Navigation */}
         <div className="flex items-center gap-1">
           <button
             onClick={() => handleShift(-1)}
@@ -122,52 +76,18 @@ export default function TimelinePage() {
           </button>
         </div>
 
-        {/* Range label */}
-        <span className="text-sm font-medium text-gray-700 tabular-nums">
-          {rangeStart != null && rangeEnd != null
-            ? formatRangeLabel(rangeStart, rangeEnd, period)
-            : "\u00a0"}
-        </span>
-
-        {/* Location filter */}
-        {locations && locations.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2 ml-auto">
-            {locations.map((loc) => {
-              const active = selectedLocations.includes(loc.id);
-              return (
-                <button
-                  key={loc.id}
-                  onClick={() => toggleLocation(loc.id)}
-                  className={`px-3 py-1.5 text-sm rounded-full border transition ${
-                    active
-                      ? "bg-indigo-600 border-indigo-600 text-white"
-                      : "border-gray-200 text-gray-600 hover:bg-gray-100"
-                  }`}
-                >
-                  {loc.name}
-                </button>
-              );
-            })}
-            {selectedLocations.length > 0 && (
-              <button onClick={() => setSelectedLocations([])} className="text-xs text-gray-400 hover:text-gray-600 underline">
-                전체
-              </button>
-            )}
-          </div>
-        )}
+        <span className="text-sm font-medium text-gray-700">{dateLabel}</span>
       </div>
 
-      {rangeStart != null && rangeEnd != null ? (
-        <TimelineGrid
-          rangeStart={rangeStart}
-          rangeEnd={rangeEnd}
-          locationIds={activeLocations}
-          period={period}
-          filter={filter}
-        />
-      ) : (
-        <div className="h-64" aria-hidden />
-      )}
+      <ScheduleTimelineGrid dateInt={dateInt} />
     </div>
+  );
+}
+
+export default function TimelinePage() {
+  return (
+    <Suspense fallback={null}>
+      <TimelineContent />
+    </Suspense>
   );
 }

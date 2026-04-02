@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { format, addDays, subDays } from "date-fns";
 import { ko } from "date-fns/locale";
 import clsx from "clsx";
-import type { Schedule, ScheduleCreate, ScheduleStatus, ScheduleUpdate } from "@/domain/scheduleTypes";
+import type { Schedule, ScheduleCreate, ScheduleUpdate } from "@/domain/scheduleTypes";
 import { useCreateSchedule, useDeleteSchedule, useSchedules, useUpdateSchedule } from "@/application/useSchedules";
 import { useUsers } from "@/application/useUsers";
 import { ScheduleEntryForm } from "@/components/manage/ScheduleEntryForm";
@@ -26,24 +26,16 @@ function dateToInt(d: Date): number {
   return Number(`${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`);
 }
 
-function isPastEntry(entry: Schedule, todayInt: number): boolean {
-  if (entry.date < todayInt) return true;
-  if (entry.date > todayInt) return false;
-  const now = new Date();
-  return entry.hour < now.getHours() || (entry.hour === now.getHours() && entry.minute <= now.getMinutes());
+function formatEntryTime(timestamp: string): string {
+  const d = new Date(timestamp);
+  const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
+  return `${String(kst.getUTCHours()).padStart(2, "0")}:${String(kst.getUTCMinutes()).padStart(2, "0")}`;
 }
 
-const STATUS_COLORS: Record<ScheduleStatus, string> = {
-  normal: "bg-green-500",
-  warning: "bg-yellow-400",
-  error: "bg-red-500",
-};
+function isPastEntry(entry: Schedule): boolean {
+  return new Date(entry.timestamp) < new Date();
+}
 
-const STATUS_LABELS: Record<ScheduleStatus, string> = {
-  normal: "정상",
-  warning: "경고",
-  error: "오류",
-};
 
 function CallsTooltipContent({ calls }: { calls: Schedule["calls"] }) {
   if (!calls.length) return null;
@@ -99,7 +91,6 @@ function SchedulePageContent() {
   const updateSchedule = useUpdateSchedule();
   const deleteSchedule = useDeleteSchedule();
 
-  const todayInt = todayAsInt();
   const currentDate = dateIntToDate(dateInt);
 
   // Sync URL params
@@ -207,7 +198,7 @@ function SchedulePageContent() {
         ) : (
           <div className="space-y-1">
             {schedules.map((entry) => {
-              const past = isPastEntry(entry, todayInt);
+              const past = isPastEntry(entry);
               return (
                 <div
                   key={entry.id}
@@ -219,7 +210,7 @@ function SchedulePageContent() {
                   )}
                 >
                   <span className="text-xs font-mono w-10 shrink-0 text-gray-500">
-                    {String(entry.hour).padStart(2, "0")}:{String(entry.minute).padStart(2, "0")}
+                    {formatEntryTime(entry.timestamp)}
                   </span>
                   {entry.location && (
                     <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100 shrink-0">
@@ -237,12 +228,11 @@ function SchedulePageContent() {
                       </span>
                     </Tooltip>
                   )}
-                  <Tooltip content={<span>{STATUS_LABELS[entry.status as ScheduleStatus] ?? entry.status}</span>}>
-                    <span className={clsx(
-                      "w-3 h-3 rounded-full shrink-0",
-                      STATUS_COLORS[entry.status as ScheduleStatus] ?? "bg-gray-400"
-                    )} />
-                  </Tooltip>
+                  {entry.status.length > 0 && entry.status.map((s) => (
+                    <span key={s} className="text-xs px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100 shrink-0">
+                      {s}
+                    </span>
+                  ))}
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition shrink-0">
                     <button
                       onClick={() => { setEditTarget(entry); setShowForm(true); }}
