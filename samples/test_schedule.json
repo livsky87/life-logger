@@ -1,0 +1,718 @@
+[
+  {
+    "user_id": "4e13cb29-733e-4b61-99c7-0c2be46607ac",
+    "date": 20260402,
+    "hour": 6,
+    "minute": 57,
+    "description": "침실에서 기상해서 휴대폰 알림을 확인했어",
+    "calls": [],
+    "location": "우리 집",
+    "is_home": true,
+    "metadata": {
+      "bot_name": "UT_BOT_002",
+      "home": {
+        "residence_city": "부산",
+        "residence_type": "오피스텔",
+        "country": "한국",
+        "locationId": "c5c38b79-f28a-42ee-893e-48a28ee0a353"
+      }
+    },
+    "status": []
+  },
+  {
+    "user_id": "4e13cb29-733e-4b61-99c7-0c2be46607ac",
+    "date": 20260402,
+    "hour": 7,
+    "minute": 3,
+    "description": "욕실 조명을 켜고 샤워를 시작했어",
+    "calls": [
+      {
+        "method": "POST",
+        "url": "https://apis.smartthingsgdev.com/v1/devices/{deviceId}/commands",
+        "deviceId": "your-bathroom-light-device-id",
+        "commands": [
+          {
+            "component": "main",
+            "capability": "switch",
+            "command": "on",
+            "arguments": []
+          }
+        ],
+        "dsec": 8,
+        "result": "expected: bathroom light on"
+      }
+    ],
+    "location": "우리 집",
+    "is_home": true,
+    "metadata": {
+      "bot_name": "UT_BOT_002",
+      "home": {
+        "residence_city": "부산",
+        "residence_type": "오피스텔",
+        "country": "한국",
+        "locationId": "c5c38b79-f28a-42ee-893e-48a28ee0a353"
+      }
+    },
+    "status": []
+  },
+  {
+    "user_id": "4e13cb29-733e-4b61-99c7-0c2be46607ac",
+    "date": 20260402,
+    "hour": 7,
+    "minute": 11,
+    "description": "샤워를 마치고 침실 공기를 환기했어",
+    "calls": [
+      {
+        "method": "POST",
+        "url": "https://apis.smartthingsgdev.com/v1/devices/{deviceId}/commands",
+        "deviceId": "your-fan-device-id",
+        "commands": [
+          {
+            "component": "main",
+            "capability": "switch",
+            "command": "on",
+            "arguments": []
+          }
+        ],
+        "dsec": 6,
+        "result": "expected: fan on"
+      }
+    ],
+    "location": "우리 집",
+    "is_home": true,
+    "metadata": {
+      "bot_name": "UT_BOT_002",
+      "home": {
+        "residence_city": "부산",
+        "residence_type": "오피스텔",
+        "country": "한국",
+        "locationId": "c5c38b79-f28a-42ee-893e-48a28ee0a353"
+      }
+    },
+    "status": []
+  },
+  {
+    "user_id": "4e13cb29-733e-4b61-99c7-0c2be46607ac",
+    "date": 20260402,
+    "hour": 7,
+    "minute": 18,
+    "description": "거실 조명을 켜고 커피를 내렸어",
+    "calls": [
+      {
+        "method": "POST",
+        "url": "https://apis.smartthingsgdev.com/v1/devices/{deviceId}/commands",
+        "deviceId": "your-light-device-id",
+        "commands": [
+          {
+            "component": "main",
+            "capability": "switch",
+            "command": "on",
+            "arguments": []
+          }
+        ],
+        "dsec": 12,
+        "result": "expected: light on"
+      }
+    ],
+    "location": "우리 집",
+    "is_home": true,
+    "metadata": {
+      "bot_name": "UT_BOT_002",
+      "home": {
+        "residence_city": "부산",
+        "residence_type": "오피스텔",
+        "country": "한국",
+        "locationId": "c5c38b79-f28a-42ee-893e-48a28ee0a353"
+      }
+    },
+    "status": []
+  },
+  {
+    "user_id": "4e13cb29-733e-4b61-99c7-0c2be46607ac",
+    "date": 20260402,
+    "hour": 7,
+    "minute": 29,
+    "description": "아침 식사를 하면서 오늘 일정과 보안 알림을 점검했어",
+    "calls": [
+      {
+        "method": "POST",
+        "url": "https://apis.smartthingsgdev.com/v1/devices/{deviceId}/commands",
+        "deviceId": "your-tv-device-id",
+        "commands": [
+          {
+            "component": "main",
+            "capability": "switch",
+            "command": "on",
+            "arguments": []
+          }
+        ],
+        "dsec": 9,
+        "result": "expected: tv on"
+      }
+    ],
+    "location": "우리 집",
+    "is_home": true,
+    "metadata": {
+      "bot_name": "UT_BOT_002",
+      "home": {
+        "residence_city": "부산",
+        "residence_type": "오피스텔",
+        "country": "한국",
+        "locationId": "c5c38b79-f28a-42ee-893e-48a28ee0a353"
+      }
+    },
+    "status": []
+  },
+  {
+    "user_id": "4e13cb29-733e-4b61-99c7-0c2be46607ac",
+    "date": 20260402,
+    "hour": 7,
+    "minute": 46,
+    "description": "현관 근처에서 외출 준비를 마치고 가방과 노트북을 챙겼어",
+    "calls": [
+      {
+        "method": "POST",
+        "url": "https://apis.smartthingsgdev.com/v1/devices/{deviceId}/commands",
+        "deviceId": "your-main-light-device-id",
+        "commands": [
+          {
+            "component": "main",
+            "capability": "switch",
+            "command": "off",
+            "arguments": []
+          }
+        ],
+        "dsec": 7,
+        "result": "expected: main light off"
+      }
+    ],
+    "location": "우리 집",
+    "is_home": true,
+    "metadata": {
+      "bot_name": "UT_BOT_002",
+      "home": {
+        "residence_city": "부산",
+        "residence_type": "오피스텔",
+        "country": "한국",
+        "locationId": "c5c38b79-f28a-42ee-893e-48a28ee0a353"
+      }
+    },
+    "status": []
+  },
+  {
+    "user_id": "4e13cb29-733e-4b61-99c7-0c2be46607ac",
+    "date": 20260402,
+    "hour": 7,
+    "minute": 54,
+    "description": "집을 나와 지하철역으로 걸어갔어",
+    "calls": [],
+    "location": "우리 집",
+    "is_home": false,
+    "metadata": {
+      "bot_name": "UT_BOT_002",
+      "home": {
+        "residence_city": "부산",
+        "residence_type": "오피스텔",
+        "country": "한국",
+        "locationId": "c5c38b79-f28a-42ee-893e-48a28ee0a353"
+      }
+    },
+    "status": []
+  },
+  {
+    "user_id": "4e13cb29-733e-4b61-99c7-0c2be46607ac",
+    "date": 20260402,
+    "hour": 8,
+    "minute": 12,
+    "description": "지하철을 타고 회사로 이동했어",
+    "calls": [],
+    "location": "이동 중",
+    "is_home": false,
+    "metadata": {
+      "bot_name": "UT_BOT_002",
+      "home": {
+        "residence_city": "부산",
+        "residence_type": "오피스텔",
+        "country": "한국",
+        "locationId": "c5c38b79-f28a-42ee-893e-48a28ee0a353"
+      }
+    },
+    "status": []
+  },
+  {
+    "user_id": "4e13cb29-733e-4b61-99c7-0c2be46607ac",
+    "date": 20260402,
+    "hour": 8,
+    "minute": 48,
+    "description": "회사에 도착해서 자리에 앉아 첫 업무를 시작했어",
+    "calls": [],
+    "location": "회사",
+    "is_home": false,
+    "metadata": {
+      "bot_name": "UT_BOT_002",
+      "home": {
+        "residence_city": "부산",
+        "residence_type": "오피스텔",
+        "country": "한국",
+        "locationId": "c5c38b79-f28a-42ee-893e-48a28ee0a353"
+      }
+    },
+    "status": []
+  },
+  {
+    "user_id": "4e13cb29-733e-4b61-99c7-0c2be46607ac",
+    "date": 20260402,
+    "hour": 10,
+    "minute": 7,
+    "description": "회의실에서 보안 점검 결과를 공유했어",
+    "calls": [],
+    "location": "회사",
+    "is_home": false,
+    "metadata": {
+      "bot_name": "UT_BOT_002",
+      "home": {
+        "residence_city": "부산",
+        "residence_type": "오피스텔",
+        "country": "한국",
+        "locationId": "c5c38b79-f28a-42ee-893e-48a28ee0a353"
+      }
+    },
+    "status": []
+  },
+  {
+    "user_id": "4e13cb29-733e-4b61-99c7-0c2be46607ac",
+    "date": 20260402,
+    "hour": 12,
+    "minute": 13,
+    "description": "회사 근처 식당으로 이동해 점심을 먹었어",
+    "calls": [],
+    "location": "외부",
+    "is_home": false,
+    "metadata": {
+      "bot_name": "UT_BOT_002",
+      "home": {
+        "residence_city": "부산",
+        "residence_type": "오피스텔",
+        "country": "한국",
+        "locationId": "c5c38b79-f28a-42ee-893e-48a28ee0a353"
+      }
+    },
+    "status": []
+  },
+  {
+    "user_id": "4e13cb29-733e-4b61-99c7-0c2be46607ac",
+    "date": 20260402,
+    "hour": 12,
+    "minute": 51,
+    "description": "점심 후 카페에 잠시 들러 메일과 일정 알림을 확인했어",
+    "calls": [],
+    "location": "외부",
+    "is_home": false,
+    "metadata": {
+      "bot_name": "UT_BOT_002",
+      "home": {
+        "residence_city": "부산",
+        "residence_type": "오피스텔",
+        "country": "한국",
+        "locationId": "c5c38b79-f28a-42ee-893e-48a28ee0a353"
+      }
+    },
+    "status": []
+  },
+  {
+    "user_id": "4e13cb29-733e-4b61-99c7-0c2be46607ac",
+    "date": 20260402,
+    "hour": 14,
+    "minute": 22,
+    "description": "오후 업무를 이어가며 로그와 리포트를 정리했어",
+    "calls": [],
+    "location": "회사",
+    "is_home": false,
+    "metadata": {
+      "bot_name": "UT_BOT_002",
+      "home": {
+        "residence_city": "부산",
+        "residence_type": "오피스텔",
+        "country": "한국",
+        "locationId": "c5c38b79-f28a-42ee-893e-48a28ee0a353"
+      }
+    },
+    "status": []
+  },
+  {
+    "user_id": "4e13cb29-733e-4b61-99c7-0c2be46607ac",
+    "date": 20260402,
+    "hour": 17,
+    "minute": 36,
+    "description": "업무를 마무리하면서 다음 날 점검 항목을 메모했어",
+    "calls": [],
+    "location": "회사",
+    "is_home": false,
+    "metadata": {
+      "bot_name": "UT_BOT_002",
+      "home": {
+        "residence_city": "부산",
+        "residence_type": "오피스텔",
+        "country": "한국",
+        "locationId": "c5c38b79-f28a-42ee-893e-48a28ee0a353"
+      }
+    },
+    "status": []
+  },
+  {
+    "user_id": "4e13cb29-733e-4b61-99c7-0c2be46607ac",
+    "date": 20260402,
+    "hour": 18,
+    "minute": 14,
+    "description": "퇴근 후 버스를 타고 집으로 이동했어",
+    "calls": [],
+    "location": "이동 중",
+    "is_home": false,
+    "metadata": {
+      "bot_name": "UT_BOT_002",
+      "home": {
+        "residence_city": "부산",
+        "residence_type": "오피스텔",
+        "country": "한국",
+        "locationId": "c5c38b79-f28a-42ee-893e-48a28ee0a353"
+      }
+    },
+    "status": []
+  },
+  {
+    "user_id": "4e13cb29-733e-4b61-99c7-0c2be46607ac",
+    "date": 20260402,
+    "hour": 18,
+    "minute": 47,
+    "description": "집에 도착해서 현관문을 열고 들어왔어",
+    "calls": [],
+    "location": "우리 집",
+    "is_home": true,
+    "metadata": {
+      "bot_name": "UT_BOT_002",
+      "home": {
+        "residence_city": "부산",
+        "residence_type": "오피스텔",
+        "country": "한국",
+        "locationId": "c5c38b79-f28a-42ee-893e-48a28ee0a353"
+      }
+    },
+    "status": []
+  },
+  {
+    "user_id": "4e13cb29-733e-4b61-99c7-0c2be46607ac",
+    "date": 20260402,
+    "hour": 18,
+    "minute": 48,
+    "description": "거실 조명을 켜고 에어컨 전원을 확인했어",
+    "calls": [
+      {
+        "method": "POST",
+        "url": "https://apis.smartthingsgdev.com/v1/devices/{deviceId}/commands",
+        "deviceId": "your-living-room-light-device-id",
+        "commands": [
+          {
+            "component": "main",
+            "capability": "switch",
+            "command": "on",
+            "arguments": []
+          }
+        ],
+        "dsec": 12,
+        "result": "expected: living room light on"
+      }
+    ],
+    "location": "우리 집",
+    "is_home": true,
+    "metadata": {
+      "bot_name": "UT_BOT_002",
+      "home": {
+        "residence_city": "부산",
+        "residence_type": "오피스텔",
+        "country": "한국",
+        "locationId": "c5c38b79-f28a-42ee-893e-48a28ee0a353"
+      }
+    },
+    "status": []
+  },
+  {
+    "user_id": "4e13cb29-733e-4b61-99c7-0c2be46607ac",
+    "date": 20260402,
+    "hour": 18,
+    "minute": 52,
+    "description": "가방을 내려놓고 손을 씻은 뒤 주방으로 이동했어",
+    "calls": [],
+    "location": "우리 집",
+    "is_home": true,
+    "metadata": {
+      "bot_name": "UT_BOT_002",
+      "home": {
+        "residence_city": "부산",
+        "residence_type": "오피스텔",
+        "country": "한국",
+        "locationId": "c5c38b79-f28a-42ee-893e-48a28ee0a353"
+      }
+    },
+    "status": []
+  },
+  {
+    "user_id": "4e13cb29-733e-4b61-99c7-0c2be46607ac",
+    "date": 20260402,
+    "hour": 18,
+    "minute": 58,
+    "description": "주방 조명을 켜고 저녁 식사를 준비했어",
+    "calls": [
+      {
+        "method": "POST",
+        "url": "https://apis.smartthingsgdev.com/v1/devices/{deviceId}/commands",
+        "deviceId": "your-kitchen-light-device-id",
+        "commands": [
+          {
+            "component": "main",
+            "capability": "switch",
+            "command": "on",
+            "arguments": []
+          }
+        ],
+        "dsec": 10,
+        "result": "expected: kitchen light on"
+      }
+    ],
+    "location": "우리 집",
+    "is_home": true,
+    "metadata": {
+      "bot_name": "UT_BOT_002",
+      "home": {
+        "residence_city": "부산",
+        "residence_type": "오피스텔",
+        "country": "한국",
+        "locationId": "c5c38b79-f28a-42ee-893e-48a28ee0a353"
+      }
+    },
+    "status": ["요리"]
+  },
+  {
+    "user_id": "4e13cb29-733e-4b61-99c7-0c2be46607ac",
+    "date": 20260402,
+    "hour": 19,
+    "minute": 21,
+    "description": "식사를 마치고 싱크대에서 설거지를 했어",
+    "calls": [
+      {
+        "method": "POST",
+        "url": "https://apis.smartthingsgdev.com/v1/devices/{deviceId}/commands",
+        "deviceId": "your-kitchen-light-device-id",
+        "commands": [
+          {
+            "component": "main",
+            "capability": "switch",
+            "command": "off",
+            "arguments": []
+          }
+        ],
+        "dsec": 8,
+        "result": "expected: kitchen light off"
+      }
+    ],
+    "location": "우리 집",
+    "is_home": true,
+    "metadata": {
+      "bot_name": "UT_BOT_002",
+      "home": {
+        "residence_city": "부산",
+        "residence_type": "오피스텔",
+        "country": "한국",
+        "locationId": "c5c38b79-f28a-42ee-893e-48a28ee0a353"
+      }
+    },
+    "status": ["설거지"]
+  },
+  {
+    "user_id": "4e13cb29-733e-4b61-99c7-0c2be46607ac",
+    "date": 20260402,
+    "hour": 19,
+    "minute": 39,
+    "description": "거실을 정리하고 로봇청소기를 작동시켰어",
+    "calls": [
+      {
+        "method": "POST",
+        "url": "https://apis.smartthingsgdev.com/v1/devices/{deviceId}/commands",
+        "deviceId": "your-vacuum-device-id",
+        "commands": [
+          {
+            "component": "main",
+            "capability": "switch",
+            "command": "on",
+            "arguments": []
+          }
+        ],
+        "dsec": 11,
+        "result": "expected: vacuum on"
+      }
+    ],
+    "location": "우리 집",
+    "is_home": true,
+    "metadata": {
+      "bot_name": "UT_BOT_002",
+      "home": {
+        "residence_city": "부산",
+        "residence_type": "오피스텔",
+        "country": "한국",
+        "locationId": "c5c38b79-f28a-42ee-893e-48a28ee0a353"
+      }
+    },
+    "status": ["청소"]
+  },
+  {
+    "user_id": "4e13cb29-733e-4b61-99c7-0c2be46607ac",
+    "date": 20260402,
+    "hour": 20,
+    "minute": 6,
+    "description": "소파에 앉아 TV를 켜고 잠시 휴식했어",
+    "calls": [
+      {
+        "method": "POST",
+        "url": "https://apis.smartthingsgdev.com/v1/devices/{deviceId}/commands",
+        "deviceId": "your-tv-device-id",
+        "commands": [
+          {
+            "component": "main",
+            "capability": "switch",
+            "command": "on",
+            "arguments": []
+          }
+        ],
+        "dsec": 9,
+        "result": "expected: tv on"
+      }
+    ],
+    "location": "우리 집",
+    "is_home": true,
+    "metadata": {
+      "bot_name": "UT_BOT_002",
+      "home": {
+        "residence_city": "부산",
+        "residence_type": "오피스텔",
+        "country": "한국",
+        "locationId": "c5c38b79-f28a-42ee-893e-48a28ee0a353"
+      }
+    },
+    "status": []
+  },
+  {
+    "user_id": "4e13cb29-733e-4b61-99c7-0c2be46607ac",
+    "date": 20260402,
+    "hour": 20,
+    "minute": 41,
+    "description": "반려동물과 짧게 놀아주고 물그릇을 확인했어",
+    "calls": [],
+    "location": "우리 집",
+    "is_home": true,
+    "metadata": {
+      "bot_name": "UT_BOT_002",
+      "home": {
+        "residence_city": "부산",
+        "residence_type": "오피스텔",
+        "country": "한국",
+        "locationId": "c5c38b79-f28a-42ee-893e-48a28ee0a353"
+      }
+    },
+    "status": ["펫 활동"]
+  },
+  {
+    "user_id": "4e13cb29-733e-4b61-99c7-0c2be46607ac",
+    "date": 20260402,
+    "hour": 21,
+    "minute": 18,
+    "description": "내일 일정과 보안 이슈를 다시 확인했어",
+    "calls": [],
+    "location": "우리 집",
+    "is_home": true,
+    "metadata": {
+      "bot_name": "UT_BOT_002",
+      "home": {
+        "residence_city": "부산",
+        "residence_type": "오피스텔",
+        "country": "한국",
+        "locationId": "c5c38b79-f28a-42ee-893e-48a28ee0a353"
+      }
+    },
+    "status": []
+  },
+  {
+    "user_id": "4e13cb29-733e-4b61-99c7-0c2be46607ac",
+    "date": 20260402,
+    "hour": 22,
+    "minute": 3,
+    "description": "반려동물을 침실 쪽으로 정리하고 조용히 쉬게 했어",
+    "calls": [],
+    "location": "우리 집",
+    "is_home": true,
+    "metadata": {
+      "bot_name": "UT_BOT_002",
+      "home": {
+        "residence_city": "부산",
+        "residence_type": "오피스텔",
+        "country": "한국",
+        "locationId": "c5c38b79-f28a-42ee-893e-48a28ee0a353"
+      }
+    },
+    "status": ["펫 수면"]
+  },
+  {
+    "user_id": "4e13cb29-733e-4b61-99c7-0c2be46607ac",
+    "date": 20260402,
+    "hour": 22,
+    "minute": 24,
+    "description": "침실 조명을 낮추고 취침 준비를 했어",
+    "calls": [
+      {
+        "method": "POST",
+        "url": "https://apis.smartthingsgdev.com/v1/devices/{deviceId}/commands",
+        "deviceId": "your-bedroom-light-device-id",
+        "commands": [
+          {
+            "component": "main",
+            "capability": "switch",
+            "command": "off",
+            "arguments": []
+          }
+        ],
+        "dsec": 7,
+        "result": "expected: bedroom light off"
+      }
+    ],
+    "location": "우리 집",
+    "is_home": true,
+    "metadata": {
+      "bot_name": "UT_BOT_002",
+      "home": {
+        "residence_city": "부산",
+        "residence_type": "오피스텔",
+        "country": "한국",
+        "locationId": "c5c38b79-f28a-42ee-893e-48a28ee0a353"
+      }
+    },
+    "status": ["수면"]
+  },
+  {
+    "user_id": "4e13cb29-733e-4b61-99c7-0c2be46607ac",
+    "date": 20260402,
+    "hour": 22,
+    "minute": 39,
+    "description": "침대에 누워 휴대폰 알림을 끄고 잠들었어",
+    "calls": [],
+    "location": "우리 집",
+    "is_home": true,
+    "metadata": {
+      "bot_name": "UT_BOT_002",
+      "home": {
+        "residence_city": "부산",
+        "residence_type": "오피스텔",
+        "country": "한국",
+        "locationId": "c5c38b79-f28a-42ee-893e-48a28ee0a353"
+      }
+    },
+    "status": ["수면"]
+  }
+]

@@ -1,4 +1,14 @@
 export type Category = "location" | "activity" | "api_request" | "event" | "context";
+export type Period = "1d" | "1w" | "1m";
+
+export interface TimelineFilter {
+  showLocation: boolean;
+  showContext: boolean;
+  contextTypes: Set<string>;   // empty = show all
+  showEvent: boolean;
+  eventTypes: Set<string>;     // empty = show all
+  showApi: boolean;
+}
 
 // location:    'home' | 'office' | 'gym' | 'outside' | ...
 // activity:    'washing_machine' | 'fridge' | 'tv' | 'shower' | ...
@@ -16,6 +26,7 @@ export interface LifeLogEvent {
 export interface TimelineUser {
   user_id: string;
   user_name: string;
+  user_job: string | null;
   events: LifeLogEvent[];
 }
 

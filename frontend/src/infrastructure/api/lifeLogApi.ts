@@ -1,8 +1,8 @@
 import type { Category, LifeLog, TimelineResponse } from "@/domain/types";
 import { apiFetch } from "./client";
 
-export function fetchTimeline(start: string, end: string, locationIds: string[]): Promise<TimelineResponse> {
-  const params = new URLSearchParams({ start, end });
+export function fetchTimeline(start: string, end: string, locationIds: string[], period = "1d"): Promise<TimelineResponse> {
+  const params = new URLSearchParams({ start, end, period });
   locationIds.forEach((id) => params.append("location_id", id));
   return apiFetch<TimelineResponse>(`/api/v1/life-logs/timeline?${params}`);
 }

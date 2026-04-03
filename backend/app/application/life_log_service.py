@@ -34,7 +34,36 @@ class LifeLogService:
     async def close_event(self, log_id: int, ended_at: datetime) -> LifeLog | None:
         return await self._repo.update_ended_at(log_id, ended_at)
 
-    async def get_timeline(self, start_str: str, end_str: str, location_ids: list[UUID] | None) -> dict:
+    @staticmethod
+    def _sample_rows(rows: list[dict], period: str) -> list[dict]:
+        """
+        Thin event rows based on view period so the frontend stays responsive
+        with large datasets.
+
+        1d  – no change (full resolution)
+        1w  – api_request: keep at most 1 per (user, hour) bucket
+        1m  – api_request: drop entirely
+              event (point events): drop entirely (sub-pixel at 1m zoom)
+        """
+        if period == "1d":
+            return rows
+
+        if period == "1w":
+            seen: set[tuple] = set()
+            out: list[dict] = []
+            for row in rows:
+                if row["category"] == "api_request":
+                    bucket = (str(row["user_id"]), row["started_at"].replace(minute=0, second=0, microsecond=0))
+                    if bucket in seen:
+                        continue
+                    seen.add(bucket)
+                out.append(row)
+            return out
+
+        # 1m – only duration-based events are meaningful at this zoom
+        return [r for r in rows if r["category"] in ("location", "context")]
+
+    async def get_timeline(self, start_str: str, end_str: str, location_ids: list[UUID] | None, period: str = "1d") -> dict:
         """
         Returns Gantt-style timeline data bucketed by location then user.
         start_str / end_str: YYYY-MM-DD (inclusive start, exclusive end).
@@ -48,9 +77,10 @@ class LifeLogService:
             location_ids = [loc.id for loc in all_locations]
 
         if not location_ids:
-            return {"date": date_str, "locations": []}
+            return {"start": start_str, "end": end_str, "locations": []}
 
         rows = await self._repo.get_timeline(location_ids, day_start, day_end)
+        rows = self._sample_rows(rows, period)
 
         # Group by location
         by_location: dict[str, dict] = {}
@@ -69,6 +99,7 @@ class LifeLogService:
                 loc_data["users"][user_id] = {
                     "user_id": user_id,
                     "user_name": row["user_name"],
+                    "user_job": row["user_job"],
                     "events": [],
                 }
             loc_data["users"][user_id]["events"].append({
