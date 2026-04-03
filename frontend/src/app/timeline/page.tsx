@@ -6,6 +6,8 @@ import { format, addDays, subDays, startOfDay, isToday } from "date-fns";
 import { ko } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { ScheduleTimelineGrid } from "@/components/timeline/ScheduleTimelineGrid";
+import { ScheduleTimelineFilterPanel } from "@/components/timeline/ScheduleTimelineFilterPanel";
+import { defaultScheduleTimelineDisplayFilter } from "@/domain/scheduleTypes";
 
 function dateToInt(d: Date): number {
   return Number(`${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`);
@@ -32,6 +34,7 @@ function TimelineContent() {
 
   const [dateInt, setDateInt] = useState(initDateInt);
   const [days, setDays] = useState(() => clampDays(Number(searchParams.get("days") ?? "1")));
+  const [displayFilter, setDisplayFilter] = useState(defaultScheduleTimelineDisplayFilter);
 
   useEffect(() => {
     router.replace(`/timeline?date=${dateInt}&days=${days}`, { scroll: false });
@@ -74,6 +77,7 @@ function TimelineContent() {
         </div>
 
         <div className="ml-auto flex items-center gap-2">
+          <ScheduleTimelineFilterPanel filter={displayFilter} onChange={setDisplayFilter} />
           <label className="flex items-center gap-1.5 px-2 py-1.5 border border-neutral-200 rounded text-xs text-neutral-600 bg-white">
             <span>범위</span>
             <select
@@ -114,7 +118,7 @@ function TimelineContent() {
 
       {/* Timeline content */}
       <div className="flex-1 overflow-auto p-5">
-        <ScheduleTimelineGrid dateInt={dateInt} days={days} />
+        <ScheduleTimelineGrid dateInt={dateInt} days={days} displayFilter={displayFilter} />
       </div>
     </div>
   );

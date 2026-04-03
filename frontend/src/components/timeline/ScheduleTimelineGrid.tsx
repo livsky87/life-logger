@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { MapPin, ChevronDown, ChevronRight, Users } from "lucide-react";
 import { useScheduleTimeline } from "@/application/useSchedules";
+import type { ScheduleTimelineDisplayFilter } from "@/domain/scheduleTypes";
 import { ScheduleUserRow } from "./ScheduleUserRow";
 import { getTimeTicks } from "./timelineUtils";
 
 interface Props {
   dateInt: number;
   days: number;
+  displayFilter: ScheduleTimelineDisplayFilter;
   locationId?: string;
 }
 
@@ -23,12 +25,14 @@ function LocationBlock({
   rangeStart,
   rangeEnd,
   days,
+  displayFilter,
 }: {
   location: { location_id: string; name: string; timezone: string; users: any[] };
   dateInt: number;
   rangeStart: Date;
   rangeEnd: Date;
   days: number;
+  displayFilter: ScheduleTimelineDisplayFilter;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const ticks = getTimeTicks(rangeStart, rangeEnd, location.timezone);
@@ -55,18 +59,19 @@ function LocationBlock({
 
         {/* Time axis */}
         <div className="relative flex-1 h-full">
-          {ticks.map((tick) => (
-            <div
-              key={tick.pct}
-              className="absolute top-0 h-full flex flex-col items-center justify-end pb-1.5"
-              style={{ left: `${tick.pct}%` }}
-            >
-              <div className="w-px h-2.5 bg-neutral-700 mb-0.5" />
-              <span className="text-[10px] text-neutral-500 font-mono whitespace-nowrap translate-x-1">
-                {tick.label}
-              </span>
-            </div>
-          ))}
+          {displayFilter.showHeaderTicks &&
+            ticks.map((tick) => (
+              <div
+                key={tick.pct}
+                className="absolute top-0 h-full flex flex-col items-center justify-end pb-1.5"
+                style={{ left: `${tick.pct}%` }}
+              >
+                <div className="w-px h-2.5 bg-neutral-700 mb-0.5" />
+                <span className="text-[10px] text-neutral-500 font-mono whitespace-nowrap translate-x-1">
+                  {tick.label}
+                </span>
+              </div>
+            ))}
         </div>
       </div>
 
@@ -80,6 +85,7 @@ function LocationBlock({
             rangeStart={rangeStart}
             rangeEnd={rangeEnd}
             days={days}
+            displayFilter={displayFilter}
             isLast={idx === location.users.length - 1}
           />
         ))}
@@ -93,7 +99,7 @@ function LocationBlock({
   );
 }
 
-export function ScheduleTimelineGrid({ dateInt, days, locationId }: Props) {
+export function ScheduleTimelineGrid({ dateInt, days, displayFilter, locationId }: Props) {
   const { data, isLoading, isError, error } = useScheduleTimeline(dateInt, days, locationId);
   const rangeStart = dateIntToDate(dateInt);
   const rangeEnd = new Date(rangeStart.getTime() + days * 24 * 60 * 60 * 1000);
@@ -143,6 +149,7 @@ export function ScheduleTimelineGrid({ dateInt, days, locationId }: Props) {
           rangeStart={rangeStart}
           rangeEnd={rangeEnd}
           days={days}
+          displayFilter={displayFilter}
         />
       ))}
     </div>

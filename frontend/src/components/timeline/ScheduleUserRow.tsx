@@ -4,7 +4,7 @@ import React, { useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Play, Zap } from "lucide-react";
-import type { Schedule, ScheduleTimelineUser } from "@/domain/scheduleTypes";
+import type { Schedule, ScheduleTimelineDisplayFilter, ScheduleTimelineUser } from "@/domain/scheduleTypes";
 
 // ── Semantic color palette (location type → color token) ─────────────────────
 
@@ -146,12 +146,21 @@ interface Props {
   rangeStart: Date;
   rangeEnd: Date;
   days: number;
+  displayFilter: ScheduleTimelineDisplayFilter;
   isLast: boolean;
 }
 
 const ROW_HEIGHT = 56;
 
-export const ScheduleUserRow = React.memo(function ScheduleUserRow({ user, dateInt, rangeStart, rangeEnd, days, isLast }: Props) {
+export const ScheduleUserRow = React.memo(function ScheduleUserRow({
+  user,
+  dateInt,
+  rangeStart,
+  rangeEnd,
+  days,
+  displayFilter,
+  isLast,
+}: Props) {
   const router = useRouter();
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const handleHover = useCallback((x: number, y: number, content: React.ReactNode) =>
@@ -205,19 +214,20 @@ export const ScheduleUserRow = React.memo(function ScheduleUserRow({ user, dateI
       {/* Timeline area */}
       <div className="relative flex-1 overflow-hidden">
         {/* Grid lines */}
-        {Array.from({ length: days <= 1 ? 25 : days + 1 }).map((_, i) => (
-          <div
-            key={i}
-            className="absolute top-0 bottom-0"
-            style={{
-              left: `${days <= 1 ? (i / 24) * 100 : (i / days) * 100}%`,
-              borderLeft: days <= 1 && i % 6 === 0 ? "1px solid rgba(0,0,0,0.08)" : "1px solid rgba(0,0,0,0.04)",
-            }}
-          />
-        ))}
+        {displayFilter.showGridLines &&
+          Array.from({ length: days <= 1 ? 25 : days + 1 }).map((_, i) => (
+            <div
+              key={i}
+              className="absolute top-0 bottom-0"
+              style={{
+                left: `${days <= 1 ? (i / 24) * 100 : (i / days) * 100}%`,
+                borderLeft: days <= 1 && i % 6 === 0 ? "1px solid rgba(0,0,0,0.08)" : "1px solid rgba(0,0,0,0.04)",
+              }}
+            />
+          ))}
 
         {/* Now indicator */}
-        {nowFrac > 0 && nowFrac < 1 && (
+        {displayFilter.showNowLine && nowFrac > 0 && nowFrac < 1 && (
           <div
             className="absolute top-0 bottom-0 w-px bg-red-400/50 z-10 pointer-events-none"
             style={{ left: `${nowFrac * 100}%` }}
@@ -225,67 +235,98 @@ export const ScheduleUserRow = React.memo(function ScheduleUserRow({ user, dateI
         )}
 
         {/* Segment bars (presence track) */}
-        {entries.map((entry, i) => {
-          const startFrac = datetimeToRangeFraction(entry.datetime, rangeStart, rangeEnd);
-          const nextEntry = entries[i + 1];
-          const endFrac = nextEntry
-            ? datetimeToRangeFraction(nextEntry.datetime, rangeStart, rangeEnd)
-            : clamp01(startFrac + (5 * 60 * 1000) / totalMs);
-          const widthPct = Math.max(0, (endFrac - startFrac) * 100);
-          if (widthPct <= 0) return null;
-          const segType = getSegmentType(entry.location, entry.is_home);
-          const palette = SEGMENT_PALETTE[segType];
-          return (
-            <div
-              key={`seg-${entry.id}`}
-              className={`absolute rounded-sm ${palette.bar}`}
-              style={{ left: `${startFrac * 100}%`, width: `${widthPct}%`, height: 10, top: 18 }}
-            />
-          );
-        })}
-
-        {/* Entry dots + status labels */}
-        {entries.map((entry) => {
-          const leftPct = datetimeToRangeFraction(entry.datetime, rangeStart, rangeEnd) * 100;
-          const hasCalls = entry.calls.length > 0;
-          const segType = getSegmentType(entry.location, entry.is_home);
-          const palette = SEGMENT_PALETTE[segType];
-          const statusKey = entry.status[0];
-          const statusStyle = statusKey ? (STATUS_STYLES[statusKey] ?? "bg-neutral-100 text-neutral-500 border-neutral-200") : null;
-
-          return (
-            <React.Fragment key={`dot-${entry.id}`}>
-              {/* Dot */}
+        {displayFilter.showPresenceBars &&
+          entries.map((entry, i) => {
+            const startFrac = datetimeToRangeFraction(entry.datetime, rangeStart, rangeEnd);
+            const nextEntry = entries[i + 1];
+            const endFrac = nextEntry
+              ? datetimeToRangeFraction(nextEntry.datetime, rangeStart, rangeEnd)
+              : clamp01(startFrac + (5 * 60 * 1000) / totalMs);
+            const widthPct = Math.max(0, (endFrac - startFrac) * 100);
+            if (widthPct <= 0) return null;
+            const segType = getSegmentType(entry.location, entry.is_home);
+            const palette = SEGMENT_PALETTE[segType];
+            return (
               <div
-                className={`absolute rounded-full cursor-pointer ring-[1.5px] ring-white shadow-sm hover:ring-indigo-300 hover:scale-125 transition-transform ${palette.dot}`}
-                style={{ left: `calc(${leftPct}% - 4px)`, top: 20, width: 8, height: 8 }}
-                onMouseMove={(e) => handleHover(e.clientX, e.clientY, <EntryTooltipContent entry={entry} />)}
-                onMouseLeave={handleLeave}
+                key={`seg-${entry.id}`}
+                className={`absolute rounded-sm ${palette.bar}`}
+                style={{ left: `${startFrac * 100}%`, width: `${widthPct}%`, height: 10, top: 18 }}
               />
-              {/* API call indicator */}
-              {hasCalls && (
+            );
+          })}
+
+        {/* Entry dots + status labels (same status as previous → no repeat label, connector + smaller marker) */}
+        {displayFilter.showEntryDots &&
+          entries.map((entry, i) => {
+            const leftPct = datetimeToRangeFraction(entry.datetime, rangeStart, rangeEnd) * 100;
+            const prevEntry = i > 0 ? entries[i - 1] : null;
+            const prevLeftPct = prevEntry
+              ? datetimeToRangeFraction(prevEntry.datetime, rangeStart, rangeEnd) * 100
+              : 0;
+            const hasCalls = entry.calls.length > 0;
+            const segType = getSegmentType(entry.location, entry.is_home);
+            const palette = SEGMENT_PALETTE[segType];
+            const statusKey = entry.status[0];
+            const prevStatusKey = prevEntry?.status[0];
+            const statusContinues = Boolean(statusKey && prevStatusKey === statusKey);
+            const statusStyle = statusKey ? (STATUS_STYLES[statusKey] ?? "bg-neutral-100 text-neutral-500 border-neutral-200") : null;
+            const showStatusTag = Boolean(displayFilter.showStatusTags && statusStyle && !statusContinues);
+
+            const lo = Math.min(prevLeftPct, leftPct);
+            const span = Math.abs(leftPct - prevLeftPct);
+
+            return (
+              <React.Fragment key={`dot-${entry.id}`}>
+                {statusContinues && span > 0 && (
+                  <div
+                    className="absolute h-[3px] rounded-full bg-neutral-400/35 pointer-events-none z-[1]"
+                    style={{
+                      left: `${lo}%`,
+                      width: `${span}%`,
+                      top: 22,
+                    }}
+                    aria-hidden
+                  />
+                )}
+                {/* Dot */}
                 <div
-                  className="absolute pointer-events-none"
-                  style={{ left: `calc(${leftPct}% - 4px)`, top: 5 }}
-                >
-                  <Zap className="w-2.5 h-2.5 text-amber-500" />
-                </div>
-              )}
-              {/* Status tag */}
-              {statusStyle && (
-                <div
-                  className={`absolute pointer-events-none px-1 py-px rounded-sm border text-[9px] font-medium leading-none ${statusStyle}`}
-                  style={{ left: `calc(${leftPct}% + 6px)`, bottom: 10 }}
-                >
-                  {statusKey}
-                </div>
-              )}
-            </React.Fragment>
-          );
-        })}
+                  className={
+                    statusContinues
+                      ? `absolute rounded-full cursor-pointer ring-1 ring-white/90 shadow-sm hover:ring-indigo-300 hover:scale-125 transition-transform opacity-75 ${palette.dot}`
+                      : `absolute rounded-full cursor-pointer ring-[1.5px] ring-white shadow-sm hover:ring-indigo-300 hover:scale-125 transition-transform ${palette.dot}`
+                  }
+                  style={
+                    statusContinues
+                      ? { left: `calc(${leftPct}% - 3px)`, top: 21, width: 6, height: 6 }
+                      : { left: `calc(${leftPct}% - 4px)`, top: 20, width: 8, height: 8 }
+                  }
+                  onMouseMove={(e) => handleHover(e.clientX, e.clientY, <EntryTooltipContent entry={entry} />)}
+                  onMouseLeave={handleLeave}
+                />
+                {/* API call indicator */}
+                {displayFilter.showApiCallMarkers && hasCalls && (
+                  <div
+                    className="absolute pointer-events-none"
+                    style={{ left: `calc(${leftPct}% - ${statusContinues ? 3 : 4}px)`, top: 5 }}
+                  >
+                    <Zap className="w-2.5 h-2.5 text-amber-500" />
+                  </div>
+                )}
+                {/* Status tag — only at start of a same-status run */}
+                {showStatusTag && (
+                  <div
+                    className={`absolute pointer-events-none px-1 py-px rounded-sm border text-[9px] font-medium leading-none ${statusStyle}`}
+                    style={{ left: `calc(${leftPct}% + 6px)`, bottom: 10 }}
+                  >
+                    {statusKey}
+                  </div>
+                )}
+              </React.Fragment>
+            );
+          })}
 
         {/* Density heatmap strip at bottom (single-day only) */}
-        {days === 1 && <DensityHeatmap density={density} />}
+        {days === 1 && displayFilter.showActivityHeatmap && <DensityHeatmap density={density} />}
 
         <Tooltip tooltip={tooltip} />
       </div>

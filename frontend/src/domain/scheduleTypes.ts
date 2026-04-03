@@ -81,3 +81,28 @@ export interface ScheduleTimelineResponse {
   range_days: number;
   locations: ScheduleTimelineLocation[];
 }
+
+/** 스케줄 타임라인 UI 레이어 on/off */
+export interface ScheduleTimelineDisplayFilter {
+  showHeaderTicks: boolean;
+  showGridLines: boolean;
+  showPresenceBars: boolean;
+  showEntryDots: boolean;
+  showStatusTags: boolean;
+  showApiCallMarkers: boolean;
+  showNowLine: boolean;
+  showActivityHeatmap: boolean;
+}
+
+export function defaultScheduleTimelineDisplayFilter(): ScheduleTimelineDisplayFilter {
+  return {
+    showHeaderTicks: true,
+    showGridLines: true,
+    showPresenceBars: true,
+    showEntryDots: true,
+    showStatusTags: true,
+    showApiCallMarkers: true,
+    showNowLine: true,
+    showActivityHeatmap: true,
+  };
+}
