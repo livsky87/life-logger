@@ -2,8 +2,9 @@
 
 import { useState, useCallback, useMemo, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { format, addDays, subDays, startOfDay } from "date-fns";
+import { format, addDays, subDays, startOfDay, isToday } from "date-fns";
 import { ko } from "date-fns/locale";
+import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { ScheduleTimelineGrid } from "@/components/timeline/ScheduleTimelineGrid";
 
 function dateToInt(d: Date): number {
@@ -41,45 +42,60 @@ function TimelineContent() {
     setDateInt(dateToInt(startOfDay(new Date())));
   }, []);
 
-  const dateLabel = useMemo(() => {
-    if (!dateInt) return "";
-    return format(intToDate(dateInt), "yyyy년 M월 d일 (EEE)", { locale: ko });
-  }, [dateInt]);
+  const currentDate = useMemo(() => intToDate(dateInt), [dateInt]);
+  const dateLabel = useMemo(() =>
+    format(currentDate, "yyyy년 M월 d일", { locale: ko }), [currentDate]);
+  const dayLabel = useMemo(() =>
+    format(currentDate, "EEE", { locale: ko }), [currentDate]);
+  const isTodayDate = isToday(currentDate);
 
   return (
-    <div className="p-6">
-      <div className="flex flex-wrap items-center gap-3 mb-6">
-        <h1 className="text-lg font-bold text-gray-900">타임라인</h1>
-
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => handleShift(-1)}
-            className="p-2 rounded-lg border border-gray-200 hover:bg-gray-100 transition"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <button
-            onClick={handleToday}
-            className="px-3 py-2 text-sm rounded-lg border border-gray-200 hover:bg-gray-100 transition"
-          >
-            오늘
-          </button>
-          <button
-            onClick={() => handleShift(1)}
-            className="p-2 rounded-lg border border-gray-200 hover:bg-gray-100 transition"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
+    <div className="flex flex-col h-full">
+      {/* Page header */}
+      <div className="flex items-center gap-4 px-6 py-4 bg-white border-b border-neutral-200 shrink-0">
+        <div>
+          <h1 className="text-sm font-semibold text-neutral-500 uppercase tracking-wider leading-none mb-1">
+            Timeline
+          </h1>
+          <div className="flex items-baseline gap-2">
+            <span className="text-xl font-bold text-neutral-900">{dateLabel}</span>
+            <span className={`text-sm font-medium px-1.5 py-0.5 rounded ${isTodayDate ? "bg-indigo-100 text-indigo-700" : "text-neutral-400"}`}>
+              {dayLabel}{isTodayDate && " · 오늘"}
+            </span>
+          </div>
         </div>
 
-        <span className="text-sm font-medium text-gray-700">{dateLabel}</span>
+        <div className="ml-auto flex items-center gap-2">
+          {!isTodayDate && (
+            <button
+              onClick={handleToday}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded border border-neutral-200 text-neutral-600 hover:bg-neutral-50 transition-colors"
+            >
+              <CalendarDays className="w-3.5 h-3.5" />
+              오늘
+            </button>
+          )}
+          <div className="flex items-center border border-neutral-200 rounded overflow-hidden">
+            <button
+              onClick={() => handleShift(-1)}
+              className="p-1.5 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 transition-colors border-r border-neutral-200"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => handleShift(1)}
+              className="p-1.5 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 transition-colors"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
       </div>
 
-      <ScheduleTimelineGrid dateInt={dateInt} />
+      {/* Timeline content */}
+      <div className="flex-1 overflow-auto p-5">
+        <ScheduleTimelineGrid dateInt={dateInt} />
+      </div>
     </div>
   );
 }

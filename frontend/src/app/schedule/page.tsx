@@ -2,8 +2,9 @@
 
 import { useState, useCallback, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { format, addDays, subDays } from "date-fns";
+import { format, addDays, subDays, isToday } from "date-fns";
 import { ko } from "date-fns/locale";
+import { ChevronLeft, ChevronRight, CalendarDays, Plus, Home, LogOut, Zap } from "lucide-react";
 import clsx from "clsx";
 import type { Schedule, ScheduleCreate, ScheduleUpdate } from "@/domain/scheduleTypes";
 import { useCreateSchedule, useDeleteSchedule, useSchedules, useUpdateSchedule } from "@/application/useSchedules";
@@ -135,114 +136,120 @@ function SchedulePageContent() {
 
   const selectedUser = users.find((u) => u.id === selectedUserId);
 
-  return (
-    <div className="max-w-4xl mx-auto p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">스케줄</h1>
-        <p className="text-gray-500 text-sm mt-1">분 단위 일정을 관리합니다</p>
-      </div>
+  const isTodayDate = isToday(currentDate);
 
-      {/* User selector + date navigator */}
-      <div className="flex flex-wrap items-center gap-3 mb-5">
-        {/* User selector */}
-        <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-gray-600 shrink-0">사용자</label>
+  return (
+    <div className="flex flex-col h-full">
+      {/* Page header */}
+      <div className="flex items-center gap-4 px-6 py-4 bg-white border-b border-neutral-200 shrink-0 min-w-0">
+        <div className="shrink-0">
+          <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider leading-none mb-1">Schedule</p>
+          <div className="flex items-baseline gap-2 whitespace-nowrap">
+            <span className="text-xl font-bold text-neutral-900">
+              {format(currentDate, "yyyy년 M월 d일", { locale: ko })}
+            </span>
+            <span className={`text-sm font-medium px-1.5 py-0.5 rounded ${isTodayDate ? "bg-indigo-100 text-indigo-700" : "text-neutral-400"}`}>
+              {format(currentDate, "EEE", { locale: ko })}{isTodayDate && " · 오늘"}
+            </span>
+          </div>
+        </div>
+
+        <div className="ml-auto flex items-center gap-2">
+          {/* User selector */}
           <select
             value={selectedUserId}
             onChange={(e) => setSelectedUserId(e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            className="border border-neutral-200 rounded px-2.5 py-1.5 text-sm text-neutral-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
           >
-            <option value="">전체</option>
+            <option value="">전체 사용자</option>
             {users.map((u) => (
               <option key={u.id} value={u.id}>{u.name}</option>
             ))}
           </select>
-        </div>
 
-        {/* Date navigator */}
-        <button onClick={() => shiftDay(-1)} className="p-2 rounded-lg border border-gray-200 hover:bg-gray-100 transition">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-        <button onClick={() => setDateInt(todayInt)} className="px-3 py-2 text-sm rounded-lg border border-gray-200 hover:bg-gray-100 transition">
-          오늘
-        </button>
-        <button onClick={() => shiftDay(1)} className="p-2 rounded-lg border border-gray-200 hover:bg-gray-100 transition">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-        <span className="text-sm font-medium text-gray-700">
-          {format(currentDate, "yyyy년 M월 d일 (EEE)", { locale: ko })}
-        </span>
-        {selectedUser && (
-          <span className="text-xs px-2 py-1 rounded-full bg-indigo-100 text-indigo-700">
-            {selectedUser.name}
-          </span>
-        )}
-        <button
-          onClick={() => { setEditTarget(null); setShowForm(true); }}
-          className="ml-auto px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition"
-        >
-          + 항목 추가
-        </button>
+          {!isTodayDate && (
+            <button
+              onClick={() => setDateInt(todayAsInt())}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded border border-neutral-200 text-neutral-600 hover:bg-neutral-50 transition-colors"
+            >
+              <CalendarDays className="w-3.5 h-3.5" />
+              오늘
+            </button>
+          )}
+          <div className="flex items-center border border-neutral-200 rounded overflow-hidden">
+            <button onClick={() => shiftDay(-1)} className="p-1.5 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 transition-colors border-r border-neutral-200">
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button onClick={() => shiftDay(1)} className="p-1.5 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 transition-colors">
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+          <button
+            onClick={() => { setEditTarget(null); setShowForm(true); }}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white text-sm font-medium rounded hover:bg-indigo-700 transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            항목 추가
+          </button>
+        </div>
       </div>
 
       {/* Schedule feed */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6">
+      <div className="flex-1 overflow-auto p-5">
+      <div className="max-w-3xl mx-auto bg-white rounded-md border border-neutral-200 overflow-hidden">
         {isLoading ? (
-          <div className="text-center text-gray-400 text-sm py-12">로딩 중...</div>
+          <div className="text-center text-neutral-400 text-sm py-12">로딩 중…</div>
         ) : !schedules?.length ? (
-          <div className="text-center text-gray-400 text-sm py-12">이 날짜에 스케줄이 없습니다.</div>
+          <div className="text-center text-neutral-400 text-sm py-12">이 날짜에 스케줄이 없습니다.</div>
         ) : (
-          <div className="space-y-1">
+          <div className="divide-y divide-neutral-100">
             {schedules.map((entry) => {
               const past = isPastEntry(entry);
               return (
                 <div
                   key={entry.id}
                   className={clsx(
-                    "flex items-center gap-3 px-4 py-3 rounded-xl border transition group",
-                    past
-                      ? "bg-gray-50 border-gray-100 text-gray-500"
-                      : "bg-white border-gray-200 text-gray-800",
+                    "flex items-center gap-3 px-4 py-2.5 transition group hover:bg-neutral-50",
+                    past ? "opacity-50" : "",
                   )}
                 >
-                  <span className="text-xs font-mono w-10 shrink-0 text-gray-500">
+                  <span className="text-xs font-mono w-10 shrink-0 text-neutral-400 tabular-nums">
                     {formatEntryTime(entry.datetime)}
                   </span>
                   {entry.location && (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100 shrink-0">
+                    <span className="text-[11px] px-1.5 py-px rounded border border-neutral-200 text-neutral-500 bg-neutral-50 shrink-0 font-medium">
                       {entry.location}
                     </span>
                   )}
-                  <span className={clsx("text-xs shrink-0", entry.is_home ? "text-blue-500" : "text-gray-400")}>
-                    {entry.is_home ? "🏠" : "🚶"}
+                  <span className="shrink-0">
+                    {entry.is_home
+                      ? <Home className="w-3 h-3 text-indigo-400" />
+                      : <LogOut className="w-3 h-3 text-neutral-400" />
+                    }
                   </span>
-                  <span className="flex-1 text-sm truncate">{entry.description}</span>
+                  <span className="flex-1 text-sm text-neutral-800 truncate">{entry.description}</span>
                   {entry.calls.length > 0 && (
                     <Tooltip content={<CallsTooltipContent calls={entry.calls} />}>
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 cursor-default shrink-0">
-                        ⚡ {entry.calls.length}건
+                      <span className="flex items-center gap-1 text-[11px] px-1.5 py-px rounded border border-amber-200 bg-amber-50 text-amber-700 cursor-default shrink-0">
+                        <Zap className="w-2.5 h-2.5" />{entry.calls.length}
                       </span>
                     </Tooltip>
                   )}
                   {entry.status.length > 0 && entry.status.map((s) => (
-                    <span key={s} className="text-xs px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100 shrink-0">
+                    <span key={s} className="text-[11px] px-1.5 py-px rounded border border-neutral-200 bg-neutral-50 text-neutral-500 shrink-0">
                       {s}
                     </span>
                   ))}
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition shrink-0">
                     <button
                       onClick={() => { setEditTarget(entry); setShowForm(true); }}
-                      className="text-xs text-indigo-500 hover:text-indigo-700 px-1"
+                      className="text-xs text-indigo-500 hover:text-indigo-700 px-1.5 py-0.5 rounded hover:bg-indigo-50 transition-colors"
                     >
                       수정
                     </button>
                     <button
                       onClick={() => setConfirmDelete(entry.id)}
-                      className="text-xs text-red-400 hover:text-red-600 px-1"
+                      className="text-xs text-red-400 hover:text-red-600 px-1.5 py-0.5 rounded hover:bg-red-50 transition-colors"
                     >
                       삭제
                     </button>
@@ -252,6 +259,7 @@ function SchedulePageContent() {
             })}
           </div>
         )}
+      </div>
       </div>
 
       {showForm && (
@@ -263,15 +271,15 @@ function SchedulePageContent() {
         />
       )}
       {confirmDelete !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl shadow-xl p-6 w-80">
-            <h4 className="font-semibold text-gray-900 mb-2">삭제 확인</h4>
-            <p className="text-sm text-gray-500 mb-5">이 스케줄 항목을 삭제하시겠습니까?</p>
-            <div className="flex gap-3">
-              <button onClick={() => setConfirmDelete(null)} className="flex-1 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg shadow-2xl border border-neutral-200 p-6 w-80">
+            <h4 className="font-semibold text-neutral-900 mb-2">삭제 확인</h4>
+            <p className="text-sm text-neutral-500 mb-5">이 스케줄 항목을 삭제하시겠습니까?</p>
+            <div className="flex gap-2">
+              <button onClick={() => setConfirmDelete(null)} className="flex-1 py-2 rounded border border-neutral-200 text-sm text-neutral-600 hover:bg-neutral-50 transition-colors">
                 취소
               </button>
-              <button onClick={() => handleDelete(confirmDelete)} className="flex-1 py-2 rounded-lg bg-red-500 text-white text-sm font-medium hover:bg-red-600">
+              <button onClick={() => handleDelete(confirmDelete)} className="flex-1 py-2 rounded bg-red-500 text-white text-sm font-medium hover:bg-red-600 transition-colors">
                 삭제
               </button>
             </div>
@@ -285,7 +293,7 @@ function SchedulePageContent() {
 
 export default function SchedulePage() {
   return (
-    <Suspense fallback={<div className="p-6 text-gray-400">로딩 중...</div>}>
+    <Suspense fallback={<div className="p-6 text-neutral-400 text-sm">로딩 중…</div>}>
       <SchedulePageContent />
     </Suspense>
   );
