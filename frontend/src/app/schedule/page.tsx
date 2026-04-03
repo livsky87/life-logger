@@ -26,14 +26,14 @@ function dateToInt(d: Date): number {
   return Number(`${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`);
 }
 
-function formatEntryTime(timestamp: string): string {
-  const d = new Date(timestamp);
+function formatEntryTime(datetime: string): string {
+  const d = new Date(datetime);
   const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
   return `${String(kst.getUTCHours()).padStart(2, "0")}:${String(kst.getUTCMinutes()).padStart(2, "0")}`;
 }
 
 function isPastEntry(entry: Schedule): boolean {
-  return new Date(entry.timestamp) < new Date();
+  return new Date(entry.datetime) < new Date();
 }
 
 
@@ -210,7 +210,7 @@ function SchedulePageContent() {
                   )}
                 >
                   <span className="text-xs font-mono w-10 shrink-0 text-gray-500">
-                    {formatEntryTime(entry.timestamp)}
+                    {formatEntryTime(entry.datetime)}
                   </span>
                   {entry.location && (
                     <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100 shrink-0">

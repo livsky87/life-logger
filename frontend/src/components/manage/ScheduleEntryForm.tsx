@@ -41,7 +41,7 @@ export function ScheduleEntryForm({ initialDate, initialData, onSave, onClose }:
   const isEdit = !!initialData;
 
   const defaultTimestamp = initialData
-    ? isoToLocalInput(initialData.timestamp)
+    ? isoToLocalInput(initialData.datetime)
     : dateIntToLocalDefault(initialDate);
 
   const [timestamp, setTimestamp] = useState(defaultTimestamp);
@@ -73,7 +73,7 @@ export function ScheduleEntryForm({ initialDate, initialData, onSave, onClose }:
         .map((s) => s.trim())
         .filter(Boolean);
       await onSave({
-        timestamp: localInputToIso(timestamp),
+        datetime: localInputToIso(timestamp),
         description: description.trim(),
         location: location.trim(),
         is_home: isHome,

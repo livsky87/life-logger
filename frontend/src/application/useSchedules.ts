@@ -30,9 +30,8 @@ export function useScheduleTimeline(date: number, locationId?: string) {
   });
 }
 
-function tsToDateInt(timestamp: string): number {
-  const d = new Date(timestamp);
-  // Convert to KST (UTC+9)
+function dtToDateInt(datetime: string): number {
+  const d = new Date(datetime);
   const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
   return (
     kst.getUTCFullYear() * 10000 +
@@ -46,7 +45,7 @@ export function useCreateSchedule() {
   return useMutation({
     mutationFn: (body: ScheduleCreate) => createSchedule(body),
     onSuccess: (data) => {
-      const date = tsToDateInt(data.timestamp);
+      const date = dtToDateInt(data.datetime);
       qc.invalidateQueries({ queryKey: ["schedules", date] });
       qc.invalidateQueries({ queryKey: ["schedule-timeline", date] });
     },
@@ -59,7 +58,7 @@ export function useUpdateSchedule() {
     mutationFn: ({ id, body }: { id: number; body: ScheduleUpdate }) =>
       updateSchedule(id, body),
     onSuccess: (data) => {
-      const date = tsToDateInt(data.timestamp);
+      const date = dtToDateInt(data.datetime);
       qc.invalidateQueries({ queryKey: ["schedules", date] });
       qc.invalidateQueries({ queryKey: ["schedule-timeline", date] });
     },

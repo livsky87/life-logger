@@ -75,7 +75,7 @@ function ScheduleCallLog({ entry }: { entry: Schedule }) {
     <div className="border border-gray-200 rounded-xl overflow-hidden mb-3">
       <div className="flex items-start gap-3 px-4 py-3 bg-gray-50 border-b border-gray-100">
         <span className="text-xs font-mono text-gray-500 shrink-0 mt-0.5 w-10">
-          {(() => { const d = new Date(entry.timestamp); const k = new Date(d.getTime() + 9*3600000); return `${String(k.getUTCHours()).padStart(2,"0")}:${String(k.getUTCMinutes()).padStart(2,"0")}`; })()}
+          {(() => { const d = new Date(entry.datetime); const k = new Date(d.getTime() + 9*3600000); return `${String(k.getUTCHours()).padStart(2,"0")}:${String(k.getUTCMinutes()).padStart(2,"0")}`; })()}
         </span>
         <div className="flex-1 min-w-0">
           <div className="text-sm text-gray-800 truncate">{entry.description}</div>

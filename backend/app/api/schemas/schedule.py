@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime as DateTime
 from typing import Any
 from uuid import UUID
 
@@ -10,13 +10,13 @@ class ScheduleCallItem(BaseModel):
     url: str
     deviceId: str = ""
     commands: list[Any] = Field(default_factory=list)
-    dsec: int = 0
+    dsec: int = 0          # optional in new format — defaults to 0
     result: str | None = None
 
 
 class ScheduleCreate(BaseModel):
     user_id: UUID | None = None
-    timestamp: datetime = Field(..., description="ISO 8601 datetime with timezone, e.g. 2026-04-02T06:57:00+09:00")
+    datetime: DateTime = Field(..., description="ISO 8601 datetime with timezone, e.g. 2026-04-02T06:30:00+09:00")
     description: str
     calls: list[ScheduleCallItem] = Field(default_factory=list)
     location: str = ""
@@ -27,7 +27,7 @@ class ScheduleCreate(BaseModel):
 
 class ScheduleUpdate(BaseModel):
     user_id: UUID | None = None
-    timestamp: datetime | None = None
+    datetime: DateTime | None = None
     description: str | None = None
     calls: list[ScheduleCallItem] | None = None
     location: str | None = None
@@ -39,14 +39,14 @@ class ScheduleUpdate(BaseModel):
 class ScheduleResponse(BaseModel):
     id: int
     user_id: UUID | None
-    timestamp: datetime
+    datetime: DateTime
     description: str
     calls: list[Any]
     location: str
     is_home: bool
     metadata: dict
     status: list[str]
-    created_at: datetime
+    created_at: DateTime
 
     model_config = {"from_attributes": True}
 
@@ -56,6 +56,8 @@ class ScheduleBatchCreate(BaseModel):
     entries: list[ScheduleCreate]
     replace: bool = True
     user_name: str | None = None
+    user_job: str | None = None
+    location_id: str | None = None    # explicit location UUID — takes priority over metadata
     location_name: str | None = None
     timezone: str = "Asia/Seoul"
 
@@ -65,7 +67,7 @@ class ScheduleBatchResult(BaseModel):
     created: int
     user_id: str
     location_id: str
-    date: int   # YYYYMMDD derived from first entry timestamp
+    date: int   # YYYYMMDD derived from first entry datetime
 
 
 # ── Timeline response (schedule-based) ──

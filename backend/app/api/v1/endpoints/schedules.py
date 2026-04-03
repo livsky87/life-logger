@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime as DateTime, timedelta, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query
@@ -22,10 +22,10 @@ router = APIRouter()
 KST = timezone(timedelta(hours=9))
 
 
-def _date_range(date: int) -> tuple[datetime, datetime]:
+def _date_range(date: int) -> tuple[DateTime, DateTime]:
     """Return UTC-aware [start, end) for a KST YYYYMMDD day."""
     s = str(date)
-    day_start_kst = datetime(int(s[:4]), int(s[4:6]), int(s[6:8]), 0, 0, 0, tzinfo=KST)
+    day_start_kst = DateTime(int(s[:4]), int(s[4:6]), int(s[6:8]), 0, 0, 0, tzinfo=KST)
     day_end_kst = day_start_kst + timedelta(days=1)
     return day_start_kst.astimezone(timezone.utc), day_end_kst.astimezone(timezone.utc)
 
@@ -34,7 +34,7 @@ def _to_response(schedule) -> ScheduleResponse:
     return ScheduleResponse(
         id=schedule.id,
         user_id=schedule.user_id,
-        timestamp=schedule.timestamp,
+        datetime=schedule.timestamp,   # ORM column is "timestamp", API field is "datetime"
         description=schedule.description,
         calls=schedule.calls,
         location=schedule.location,
@@ -45,9 +45,9 @@ def _to_response(schedule) -> ScheduleResponse:
     )
 
 
-def _timestamp_to_date_int(ts: datetime) -> int:
-    kst_ts = ts.astimezone(KST)
-    return int(kst_ts.strftime("%Y%m%d"))
+def _datetime_to_date_int(dt: DateTime) -> int:
+    kst_dt = dt.astimezone(KST)
+    return int(kst_dt.strftime("%Y%m%d"))
 
 
 @router.post("/batch", response_model=ScheduleBatchResult, status_code=201)
@@ -58,9 +58,10 @@ async def batch_upload_schedules(
 ):
     """
     Batch upload a full day's schedule for one user.
-    Derives date from first entry's timestamp (KST).
-    Auto-creates location and user if they don't exist.
-    If replace=True, deletes existing entries for that user+day first.
+    - location_id in body takes priority over metadata.home.locationId.
+    - user_job is stored if provided.
+    - Derives date from first entry's datetime (KST).
+    - If replace=True, deletes existing entries for that user+day first.
     """
     if not body.entries:
         raise HTTPException(status_code=400, detail="entries must not be empty")
@@ -70,24 +71,31 @@ async def batch_upload_schedules(
         raise HTTPException(status_code=400, detail="user_id is required in entries")
 
     user_id = first.user_id
-    date_int = _timestamp_to_date_int(first.timestamp)
+    date_int = _datetime_to_date_int(first.datetime)
     date_start, date_end = _date_range(date_int)
 
-    # Extract locationId from metadata if available
-    home_meta = first.metadata.get("home", {}) if first.metadata else {}
-    raw_loc_id = home_meta.get("locationId")
+    # Resolve location_id: explicit body field > metadata.home.locationId
     location_id: UUID | None = None
-    if raw_loc_id:
+    if body.location_id:
         try:
-            location_id = UUID(str(raw_loc_id))
+            location_id = UUID(str(body.location_id))
         except (ValueError, AttributeError):
             pass
+
+    if location_id is None:
+        home_meta = first.metadata.get("home", {}) if first.metadata else {}
+        raw_loc_id = home_meta.get("locationId")
+        if raw_loc_id:
+            try:
+                location_id = UUID(str(raw_loc_id))
+            except (ValueError, AttributeError):
+                pass
 
     # Upsert location
     if location_id:
         loc_orm = await db.get(LocationORM, location_id)
         if not loc_orm:
-            loc_name = body.location_name or home_meta.get("residence_type", "홈")
+            loc_name = body.location_name or "홈"
             loc_orm = LocationORM(
                 id=location_id,
                 name=loc_name,
@@ -109,20 +117,27 @@ async def batch_upload_schedules(
             id=user_id,
             location_id=location_id,
             name=body.user_name or f"사용자_{str(user_id)[:8]}",
+            job=body.user_job,
         )
         db.add(user_orm)
         await db.flush()
+    else:
+        # Update name/job if provided
+        if body.user_name:
+            user_orm.name = body.user_name
+        if body.user_job:
+            user_orm.job = body.user_job
 
     # Delete existing if replace=True
     deleted = 0
     if body.replace:
         deleted = await service.delete_by_user_date(user_id, date_start, date_end)
 
-    # Bulk create
+    # Bulk create — map schema "datetime" → internal "timestamp"
     entries_dicts = [
         {
             "user_id": user_id,
-            "timestamp": e.timestamp,
+            "timestamp": e.datetime,
             "description": e.description,
             "calls": [c.model_dump() for c in e.calls],
             "location": e.location,
@@ -162,9 +177,7 @@ async def get_schedule_timeline(
     date: int = Query(..., description="Date in YYYYMMDD format (KST)"),
     location_id: UUID | None = Query(default=None, description="Filter by location UUID"),
 ):
-    """
-    Return schedule data grouped by location → user for timeline rendering.
-    """
+    """Return schedule data grouped by location → user for timeline rendering."""
     date_start, date_end = _date_range(date)
     schedules = await service.get_by_date(date_start, date_end)
 
@@ -245,7 +258,7 @@ async def get_schedule_timeline(
 async def create_schedule(body: ScheduleCreate, service: ScheduleServiceDep):
     schedule = await service.create(
         user_id=body.user_id,
-        timestamp=body.timestamp,
+        timestamp=body.datetime,
         description=body.description,
         calls=[c.model_dump() for c in body.calls],
         location=body.location,
@@ -281,7 +294,7 @@ async def update_schedule(schedule_id: int, body: ScheduleUpdate, service: Sched
     schedule = await service.update(
         schedule_id=schedule_id,
         user_id=body.user_id,
-        timestamp=body.timestamp,
+        timestamp=body.datetime,
         description=body.description,
         calls=calls_raw,
         location=body.location,

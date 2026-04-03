@@ -115,7 +115,7 @@ function SimulationContent() {
     return `${String(kst.getUTCHours()).padStart(2, "0")}:${String(kst.getUTCMinutes()).padStart(2, "0")}`;
   }
 
-  const timeStr = currentEntry ? formatKst(currentEntry.timestamp) : "--:--";
+  const timeStr = currentEntry ? formatKst(currentEntry.datetime) : "--:--";
 
   const progressPct = totalSteps > 0 ? (currentStep / Math.max(1, totalSteps - 1)) * 100 : 0;
   const locBg = currentEntry ? (LOCATION_BG[currentEntry.location] ?? "bg-gray-50 border-gray-200") : "bg-gray-50 border-gray-200";
@@ -227,7 +227,7 @@ function SimulationContent() {
                     onClick={() => setCurrentStep(i)}
                     className={`absolute w-2 h-2 rounded-full -translate-x-1/2 top-1 transition-all ${i === currentStep ? "bg-indigo-600 scale-150" : "bg-gray-300 hover:bg-indigo-300"}`}
                     style={{ left: `${leftPct}%` }}
-                    title={`${formatKst(e.timestamp)} ${e.description.slice(0, 20)}`}
+                    title={`${formatKst(e.datetime)} ${e.description.slice(0, 20)}`}
                   />
                 );
               })}
@@ -295,7 +295,7 @@ function SimulationContent() {
                   className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition ${i === currentStep ? "bg-indigo-50" : "hover:bg-gray-50"}`}
                 >
                   <span className="text-xs font-mono text-gray-500 shrink-0 w-10">
-                    {formatKst(entry.timestamp)}
+                    {formatKst(entry.datetime)}
                   </span>
                   <span className={`text-sm truncate flex-1 ${i === currentStep ? "font-medium text-indigo-800" : "text-gray-700"}`}>
                     {entry.description}

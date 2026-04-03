@@ -5,20 +5,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Schedule, ScheduleTimelineUser } from "@/domain/scheduleTypes";
 
-// ── Location color mapping ────────────────────────────────────────────────────
-
 const LOCATION_COLORS: Record<string, string> = {
   "우리 집": "bg-blue-400",
+  "집": "bg-blue-400",
   "이동 중": "bg-amber-400",
+  "이동중": "bg-amber-400",
   "회사": "bg-purple-400",
   "외부": "bg-orange-400",
-};
-
-const LOCATION_TEXT: Record<string, string> = {
-  "우리 집": "text-blue-700",
-  "이동 중": "text-amber-700",
-  "회사": "text-purple-700",
-  "외부": "text-orange-700",
 };
 
 const STATUS_TAG_COLORS: Record<string, string> = {
@@ -28,36 +21,33 @@ const STATUS_TAG_COLORS: Record<string, string> = {
   "청소": "bg-green-100 text-green-700",
   "펫 활동": "bg-pink-100 text-pink-700",
   "펫 수면": "bg-pink-100 text-pink-600",
+  "식사": "bg-yellow-100 text-yellow-700",
+  "운동": "bg-emerald-100 text-emerald-700",
+  "업무": "bg-violet-100 text-violet-700",
+  "외출": "bg-rose-100 text-rose-700",
+  "귀가": "bg-sky-100 text-sky-700",
 };
 
 function getSegmentColor(loc: string, isHome: boolean): string {
   if (isHome) return "bg-blue-200";
-  const color = LOCATION_COLORS[loc];
-  if (color) return color.replace("400", "200");
-  return "bg-gray-200";
+  const key = Object.keys(LOCATION_COLORS).find((k) => loc.includes(k)) ?? "";
+  return LOCATION_COLORS[key]?.replace("400", "200") ?? "bg-gray-200";
 }
 
-/** Returns a fraction [0, 1] representing the time position within a 24-hour day (in KST). */
-function timestampToFraction(timestamp: string): number {
-  const d = new Date(timestamp);
-  // Convert to KST offset
+/** Returns a fraction [0, 1] for the time position within a 24-hour KST day. */
+function datetimeToFraction(dt: string): number {
+  const d = new Date(dt);
   const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
-  const minutes = kst.getUTCHours() * 60 + kst.getUTCMinutes();
-  return minutes / (24 * 60);
+  return (kst.getUTCHours() * 60 + kst.getUTCMinutes()) / (24 * 60);
 }
 
-/** Format timestamp as HH:MM in KST. */
-function formatTime(timestamp: string): string {
-  const d = new Date(timestamp);
+function formatKst(dt: string): string {
+  const d = new Date(dt);
   const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
   return `${String(kst.getUTCHours()).padStart(2, "0")}:${String(kst.getUTCMinutes()).padStart(2, "0")}`;
 }
 
-interface TooltipState {
-  x: number;
-  y: number;
-  content: React.ReactNode;
-}
+interface TooltipState { x: number; y: number; content: React.ReactNode }
 
 function Tooltip({ tooltip }: { tooltip: TooltipState | null }) {
   if (!tooltip) return null;
@@ -75,7 +65,7 @@ function EntryTooltip({ entry }: { entry: Schedule }) {
   return (
     <div>
       <div className="font-semibold text-white">
-        {formatTime(entry.timestamp)}
+        {formatKst(entry.datetime)}
         <span className="ml-2 text-gray-300 font-normal">📍 {entry.location}</span>
       </div>
       <div className="text-gray-200 mt-1 text-xs max-w-[220px] whitespace-normal leading-snug">
@@ -130,7 +120,6 @@ export const ScheduleUserRow = React.memo(function ScheduleUserRow({ user, dateI
             <div className="text-[10px] text-gray-400 truncate">{user.user_job}</div>
           )}
         </div>
-        {/* Simulation button */}
         <button
           onClick={() => router.push(`/simulation?userId=${user.user_id}&date=${dateStr}`)}
           className="shrink-0 w-6 h-6 rounded flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition"
@@ -144,20 +133,15 @@ export const ScheduleUserRow = React.memo(function ScheduleUserRow({ user, dateI
 
       {/* Timeline area */}
       <div className="relative flex-1 bg-white overflow-hidden">
-        {/* Hour grid lines */}
         {Array.from({ length: 25 }).map((_, h) => (
-          <div
-            key={h}
-            className="absolute top-0 bottom-0 border-l border-gray-100"
-            style={{ left: `${(h / 24) * 100}%` }}
-          />
+          <div key={h} className="absolute top-0 bottom-0 border-l border-gray-100" style={{ left: `${(h / 24) * 100}%` }} />
         ))}
 
-        {/* Segment bars between entries */}
+        {/* Segment bars */}
         {entries.map((entry, i) => {
-          const startFrac = timestampToFraction(entry.timestamp);
+          const startFrac = datetimeToFraction(entry.datetime);
           const nextEntry = entries[i + 1];
-          const endFrac = nextEntry ? timestampToFraction(nextEntry.timestamp) : startFrac + 1 / 96;
+          const endFrac = nextEntry ? datetimeToFraction(nextEntry.datetime) : startFrac + 1 / 96;
           const widthPct = Math.max(0, (endFrac - startFrac) * 100);
           if (widthPct <= 0) return null;
           const segColor = getSegmentColor(entry.location, entry.is_home);
@@ -165,52 +149,34 @@ export const ScheduleUserRow = React.memo(function ScheduleUserRow({ user, dateI
             <div
               key={`seg-${entry.id}`}
               className={`absolute top-1/2 -translate-y-1/2 rounded-sm opacity-60 ${segColor}`}
-              style={{
-                left: `${startFrac * 100}%`,
-                width: `${widthPct}%`,
-                height: 8,
-              }}
+              style={{ left: `${startFrac * 100}%`, width: `${widthPct}%`, height: 8 }}
             />
           );
         })}
 
         {/* Entry dots */}
         {entries.map((entry) => {
-          const leftPct = timestampToFraction(entry.timestamp) * 100;
+          const leftPct = datetimeToFraction(entry.datetime) * 100;
           const hasCalls = entry.calls.length > 0;
           const hasStatus = entry.status.length > 0;
-          const dotColor = entry.is_home ? "bg-blue-500" : (LOCATION_COLORS[entry.location] ?? "bg-gray-500");
+          const dotColor = entry.is_home
+            ? "bg-blue-500"
+            : (Object.entries(LOCATION_COLORS).find(([k]) => entry.location.includes(k))?.[1]?.replace("bg-", "bg-") ?? "bg-gray-500");
 
           return (
             <div key={`dot-${entry.id}`}>
-              {/* Main dot */}
               <div
                 className={`absolute rounded-full cursor-pointer ring-2 ring-white shadow-sm hover:scale-125 transition-transform ${dotColor}`}
-                style={{
-                  left: `calc(${leftPct}% - 5px)`,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  width: 10,
-                  height: 10,
-                }}
+                style={{ left: `calc(${leftPct}% - 5px)`, top: "50%", transform: "translateY(-50%)", width: 10, height: 10 }}
                 onMouseMove={(e) => handleHover(e.clientX, e.clientY, <EntryTooltip entry={entry} />)}
                 onMouseLeave={handleLeave}
               />
-              {/* Call marker */}
               {hasCalls && (
-                <div
-                  className="absolute text-amber-500 pointer-events-none select-none leading-none"
-                  style={{ left: `calc(${leftPct}% - 4px)`, top: 4, fontSize: 10 }}
-                >
-                  ⚡
-                </div>
+                <div className="absolute text-amber-500 pointer-events-none select-none leading-none"
+                  style={{ left: `calc(${leftPct}% - 4px)`, top: 4, fontSize: 10 }}>⚡</div>
               )}
-              {/* Status tag (first one) */}
               {hasStatus && (
-                <div
-                  className="absolute pointer-events-none select-none"
-                  style={{ left: `calc(${leftPct}% + 7px)`, bottom: 4 }}
-                >
+                <div className="absolute pointer-events-none select-none" style={{ left: `calc(${leftPct}% + 7px)`, bottom: 4 }}>
                   <span className={`text-[9px] px-1 py-0 rounded leading-none font-medium ${STATUS_TAG_COLORS[entry.status[0]] ?? "bg-gray-100 text-gray-500"}`}>
                     {entry.status[0]}
                   </span>

@@ -10,7 +10,7 @@ export interface ScheduleCall {
 export interface Schedule {
   id: number;
   user_id: string | null;
-  timestamp: string;        // ISO 8601 datetime with timezone, e.g. "2026-04-02T06:57:00+09:00"
+  datetime: string;         // ISO 8601 datetime with timezone, e.g. "2026-04-02T06:30:00+09:00"
   description: string;
   calls: ScheduleCall[];
   location: string;
@@ -22,7 +22,7 @@ export interface Schedule {
 
 export interface ScheduleCreate {
   user_id?: string | null;
-  timestamp: string;
+  datetime: string;
   description: string;
   calls?: ScheduleCall[];
   location?: string;
@@ -33,7 +33,7 @@ export interface ScheduleCreate {
 
 export interface ScheduleUpdate {
   user_id?: string | null;
-  timestamp?: string;
+  datetime?: string;
   description?: string;
   calls?: ScheduleCall[];
   location?: string;
@@ -46,6 +46,8 @@ export interface ScheduleBatchCreate {
   entries: ScheduleCreate[];
   replace?: boolean;
   user_name?: string;
+  user_job?: string;
+  location_id?: string;
   location_name?: string;
   timezone?: string;
 }
