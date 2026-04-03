@@ -43,8 +43,8 @@ export async function deleteDaySchedules(userId: string, date: number): Promise<
   );
 }
 
-export async function fetchScheduleTimeline(date: number, locationId?: string): Promise<ScheduleTimelineResponse> {
-  let url = `/api/v1/schedules/timeline?date=${date}`;
+export async function fetchScheduleTimeline(date: number, days = 1, locationId?: string): Promise<ScheduleTimelineResponse> {
+  let url = `/api/v1/schedules/timeline?date=${date}&days=${days}`;
   if (locationId) url += `&location_id=${locationId}`;
   return apiFetch<ScheduleTimelineResponse>(url);
 }

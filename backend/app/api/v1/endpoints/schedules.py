@@ -22,11 +22,11 @@ router = APIRouter()
 KST = timezone(timedelta(hours=9))
 
 
-def _date_range(date: int) -> tuple[DateTime, DateTime]:
-    """Return UTC-aware [start, end) for a KST YYYYMMDD day."""
+def _date_range(date: int, days: int = 1) -> tuple[DateTime, DateTime]:
+    """Return UTC-aware [start, end) for a KST YYYYMMDD date range."""
     s = str(date)
     day_start_kst = DateTime(int(s[:4]), int(s[4:6]), int(s[6:8]), 0, 0, 0, tzinfo=KST)
-    day_end_kst = day_start_kst + timedelta(days=1)
+    day_end_kst = day_start_kst + timedelta(days=days)
     return day_start_kst.astimezone(timezone.utc), day_end_kst.astimezone(timezone.utc)
 
 
@@ -175,10 +175,11 @@ async def get_schedule_timeline(
     db: DBSession,
     service: ScheduleServiceDep,
     date: int = Query(..., description="Date in YYYYMMDD format (KST)"),
+    days: int = Query(default=1, ge=1, le=31, description="Inclusive day count from start date"),
     location_id: UUID | None = Query(default=None, description="Filter by location UUID"),
 ):
     """Return schedule data grouped by location → user for timeline rendering."""
-    date_start, date_end = _date_range(date)
+    date_start, date_end = _date_range(date, days=days)
     schedules = await service.get_by_date(date_start, date_end)
 
     if not schedules:
@@ -187,6 +188,7 @@ async def get_schedule_timeline(
             if loc:
                 return ScheduleTimelineResponse(
                     date=date,
+                    range_days=days,
                     locations=[ScheduleTimelineLocation(
                         location_id=str(loc.id),
                         name=loc.name,
@@ -194,7 +196,7 @@ async def get_schedule_timeline(
                         users=[],
                     )],
                 )
-        return ScheduleTimelineResponse(date=date, locations=[])
+        return ScheduleTimelineResponse(date=date, range_days=days, locations=[])
 
     user_ids = list({s.user_id for s in schedules if s.user_id})
 
@@ -251,7 +253,7 @@ async def get_schedule_timeline(
             users=users_out,
         ))
 
-    return ScheduleTimelineResponse(date=date, locations=locations_out)
+    return ScheduleTimelineResponse(date=date, range_days=days, locations=locations_out)
 
 
 @router.post("", response_model=ScheduleResponse, status_code=201)

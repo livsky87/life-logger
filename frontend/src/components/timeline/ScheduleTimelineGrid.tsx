@@ -8,6 +8,7 @@ import { getTimeTicks } from "./timelineUtils";
 
 interface Props {
   dateInt: number;
+  days: number;
   locationId?: string;
 }
 
@@ -19,13 +20,17 @@ function dateIntToDate(n: number): Date {
 function LocationBlock({
   location,
   dateInt,
+  rangeStart,
+  rangeEnd,
+  days,
 }: {
   location: { location_id: string; name: string; timezone: string; users: any[] };
   dateInt: number;
+  rangeStart: Date;
+  rangeEnd: Date;
+  days: number;
 }) {
   const [collapsed, setCollapsed] = useState(false);
-  const rangeStart = dateIntToDate(dateInt);
-  const rangeEnd = new Date(rangeStart.getTime() + 24 * 60 * 60 * 1000);
   const ticks = getTimeTicks(rangeStart, rangeEnd, location.timezone);
 
   return (
@@ -72,6 +77,9 @@ function LocationBlock({
             key={user.user_id}
             user={user}
             dateInt={dateInt}
+            rangeStart={rangeStart}
+            rangeEnd={rangeEnd}
+            days={days}
             isLast={idx === location.users.length - 1}
           />
         ))}
@@ -85,8 +93,10 @@ function LocationBlock({
   );
 }
 
-export function ScheduleTimelineGrid({ dateInt, locationId }: Props) {
-  const { data, isLoading, isError, error } = useScheduleTimeline(dateInt, locationId);
+export function ScheduleTimelineGrid({ dateInt, days, locationId }: Props) {
+  const { data, isLoading, isError, error } = useScheduleTimeline(dateInt, days, locationId);
+  const rangeStart = dateIntToDate(dateInt);
+  const rangeEnd = new Date(rangeStart.getTime() + days * 24 * 60 * 60 * 1000);
 
   if (isLoading) {
     return (
@@ -116,7 +126,7 @@ export function ScheduleTimelineGrid({ dateInt, locationId }: Props) {
             d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
         <div className="text-center">
-          <p className="text-sm font-medium text-neutral-600">이 날짜에 스케줄 데이터가 없습니다</p>
+          <p className="text-sm font-medium text-neutral-600">선택한 기간에 스케줄 데이터가 없습니다</p>
           <p className="text-xs text-neutral-400 mt-1">스케줄을 업로드하거나 직접 입력하세요</p>
         </div>
       </div>
@@ -126,7 +136,14 @@ export function ScheduleTimelineGrid({ dateInt, locationId }: Props) {
   return (
     <div>
       {data.locations.map((loc) => (
-        <LocationBlock key={loc.location_id} location={loc} dateInt={dateInt} />
+        <LocationBlock
+          key={loc.location_id}
+          location={loc}
+          dateInt={dateInt}
+          rangeStart={rangeStart}
+          rangeEnd={rangeEnd}
+          days={days}
+        />
       ))}
     </div>
   );

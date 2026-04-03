@@ -21,10 +21,10 @@ export function useSchedules(date: number, userId?: string | null) {
   });
 }
 
-export function useScheduleTimeline(date: number, locationId?: string) {
+export function useScheduleTimeline(date: number, days = 1, locationId?: string) {
   return useQuery({
-    queryKey: ["schedule-timeline", date, locationId ?? null],
-    queryFn: () => fetchScheduleTimeline(date, locationId),
+    queryKey: ["schedule-timeline", date, days, locationId ?? null],
+    queryFn: () => fetchScheduleTimeline(date, days, locationId),
     staleTime: 30_000,
     enabled: !!date,
   });
@@ -47,7 +47,7 @@ export function useCreateSchedule() {
     onSuccess: (data) => {
       const date = dtToDateInt(data.datetime);
       qc.invalidateQueries({ queryKey: ["schedules", date] });
-      qc.invalidateQueries({ queryKey: ["schedule-timeline", date] });
+      qc.invalidateQueries({ queryKey: ["schedule-timeline"] });
     },
   });
 }
@@ -60,7 +60,7 @@ export function useUpdateSchedule() {
     onSuccess: (data) => {
       const date = dtToDateInt(data.datetime);
       qc.invalidateQueries({ queryKey: ["schedules", date] });
-      qc.invalidateQueries({ queryKey: ["schedule-timeline", date] });
+      qc.invalidateQueries({ queryKey: ["schedule-timeline"] });
     },
   });
 }
@@ -72,7 +72,7 @@ export function useDeleteSchedule() {
       deleteSchedule(id).then(() => date),
     onSuccess: (date) => {
       qc.invalidateQueries({ queryKey: ["schedules", date] });
-      qc.invalidateQueries({ queryKey: ["schedule-timeline", date] });
+      qc.invalidateQueries({ queryKey: ["schedule-timeline"] });
     },
   });
 }
@@ -83,7 +83,7 @@ export function useBatchUploadSchedules() {
     mutationFn: (body: ScheduleBatchCreate) => batchUploadSchedules(body),
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ["schedules", data.date] });
-      qc.invalidateQueries({ queryKey: ["schedule-timeline", data.date] });
+      qc.invalidateQueries({ queryKey: ["schedule-timeline"] });
     },
   });
 }
@@ -95,7 +95,7 @@ export function useDeleteDaySchedules() {
       deleteDaySchedules(userId, date),
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: ["schedules", vars.date] });
-      qc.invalidateQueries({ queryKey: ["schedule-timeline", vars.date] });
+      qc.invalidateQueries({ queryKey: ["schedule-timeline"] });
     },
   });
 }

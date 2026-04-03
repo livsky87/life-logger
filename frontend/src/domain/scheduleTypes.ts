@@ -78,5 +78,6 @@ export interface ScheduleTimelineLocation {
 
 export interface ScheduleTimelineResponse {
   date: number;
+  range_days: number;
   locations: ScheduleTimelineLocation[];
 }

@@ -88,4 +88,5 @@ class ScheduleTimelineLocation(BaseModel):
 
 class ScheduleTimelineResponse(BaseModel):
     date: int   # YYYYMMDD
+    range_days: int = 1
     locations: list[ScheduleTimelineLocation]

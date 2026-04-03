@@ -42,10 +42,15 @@ function getSegmentType(location: string, isHome: boolean): SegmentType {
   return "home";
 }
 
-function datetimeToFraction(dt: string): number {
-  const d = new Date(dt);
-  const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
-  return (kst.getUTCHours() * 60 + kst.getUTCMinutes()) / (24 * 60);
+function clamp01(n: number): number {
+  return Math.max(0, Math.min(1, n));
+}
+
+function datetimeToRangeFraction(dt: string, rangeStart: Date, rangeEnd: Date): number {
+  const t = new Date(dt).getTime();
+  const total = rangeEnd.getTime() - rangeStart.getTime();
+  if (total <= 0) return 0;
+  return clamp01((t - rangeStart.getTime()) / total);
 }
 
 function formatKst(dt: string): string {
@@ -138,12 +143,15 @@ function EntryTooltipContent({ entry }: { entry: Schedule }) {
 interface Props {
   user: ScheduleTimelineUser;
   dateInt: number;
+  rangeStart: Date;
+  rangeEnd: Date;
+  days: number;
   isLast: boolean;
 }
 
 const ROW_HEIGHT = 56;
 
-export const ScheduleUserRow = React.memo(function ScheduleUserRow({ user, dateInt, isLast }: Props) {
+export const ScheduleUserRow = React.memo(function ScheduleUserRow({ user, dateInt, rangeStart, rangeEnd, days, isLast }: Props) {
   const router = useRouter();
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const handleHover = useCallback((x: number, y: number, content: React.ReactNode) =>
@@ -154,12 +162,15 @@ export const ScheduleUserRow = React.memo(function ScheduleUserRow({ user, dateI
   const entries = user.entries;
 
   const density = useMemo(() => buildDensityMap(entries), [entries]);
+  const totalMs = useMemo(() => Math.max(1, rangeEnd.getTime() - rangeStart.getTime()), [rangeEnd, rangeStart]);
 
   // Current-hour marker
   const nowFrac = useMemo(() => {
     const now = new Date();
-    return (now.getHours() * 60 + now.getMinutes()) / (24 * 60);
-  }, []);
+    const nowMs = now.getTime();
+    if (nowMs < rangeStart.getTime() || nowMs >= rangeEnd.getTime()) return -1;
+    return (nowMs - rangeStart.getTime()) / totalMs;
+  }, [rangeEnd, rangeStart, totalMs]);
 
   return (
     <div
@@ -193,14 +204,14 @@ export const ScheduleUserRow = React.memo(function ScheduleUserRow({ user, dateI
 
       {/* Timeline area */}
       <div className="relative flex-1 overflow-hidden">
-        {/* Hour grid lines */}
-        {Array.from({ length: 25 }).map((_, h) => (
+        {/* Grid lines */}
+        {Array.from({ length: days <= 1 ? 25 : days + 1 }).map((_, i) => (
           <div
-            key={h}
+            key={i}
             className="absolute top-0 bottom-0"
             style={{
-              left: `${(h / 24) * 100}%`,
-              borderLeft: h % 6 === 0 ? "1px solid rgba(0,0,0,0.08)" : "1px solid rgba(0,0,0,0.04)",
+              left: `${days <= 1 ? (i / 24) * 100 : (i / days) * 100}%`,
+              borderLeft: days <= 1 && i % 6 === 0 ? "1px solid rgba(0,0,0,0.08)" : "1px solid rgba(0,0,0,0.04)",
             }}
           />
         ))}
@@ -215,9 +226,11 @@ export const ScheduleUserRow = React.memo(function ScheduleUserRow({ user, dateI
 
         {/* Segment bars (presence track) */}
         {entries.map((entry, i) => {
-          const startFrac = datetimeToFraction(entry.datetime);
+          const startFrac = datetimeToRangeFraction(entry.datetime, rangeStart, rangeEnd);
           const nextEntry = entries[i + 1];
-          const endFrac = nextEntry ? datetimeToFraction(nextEntry.datetime) : startFrac + 1 / 96;
+          const endFrac = nextEntry
+            ? datetimeToRangeFraction(nextEntry.datetime, rangeStart, rangeEnd)
+            : clamp01(startFrac + (5 * 60 * 1000) / totalMs);
           const widthPct = Math.max(0, (endFrac - startFrac) * 100);
           if (widthPct <= 0) return null;
           const segType = getSegmentType(entry.location, entry.is_home);
@@ -233,7 +246,7 @@ export const ScheduleUserRow = React.memo(function ScheduleUserRow({ user, dateI
 
         {/* Entry dots + status labels */}
         {entries.map((entry) => {
-          const leftPct = datetimeToFraction(entry.datetime) * 100;
+          const leftPct = datetimeToRangeFraction(entry.datetime, rangeStart, rangeEnd) * 100;
           const hasCalls = entry.calls.length > 0;
           const segType = getSegmentType(entry.location, entry.is_home);
           const palette = SEGMENT_PALETTE[segType];
@@ -271,8 +284,8 @@ export const ScheduleUserRow = React.memo(function ScheduleUserRow({ user, dateI
           );
         })}
 
-        {/* Density heatmap strip at bottom */}
-        <DensityHeatmap density={density} />
+        {/* Density heatmap strip at bottom (single-day only) */}
+        {days === 1 && <DensityHeatmap density={density} />}
 
         <Tooltip tooltip={tooltip} />
       </div>
