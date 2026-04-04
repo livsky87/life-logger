@@ -24,10 +24,10 @@ function dateToInt(d: Date): number {
 }
 
 const LOCATION_BG: Record<string, string> = {
-  "우리 집": "bg-blue-50 border-blue-200",
-  "이동 중": "bg-amber-50 border-amber-200",
-  "회사": "bg-purple-50 border-purple-200",
-  "외부": "bg-orange-50 border-orange-200",
+  "우리 집": "bg-blue-50 border-blue-200 dark:bg-blue-950/45 dark:border-blue-800",
+  "이동 중": "bg-amber-50 border-amber-200 dark:bg-amber-950/35 dark:border-amber-800",
+  "회사": "bg-purple-50 border-purple-200 dark:bg-purple-950/45 dark:border-purple-800",
+  "외부": "bg-orange-50 border-orange-200 dark:bg-orange-950/35 dark:border-orange-800",
 };
 
 const LOCATION_ICON: Record<string, string> = {
@@ -38,12 +38,12 @@ const LOCATION_ICON: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  "수면": "bg-indigo-100 text-indigo-700",
-  "요리": "bg-orange-100 text-orange-700",
-  "설거지": "bg-cyan-100 text-cyan-700",
-  "청소": "bg-green-100 text-green-700",
-  "펫 활동": "bg-pink-100 text-pink-700",
-  "펫 수면": "bg-pink-100 text-pink-600",
+  수면: "bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-200",
+  요리: "bg-orange-100 text-orange-800 dark:bg-orange-950/50 dark:text-orange-200",
+  설거지: "bg-cyan-100 text-cyan-800 dark:bg-cyan-950/50 dark:text-cyan-200",
+  청소: "bg-green-100 text-green-800 dark:bg-green-950/50 dark:text-green-200",
+  "펫 활동": "bg-pink-100 text-pink-800 dark:bg-pink-950/50 dark:text-pink-200",
+  "펫 수면": "bg-pink-100 text-pink-700 dark:bg-pink-950/50 dark:text-pink-300",
 };
 
 function SimulationContent() {
@@ -118,24 +118,26 @@ function SimulationContent() {
   const timeStr = currentEntry ? formatKst(currentEntry.datetime) : "--:--";
 
   const progressPct = totalSteps > 0 ? (currentStep / Math.max(1, totalSteps - 1)) * 100 : 0;
-  const locBg = currentEntry ? (LOCATION_BG[currentEntry.location] ?? "bg-gray-50 border-gray-200") : "bg-gray-50 border-gray-200";
+  const locBg = currentEntry
+    ? (LOCATION_BG[currentEntry.location] ??
+        "bg-zinc-100 border-zinc-200 dark:bg-zinc-900/60 dark:border-zinc-700")
+    : "bg-zinc-100 border-zinc-200 dark:bg-zinc-900/60 dark:border-zinc-700";
   const locIcon = currentEntry ? (LOCATION_ICON[currentEntry.location] ?? "📍") : "📍";
 
   return (
-    <div className="max-w-3xl mx-auto p-6">
+    <div className="mx-auto max-w-3xl p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">시뮬레이션</h1>
-        <p className="text-gray-500 text-sm mt-1">스케줄 기반 하루 행동 시뮬레이션</p>
+        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">시뮬레이션</h1>
+        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">스케줄 기반 하루 행동 시뮬레이션</p>
       </div>
 
-      {/* Controls row */}
-      <div className="flex flex-wrap items-center gap-3 mb-6">
+      <div className="mb-6 flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-gray-600 shrink-0">사용자</label>
+          <label className="shrink-0 text-sm font-medium text-zinc-600 dark:text-zinc-400">사용자</label>
           <select
             value={selectedUserId}
             onChange={(e) => setSelectedUserId(e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-800 focus:outline-none focus:ring-2 focus:ring-cyan-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
           >
             <option value="">선택</option>
             {users.map((u) => (
@@ -144,30 +146,41 @@ function SimulationContent() {
           </select>
         </div>
 
-        <button onClick={() => shiftDay(-1)} className="p-2 rounded-lg border border-gray-200 hover:bg-gray-100 transition">
+        <button
+          onClick={() => shiftDay(-1)}
+          className="rounded-lg border border-zinc-200 p-2 transition hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+        >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <button onClick={() => setDateInt(todayAsInt())} className="px-3 py-2 text-sm rounded-lg border border-gray-200 hover:bg-gray-100 transition">오늘</button>
-        <button onClick={() => shiftDay(1)} className="p-2 rounded-lg border border-gray-200 hover:bg-gray-100 transition">
+        <button
+          onClick={() => setDateInt(todayAsInt())}
+          className="rounded-lg border border-zinc-200 px-3 py-2 text-sm transition hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+        >
+          오늘
+        </button>
+        <button
+          onClick={() => shiftDay(1)}
+          className="rounded-lg border border-zinc-200 p-2 transition hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+        >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
           </svg>
         </button>
-        <span className="text-sm font-medium text-gray-700">
+        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-200">
           {format(currentDate, "yyyy년 M월 d일 (EEE)", { locale: ko })}
         </span>
       </div>
 
       {isLoading ? (
-        <div className="text-center text-gray-400 py-16">로딩 중...</div>
+        <div className="py-16 text-center text-zinc-400 dark:text-zinc-500">로딩 중...</div>
       ) : !selectedUserId ? (
-        <div className="text-center text-gray-400 py-16 bg-white rounded-2xl border border-gray-200">
+        <div className="rounded-2xl border border-zinc-200 bg-white py-16 text-center text-zinc-400 dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-500">
           위에서 사용자를 선택하세요
         </div>
       ) : entries.length === 0 ? (
-        <div className="text-center text-gray-400 py-16 bg-white rounded-2xl border border-gray-200">
+        <div className="rounded-2xl border border-zinc-200 bg-white py-16 text-center text-zinc-400 dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-500">
           이 날짜에 스케줄 데이터가 없습니다
         </div>
       ) : (
@@ -178,25 +191,37 @@ function SimulationContent() {
               <div className="text-4xl">{locIcon}</div>
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
-                  <span className="text-2xl font-bold text-gray-900 font-mono">{timeStr}</span>
-                  <span className="text-sm text-gray-600 px-2 py-0.5 rounded-full bg-white/60 border border-white">
+                  <span className="font-mono text-2xl font-bold text-zinc-900 dark:text-zinc-50">{timeStr}</span>
+                  <span className="rounded-full border border-white/80 bg-white/70 px-2 py-0.5 text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-950/50 dark:text-zinc-300">
                     {currentEntry?.location ?? ""}
                   </span>
                   {currentEntry?.status.map((s) => (
-                    <span key={s} className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLORS[s] ?? "bg-gray-100 text-gray-600"}`}>{s}</span>
+                    <span
+                      key={s}
+                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[s] ?? "bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"}`}
+                    >
+                      {s}
+                    </span>
                   ))}
                 </div>
-                <p className="text-gray-800 text-base leading-relaxed">
+                <p className="text-base leading-relaxed text-zinc-800 dark:text-zinc-100">
                   {currentEntry?.description ?? ""}
                 </p>
                 {currentEntry && currentEntry.calls.length > 0 && (
                   <div className="mt-3 space-y-1.5">
                     {currentEntry.calls.map((call, i) => (
-                      <div key={i} className="flex items-center gap-2 text-sm bg-white/70 rounded-lg px-3 py-1.5 border border-white">
+                      <div
+                        key={i}
+                        className="flex items-center gap-2 rounded-lg border border-white/80 bg-white/70 px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-950/40"
+                      >
                         <span className="text-amber-500">⚡</span>
-                        <span className="text-xs font-mono font-bold text-blue-600">{call.method}</span>
-                        <span className="text-xs text-gray-600 truncate">{call.deviceId || call.url.slice(0, 40)}</span>
-                        {call.dsec > 0 && <span className="text-xs text-gray-400 ml-auto shrink-0">+{call.dsec}s</span>}
+                        <span className="font-mono text-xs font-bold text-cyan-600 dark:text-cyan-400">{call.method}</span>
+                        <span className="truncate text-xs text-zinc-600 dark:text-zinc-300">
+                          {call.deviceId || call.url.slice(0, 40)}
+                        </span>
+                        {call.dsec > 0 && (
+                          <span className="ml-auto shrink-0 text-xs text-zinc-400 dark:text-zinc-500">+{call.dsec}s</span>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -207,13 +232,15 @@ function SimulationContent() {
 
           {/* Progress bar */}
           <div className="mb-4">
-            <div className="flex justify-between text-xs text-gray-400 mb-1">
-              <span>스텝 {currentStep + 1} / {totalSteps}</span>
+            <div className="mb-1 flex justify-between text-xs text-zinc-400 dark:text-zinc-500">
+              <span>
+                스텝 {currentStep + 1} / {totalSteps}
+              </span>
               <span>{Math.round(progressPct)}%</span>
             </div>
-            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div className="h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
               <div
-                className="h-full bg-indigo-500 rounded-full transition-all duration-300"
+                className="h-full rounded-full bg-cyan-500 transition-all duration-300 dark:bg-cyan-600"
                 style={{ width: `${progressPct}%` }}
               />
             </div>
@@ -225,7 +252,7 @@ function SimulationContent() {
                   <button
                     key={e.id}
                     onClick={() => setCurrentStep(i)}
-                    className={`absolute w-2 h-2 rounded-full -translate-x-1/2 top-1 transition-all ${i === currentStep ? "bg-indigo-600 scale-150" : "bg-gray-300 hover:bg-indigo-300"}`}
+                    className={`absolute top-1 h-2 w-2 -translate-x-1/2 rounded-full transition-all ${i === currentStep ? "scale-150 bg-cyan-600 dark:bg-cyan-500" : "bg-zinc-300 hover:bg-cyan-400 dark:bg-zinc-600 dark:hover:bg-cyan-500"}`}
                     style={{ left: `${leftPct}%` }}
                     title={`${formatKst(e.datetime)} ${e.description.slice(0, 20)}`}
                   />
@@ -235,23 +262,26 @@ function SimulationContent() {
           </div>
 
           {/* Playback controls */}
-          <div className="flex items-center gap-3 justify-center mb-6">
+          <div className="mb-6 flex items-center justify-center gap-3">
             <button
-              onClick={() => { setCurrentStep(0); setPlaying(false); }}
-              className="p-2 rounded-lg border border-gray-200 hover:bg-gray-100 transition"
+              onClick={() => {
+                setCurrentStep(0);
+                setPlaying(false);
+              }}
+              className="rounded-lg border border-zinc-200 p-2 transition hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
               title="처음으로"
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M8.445 14.832A1 1 0 0010 14v-2.798l5.445 3.63A1 1 0 0017 14V6a1 1 0 00-1.555-.832L10 8.798V6a1 1 0 00-1.555-.832l-6 4a1 1 0 000 1.664l6 4z"/></svg>
             </button>
             <button
               onClick={() => setCurrentStep((s) => Math.max(0, s - 1))}
-              className="p-2 rounded-lg border border-gray-200 hover:bg-gray-100 transition"
+              className="rounded-lg border border-zinc-200 p-2 transition hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
             </button>
             <button
               onClick={() => setPlaying((p) => !p)}
-              className="px-6 py-2 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition flex items-center gap-2"
+              className="flex items-center gap-2 rounded-xl bg-cyan-600 px-6 py-2 text-sm font-medium text-white transition hover:bg-cyan-700 dark:bg-cyan-600 dark:hover:bg-cyan-500"
             >
               {playing ? (
                 <>
@@ -267,7 +297,7 @@ function SimulationContent() {
             </button>
             <button
               onClick={() => setCurrentStep((s) => Math.min(totalSteps - 1, s + 1))}
-              className="p-2 rounded-lg border border-gray-200 hover:bg-gray-100 transition"
+              className="rounded-lg border border-zinc-200 p-2 transition hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
             </button>
@@ -275,7 +305,7 @@ function SimulationContent() {
             <select
               value={speed}
               onChange={(e) => setSpeed(Number(e.target.value))}
-              className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs text-gray-600"
+              className="rounded-lg border border-zinc-200 px-2 py-1.5 text-xs text-zinc-600 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-300"
             >
               <option value={2000}>0.5×</option>
               <option value={1000}>1×</option>
@@ -285,27 +315,37 @@ function SimulationContent() {
           </div>
 
           {/* Entry list */}
-          <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-100 text-sm font-medium text-gray-700">전체 일정</div>
-            <div className="max-h-64 overflow-y-auto divide-y divide-gray-50">
+          <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900/60">
+            <div className="border-b border-zinc-100 px-4 py-3 text-sm font-medium text-zinc-700 dark:border-zinc-800 dark:text-zinc-200">
+              전체 일정
+            </div>
+            <div className="max-h-64 divide-y divide-zinc-50 overflow-y-auto dark:divide-zinc-800">
               {entries.map((entry, i) => (
                 <button
                   key={entry.id}
                   onClick={() => setCurrentStep(i)}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition ${i === currentStep ? "bg-indigo-50" : "hover:bg-gray-50"}`}
+                  className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition ${
+                    i === currentStep
+                      ? "bg-cyan-500/10 dark:bg-cyan-500/15"
+                      : "hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                  }`}
                 >
-                  <span className="text-xs font-mono text-gray-500 shrink-0 w-10">
+                  <span className="w-10 shrink-0 font-mono text-xs text-zinc-500 dark:text-zinc-400">
                     {formatKst(entry.datetime)}
                   </span>
-                  <span className={`text-sm truncate flex-1 ${i === currentStep ? "font-medium text-indigo-800" : "text-gray-700"}`}>
+                  <span
+                    className={`flex-1 truncate text-sm ${
+                      i === currentStep
+                        ? "font-medium text-cyan-900 dark:text-cyan-200"
+                        : "text-zinc-700 dark:text-zinc-200"
+                    }`}
+                  >
                     {entry.description}
                   </span>
                   {entry.calls.length > 0 && (
-                    <span className="text-amber-500 text-xs shrink-0">⚡{entry.calls.length}</span>
+                    <span className="shrink-0 text-xs text-amber-500">⚡{entry.calls.length}</span>
                   )}
-                  {i === currentStep && (
-                    <span className="w-2 h-2 rounded-full bg-indigo-500 shrink-0" />
-                  )}
+                  {i === currentStep && <span className="h-2 w-2 shrink-0 rounded-full bg-cyan-500 dark:bg-cyan-400" />}
                 </button>
               ))}
             </div>
@@ -320,7 +360,7 @@ function SimulationContent() {
 
 export default function SimulationPage() {
   return (
-    <Suspense fallback={<div className="p-6 text-gray-400">로딩 중...</div>}>
+    <Suspense fallback={<div className="p-6 text-zinc-400 dark:text-zinc-500">로딩 중...</div>}>
       <SimulationContent />
     </Suspense>
   );

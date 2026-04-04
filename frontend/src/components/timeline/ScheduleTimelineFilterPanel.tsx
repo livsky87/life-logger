@@ -49,15 +49,15 @@ export function ScheduleTimelineFilterPanel({ filter, onChange }: Props) {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded border text-xs font-medium transition-colors ${
+        className={`flex items-center gap-1.5 rounded border px-3 py-1.5 text-xs font-medium transition-colors ${
           offCount > 0
-            ? "border-indigo-300 bg-indigo-50 text-indigo-800"
-            : "border-neutral-200 text-neutral-600 hover:bg-neutral-50"
+            ? "border-cyan-500/40 bg-cyan-500/10 text-cyan-900 dark:border-cyan-500/30 dark:bg-cyan-500/15 dark:text-cyan-200"
+            : "border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800/80"
         }`}
       >
         표시 필터
         {offCount > 0 && (
-          <span className="bg-indigo-600 text-white rounded-full min-w-[1.125rem] h-[1.125rem] px-1 text-[10px] font-bold flex items-center justify-center">
+          <span className="flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-cyan-600 px-1 text-[10px] font-bold text-white dark:bg-cyan-500">
             {offCount}
           </span>
         )}
@@ -71,21 +71,21 @@ export function ScheduleTimelineFilterPanel({ filter, onChange }: Props) {
             aria-label="필터 닫기"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute right-0 top-full mt-1 z-50 w-72 rounded-lg border border-neutral-200 bg-white py-3 px-3 shadow-xl">
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <span className="text-sm font-semibold text-neutral-800">타임라인 표시</span>
-              <div className="flex gap-1 shrink-0">
+          <div className="absolute right-0 top-full z-50 mt-1 w-72 rounded-lg border border-zinc-200 bg-white py-3 px-3 shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <span className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">타임라인 표시</span>
+              <div className="flex shrink-0 gap-1">
                 <button
                   type="button"
-                  className="text-[11px] text-indigo-600 hover:underline"
+                  className="text-[11px] text-cyan-600 hover:underline dark:text-cyan-400"
                   onClick={() => onChange(allOn())}
                 >
                   전부 켜기
                 </button>
-                <span className="text-neutral-300">|</span>
+                <span className="text-zinc-300 dark:text-zinc-600">|</span>
                 <button
                   type="button"
-                  className="text-[11px] text-neutral-500 hover:underline"
+                  className="text-[11px] text-zinc-500 hover:underline dark:text-zinc-400"
                   onClick={() => onChange(allOff())}
                 >
                   전부 끄기
@@ -95,14 +95,14 @@ export function ScheduleTimelineFilterPanel({ filter, onChange }: Props) {
             <ul className="space-y-2">
               {ROWS.map(({ key, label }) => (
                 <li key={key}>
-                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <label className="flex cursor-pointer select-none items-center gap-2">
                     <input
                       type="checkbox"
                       checked={filter[key]}
                       onChange={() => onChange({ ...filter, [key]: !filter[key] })}
-                      className="h-3.5 w-3.5 rounded border-neutral-300 text-indigo-600 focus:ring-indigo-500"
+                      className="h-3.5 w-3.5 rounded border-zinc-300 text-cyan-600 focus:ring-cyan-500 dark:border-zinc-600 dark:text-cyan-500"
                     />
-                    <span className="text-sm text-neutral-700">{label}</span>
+                    <span className="text-sm text-zinc-700 dark:text-zinc-300">{label}</span>
                   </label>
                 </li>
               ))}

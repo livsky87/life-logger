@@ -22,17 +22,53 @@ export const API_RESULT_BADGE: Record<ResultCategory, string> = {
   other: "기타",
 };
 
-/** Recharts/SVG용 — Tailwind와 동일 계열의 절제된 팔레트 */
-export const CHART_COLORS = {
-  grid: "#e7e5e4",
-  gridStrong: "#d6d3d1",
-  axis: "#78716c",
-  now: "#f87171",
-  connector: "rgba(120, 113, 108, 0.35)",
-  tooltipBg: "#1c1917",
-  tooltipBorder: "#44403c",
-  apiAccent: "#d97706",
-} as const;
+export type ChartUiTheme = "light" | "dark";
+
+/** 라이트 패널 / 다크 패널 각각에 맞는 격자·축·툴팁 */
+export const CHART_COLORS_BY_THEME: Record<
+  ChartUiTheme,
+  {
+    grid: string;
+    gridStrong: string;
+    axis: string;
+    now: string;
+    connector: string;
+    tooltipBg: string;
+    tooltipBorder: string;
+    apiAccent: string;
+    statusTagFill: string;
+  }
+> = {
+  light: {
+    grid: "#e7e5e4",
+    gridStrong: "#d6d3d1",
+    axis: "#78716c",
+    now: "#dc2626",
+    connector: "rgba(120, 113, 108, 0.35)",
+    tooltipBg: "#1c1917",
+    tooltipBorder: "#44403c",
+    apiAccent: "#d97706",
+    statusTagFill: "#44403c",
+  },
+  dark: {
+    grid: "#3f3f46",
+    gridStrong: "#52525b",
+    axis: "#a1a1aa",
+    now: "#f87171",
+    connector: "rgba(161, 161, 170, 0.35)",
+    tooltipBg: "#09090b",
+    tooltipBorder: "#3f3f46",
+    apiAccent: "#fbbf24",
+    statusTagFill: "#d4d4d8",
+  },
+};
+
+export function getChartColors(theme: ChartUiTheme) {
+  return CHART_COLORS_BY_THEME[theme];
+}
+
+/** @deprecated getChartColors 사용 권장 */
+export const CHART_COLORS = CHART_COLORS_BY_THEME.light;
 
 export const SEGMENT_FILL: Record<SegmentType, string> = {
   home: "rgba(99, 102, 241, 0.32)",

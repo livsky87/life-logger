@@ -32,7 +32,7 @@ function LocationBlock({
   const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div className="mb-4 overflow-visible rounded-lg border border-stone-200/90 bg-white shadow-sm ring-1 ring-stone-900/[0.04]">
+    <div className="mb-4 overflow-visible rounded-lg border border-zinc-200/90 bg-white shadow-sm ring-1 ring-zinc-900/[0.04] dark:border-zinc-800 dark:bg-zinc-900/60 dark:ring-zinc-950/40">
       {/* 위치 헤더 — 시간축은 상태 차트 X축과 중복·불일치를 피하기 위해 제거 */}
       <div className="flex h-10 select-none items-center bg-gradient-to-b from-stone-900 to-stone-950 text-white">
         <button
@@ -71,7 +71,7 @@ function LocationBlock({
         ))}
 
       {!collapsed && location.users.length === 0 && (
-        <div className="h-12 flex items-center justify-center text-sm text-neutral-400">
+        <div className="flex h-12 items-center justify-center text-sm text-zinc-400 dark:text-zinc-500">
           이 날짜에 스케줄 데이터가 없습니다
         </div>
       )}
@@ -85,7 +85,7 @@ export function ScheduleTimelineGrid({ dateInt, days, displayFilter, locationId 
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64 text-neutral-400 gap-2">
+      <div className="flex h-64 items-center justify-center gap-2 text-zinc-400 dark:text-zinc-500">
         <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
@@ -97,7 +97,7 @@ export function ScheduleTimelineGrid({ dateInt, days, displayFilter, locationId 
 
   if (isError) {
     return (
-      <div className="flex items-center justify-center h-64 text-red-500 text-sm">
+      <div className="flex h-64 items-center justify-center text-sm text-red-500 dark:text-red-400">
         {error instanceof Error ? error.message : "데이터를 불러올 수 없습니다"}
       </div>
     );
@@ -105,14 +105,14 @@ export function ScheduleTimelineGrid({ dateInt, days, displayFilter, locationId 
 
   if (!data || data.locations.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-neutral-400 gap-3">
+      <div className="flex h-64 flex-col items-center justify-center gap-3 text-zinc-400 dark:text-zinc-500">
         <svg className="w-10 h-10 text-neutral-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
             d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
         <div className="text-center">
-          <p className="text-sm font-medium text-neutral-600">선택한 기간에 스케줄 데이터가 없습니다</p>
-          <p className="text-xs text-neutral-400 mt-1">스케줄을 업로드하거나 직접 입력하세요</p>
+          <p className="text-sm font-medium text-zinc-600 dark:text-zinc-300">선택한 기간에 스케줄 데이터가 없습니다</p>
+          <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">스케줄을 업로드하거나 직접 입력하세요</p>
         </div>
       </div>
     );
