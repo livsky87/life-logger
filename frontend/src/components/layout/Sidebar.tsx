@@ -8,6 +8,7 @@ import {
   CalendarDays,
   HomeIcon,
   MapPin,
+  Network,
   ScrollText,
   ChevronLeft,
   ChevronRight,
@@ -18,6 +19,7 @@ import {
 import { useAppTheme } from "@/components/providers/ThemeProvider";
 
 const NAV_ITEMS = [
+  { href: "/agents", icon: Network, label: "UT 에이전트" },
   { href: "/timeline", icon: BarChart2, label: "타임라인" },
   { href: "/schedule", icon: CalendarDays, label: "스케줄" },
   { href: "/simulation", icon: HomeIcon, label: "시뮬레이션" },
@@ -51,8 +53,8 @@ export function Sidebar() {
         {!collapsed && (
           <div className="min-w-0">
             <span className="block truncate text-sm font-semibold tracking-tight text-zinc-100">Life Logger</span>
-            <span className="block truncate text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-500">
-              UT Agent · observability
+            <span className="block truncate text-[10px] font-medium tracking-wide text-zinc-500">
+              HDE · UT Agent System
             </span>
           </div>
         )}

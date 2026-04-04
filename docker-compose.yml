@@ -36,6 +36,12 @@ services:
       - backend
     environment:
       NEXT_PUBLIC_API_URL: http://backend:8000
+      # 호스트 OpenClaw 디렉터리 마운트 시(getOpenclawBase). 비도커 로컬은 미설정으로 ~/.openclaw 사용.
+      OPENCLAW_HOME: /openclaw
+    volumes:
+      # UT 에이전트 토폴로지(3대) 워크스페이스 .md 읽기 — 호스트 경로는 OPENCLAW_HOST_PATH로 덮어쓸 수 있음
+      # Compose는 ${VAR:-${HOME}/...} 중첩 보간을 지원하지 않음. 미설정 시 ~/.openclaw(호스트 홈 기준)
+      - "${OPENCLAW_HOST_PATH:-~/.openclaw}:/openclaw:ro"
     ports:
       - "3000:3000"
 

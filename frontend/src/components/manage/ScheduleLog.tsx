@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import clsx from "clsx";
 import { format, addDays, subDays } from "date-fns";
 import { ko } from "date-fns/locale";
-import type { Schedule, ScheduleCreate, ScheduleStatus, ScheduleUpdate } from "@/domain/scheduleTypes";
+import type { Schedule, ScheduleCreate, ScheduleUpdate } from "@/domain/scheduleTypes";
 import { useCreateSchedule, useDeleteSchedule, useSchedules, useUpdateSchedule } from "@/application/useSchedules";
 import { ScheduleEntryForm } from "./ScheduleEntryForm";
 import { Tooltip } from "@/components/ui/Tooltip";
@@ -24,24 +24,37 @@ function dateIntToDate(n: number): Date {
   return new Date(Number(s.slice(0, 4)), Number(s.slice(4, 6)) - 1, Number(s.slice(6, 8)));
 }
 
-function isPastEntry(entry: Schedule, todayInt: number): boolean {
-  if (entry.date < todayInt) return true;
-  if (entry.date > todayInt) return false;
-  const now = new Date();
-  return entry.hour < now.getHours() || (entry.hour === now.getHours() && entry.minute <= now.getMinutes());
+function scheduleDayInt(entry: Schedule): number {
+  const d = new Date(entry.datetime);
+  return Number(
+    `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`,
+  );
 }
 
-const STATUS_COLORS: Record<ScheduleStatus, string> = {
-  normal: "bg-green-500",
-  warning: "bg-yellow-400",
-  error: "bg-red-500",
-};
+function isPastEntry(entry: Schedule, todayInt: number): boolean {
+  const dInt = scheduleDayInt(entry);
+  if (dInt < todayInt) return true;
+  if (dInt > todayInt) return false;
+  return new Date(entry.datetime) < new Date();
+}
 
-const STATUS_LABELS: Record<ScheduleStatus, string> = {
-  normal: "정상",
-  warning: "경고",
-  error: "오류",
-};
+function formatScheduleHm(entry: Schedule): string {
+  const d = new Date(entry.datetime);
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+function statusDotClass(tags: string[]): string {
+  const s = tags.join(" ").toLowerCase();
+  if (/error|오류|fail|실패/i.test(s)) return "bg-red-500";
+  if (/warn|경고|주의/i.test(s)) return "bg-yellow-400";
+  if (tags.length === 0) return "bg-gray-400";
+  return "bg-green-500";
+}
+
+function statusTooltip(tags: string[]): string {
+  if (tags.length === 0) return "상태 태그 없음";
+  return tags.join(" · ");
+}
 
 function CallsTooltipContent({ calls }: { calls: Schedule["calls"] }) {
   if (!calls.length) return null;
@@ -165,7 +178,7 @@ export function ScheduleLog({ onSuccess, onError }: Props) {
               >
                 {/* Time */}
                 <span className="text-xs font-mono w-10 shrink-0 text-gray-500">
-                  {String(entry.hour).padStart(2, "0")}:{String(entry.minute).padStart(2, "0")}
+                  {formatScheduleHm(entry)}
                 </span>
 
                 {/* Location tag */}
@@ -192,14 +205,9 @@ export function ScheduleLog({ onSuccess, onError }: Props) {
                   </Tooltip>
                 )}
 
-                {/* Status dot */}
-                <Tooltip content={<span>{STATUS_LABELS[entry.status as ScheduleStatus] ?? entry.status}</span>}>
-                  <span
-                    className={clsx(
-                      "w-3 h-3 rounded-full shrink-0",
-                      STATUS_COLORS[entry.status as ScheduleStatus] ?? "bg-gray-400"
-                    )}
-                  />
+                {/* Status dot (복수 태그) */}
+                <Tooltip content={<span>{statusTooltip(entry.status)}</span>}>
+                  <span className={clsx("h-3 w-3 shrink-0 rounded-full", statusDotClass(entry.status))} />
                 </Tooltip>
 
                 {/* Actions */}

@@ -47,7 +47,8 @@ export function useTimeline(
 
   return useQuery({
     queryKey: ["timeline", start, end, locationIds, categories],
-    queryFn: () => fetchTimeline(start, end, locationIds, categories),
+    /** 백엔드 타임라인은 period만 받음 — 카테고리 필터는 쿼리 키·클라이언트 가시성용 */
+    queryFn: () => fetchTimeline(start, end, locationIds, "1d"),
     staleTime: 30_000,
     refetchInterval: 60_000,
     // Skip the request entirely if nothing would be shown
