@@ -2,6 +2,59 @@ import type { LifeLogEvent } from "@/domain/types";
 
 export const DAY_MINUTES = 24 * 60;
 
+/** 타임라인 API(`schedules/timeline`)와 동일: dateInt(YYYYMMDD) 자정 KST부터 days일 [start, end) */
+export function kstDateIntRangeToDates(
+  dateInt: number,
+  days: number,
+): { rangeStart: Date; rangeEnd: Date } {
+  const raw = String(dateInt).padStart(8, "0");
+  const y = raw.slice(0, 4);
+  const mo = raw.slice(4, 6);
+  const da = raw.slice(6, 8);
+  const rangeStart = new Date(`${y}-${mo}-${da}T00:00:00+09:00`);
+  const rangeEnd = new Date(rangeStart.getTime() + days * 24 * 60 * 60 * 1000);
+  return { rangeStart, rangeEnd };
+}
+
+export const DEFAULT_TIMELINE_TIMEZONE = "Asia/Seoul";
+
+export function normalizeTimelineTimeZone(tz: string | null | undefined): string {
+  const t = tz?.trim();
+  return t && t.length > 0 ? t : DEFAULT_TIMELINE_TIMEZONE;
+}
+
+/** X축·눈금용 시:분 (해당 IANA 타임존) */
+export function formatTimeInTimeZone(ms: number, timeZone: string): string {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date(ms));
+  const hh = parts.find((p) => p.type === "hour")?.value ?? "00";
+  const mm = parts.find((p) => p.type === "minute")?.value ?? "00";
+  return `${hh}:${mm}`;
+}
+
+/** X축 다일: 월/일·요일 */
+export function formatTimelineDayInZone(ms: number, timeZone: string): string {
+  return new Intl.DateTimeFormat("ko-KR", {
+    timeZone,
+    month: "numeric",
+    day: "numeric",
+    weekday: "short",
+  }).format(new Date(ms));
+}
+
+/** X축 장기: 월/일 */
+export function formatTimelineShortDateInZone(ms: number, timeZone: string): string {
+  return new Intl.DateTimeFormat("ko-KR", {
+    timeZone,
+    month: "numeric",
+    day: "numeric",
+  }).format(new Date(ms));
+}
+
 /** Converts an ISO datetime string to minutes-since-midnight in the given timezone. */
 export function toMinutesOfDay(isoStr: string, timezone: string): number {
   const date = new Date(isoStr);
@@ -86,33 +139,32 @@ export interface Tick {
 export function getTimeTicks(rangeStart: Date, rangeEnd: Date, timezone: string): Tick[] {
   const totalMs = rangeEnd.getTime() - rangeStart.getTime();
   const dayMs = 24 * 60 * 60 * 1000;
-  const days = totalMs / dayMs;
+  const spanDays = totalMs / dayMs;
   const ticks: Tick[] = [];
+  const tz = normalizeTimelineTimeZone(timezone);
 
-  const fmt = (date: Date, opts: Intl.DateTimeFormatOptions) =>
-    new Intl.DateTimeFormat("ko-KR", { timeZone: timezone, ...opts }).format(date);
-
-  if (days <= 1) {
-    // Every 2 hours
+  if (spanDays <= 1) {
+    const hourMs = 60 * 60 * 1000;
     for (let h = 0; h <= 24; h += 2) {
-      const ms = h * 60 * 60 * 1000;
-      ticks.push({ pct: (ms / totalMs) * 100, label: String(h).padStart(2, "0") });
+      const tickMs = rangeStart.getTime() + h * hourMs;
+      if (tickMs > rangeEnd.getTime()) break;
+      const pct = ((tickMs - rangeStart.getTime()) / totalMs) * 100;
+      ticks.push({ pct, label: formatTimeInTimeZone(tickMs, tz) });
     }
-  } else if (days <= 8) {
-    // Every day
-    const d = new Date(rangeStart);
-    while (d < rangeEnd) {
-      const pct = ((d.getTime() - rangeStart.getTime()) / totalMs) * 100;
-      ticks.push({ pct, label: fmt(d, { month: "numeric", day: "numeric", weekday: "short" }) });
-      d.setDate(d.getDate() + 1);
+  } else if (spanDays <= 8) {
+    let tickMs = rangeStart.getTime();
+    while (tickMs < rangeEnd.getTime()) {
+      const pct = ((tickMs - rangeStart.getTime()) / totalMs) * 100;
+      ticks.push({ pct, label: formatTimelineDayInZone(tickMs, tz) });
+      tickMs += dayMs;
     }
   } else {
-    // Every ~5 days
-    const d = new Date(rangeStart);
-    while (d < rangeEnd) {
-      const pct = ((d.getTime() - rangeStart.getTime()) / totalMs) * 100;
-      ticks.push({ pct, label: fmt(d, { month: "numeric", day: "numeric" }) });
-      d.setDate(d.getDate() + (days <= 14 ? 2 : 5));
+    const stepDays = spanDays <= 14 ? 2 : 5;
+    let tickMs = rangeStart.getTime();
+    while (tickMs < rangeEnd.getTime()) {
+      const pct = ((tickMs - rangeStart.getTime()) / totalMs) * 100;
+      ticks.push({ pct, label: formatTimelineShortDateInZone(tickMs, tz) });
+      tickMs += stepDays * dayMs;
     }
   }
   return ticks;

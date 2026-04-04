@@ -15,6 +15,10 @@ interface Props {
   rangeEnd: Date;
   days: number;
   displayFilter: ScheduleTimelineDisplayFilter;
+  /** 집(위치) 타임존 — 축·툴팁·히트맵·밀도 스트립이 동일 기준 */
+  timeZone: string;
+  /** 위치당 첫 행만 시간 축 눈금(상태 차트와 동일 도메인) */
+  showTimelineXAxis: boolean;
   isLast: boolean;
 }
 
@@ -28,6 +32,8 @@ export const ScheduleUserRow = React.memo(function ScheduleUserRow({
   rangeEnd,
   days,
   displayFilter,
+  timeZone,
+  showTimelineXAxis,
   isLast,
 }: Props) {
   const router = useRouter();
@@ -79,6 +85,8 @@ export const ScheduleUserRow = React.memo(function ScheduleUserRow({
         rangeEnd={rangeEnd}
         days={days}
         displayFilter={displayFilter}
+        timeZone={timeZone}
+        showXAxis={showTimelineXAxis}
       />
     </div>
   );

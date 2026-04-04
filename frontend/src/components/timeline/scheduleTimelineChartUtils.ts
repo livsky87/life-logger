@@ -185,13 +185,50 @@ export function laneTagToDisplayLabel(laneTag: string): string {
 
 export { EMPTY_LANE_SENTINEL };
 
-export function buildDensityMap(entries: Schedule[]): number[] {
+function hourInTimeZone(d: Date, timeZone: string): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hour: "numeric",
+    hour12: false,
+  }).formatToParts(d);
+  const raw = parts.find((p) => p.type === "hour")?.value ?? "0";
+  let h = parseInt(raw, 10);
+  if (!Number.isFinite(h)) h = 0;
+  if (h === 24) h = 0;
+  return h;
+}
+
+/** 시간대별 0–23시 슬롯 집계(로컬 시계 시각 기준; 타임라인 축과 픽셀 정렬에는 `buildHourBucketsForRange` 권장) */
+export function buildDensityMap(entries: Schedule[], timeZone: string): number[] {
   const slots = new Array(24).fill(0);
   for (const e of entries) {
-    const d = new Date(e.datetime);
-    const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
-    const h = kst.getUTCHours();
+    const h = hourInTimeZone(new Date(e.datetime), timeZone);
     slots[h]++;
   }
   return slots;
 }
+
+const HOUR_MS = 60 * 60 * 1000;
+
+/**
+ * [rangeStartMs, rangeEndMs) 를 1시간 단위로 자른 버킷 — 메인 차트 X 도메인과 동일 선상에서 픽셀 정렬 가능.
+ */
+export function buildHourBucketsForRange(
+  entries: Schedule[],
+  rangeStartMs: number,
+  rangeEndMs: number,
+): number[] {
+  const span = rangeEndMs - rangeStartMs;
+  if (span <= 0) return [];
+  const n = Math.max(1, Math.round(span / HOUR_MS));
+  const buckets = new Array(n).fill(0);
+  for (const e of entries) {
+    const t = new Date(e.datetime).getTime();
+    if (t < rangeStartMs || t >= rangeEndMs) continue;
+    const k = Math.floor((t - rangeStartMs) / HOUR_MS);
+    if (k >= 0 && k < n) buckets[k]++;
+  }
+  return buckets;
+}
+
+export { HOUR_MS };
