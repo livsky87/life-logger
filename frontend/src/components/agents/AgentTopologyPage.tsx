@@ -1,19 +1,37 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Network, Maximize2, Info } from "lucide-react";
 import clsx from "clsx";
 import { AgentFlowCanvas } from "./AgentFlowCanvas";
+import { UtAgentWorkspacePanel } from "./UtAgentWorkspacePanel";
 
 const AGENT_PRESETS = [3, 12, 48, 100] as const;
+
+type WsState = {
+  sourceNodeId: string;
+  workspaceKey: string;
+  label: string;
+};
 
 export function AgentTopologyPage() {
   const [agentCount, setAgentCount] = useState<number>(3);
   const [compact, setCompact] = useState(false);
+  const [ws, setWs] = useState<WsState | null>(null);
 
   const handleFitHint = useCallback(() => {
     window.dispatchEvent(new Event("ut-agent-fit-view"));
   }, []);
+
+  const onWorkspacePanelToggle = useCallback((p: WsState | null) => {
+    setWs(p);
+  }, []);
+
+  useEffect(() => {
+    setWs(null);
+  }, [agentCount, compact]);
+
+  const panelOpen = ws != null;
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -27,7 +45,22 @@ export function AgentTopologyPage() {
             <h1 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">UT 에이전트 토폴로지</h1>
           </div>
           <p className="mt-1 max-w-3xl text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-            Token Manager·UT Master·Validator는 그리드와 정렬해 두었습니다. 연결은 모두 얇은 점선이며, 컨트롤 카드를 클릭한 뒤에만 해당 색 연결에 흐름 애니메이션이 보입니다.
+            Token Manager·UT Master·Validator는 그리드와 정렬해 두었습니다. 연결은 모두 얇은 점선이며, 컨트롤 카드를 클릭하면 해당 색 연결에 흐름 애니메이션이 켜집니다.
+            <span className="mt-1 block">
+              컨트롤·에이전트 카드를 클릭하면 오른쪽 패널에서{" "}
+              <code className="rounded bg-zinc-200/80 px-1 py-0.5 font-mono text-[10px] dark:bg-zinc-800">
+                ~/.openclaw/workspace-ut-*
+              </code>{" "}
+              아래 Markdown 문서를 볼 수 있습니다. (예:{" "}
+              <code className="rounded bg-zinc-200/80 px-1 py-0.5 font-mono text-[10px] dark:bg-zinc-800">
+                workspace-ut-master
+              </code>
+              ,{" "}
+              <code className="rounded bg-zinc-200/80 px-1 py-0.5 font-mono text-[10px] dark:bg-zinc-800">
+                workspace-ut-bot-001
+              </code>
+              )
+            </span>
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:justify-end">
@@ -80,8 +113,39 @@ export function AgentTopologyPage() {
             추후 UT Master API·실시간 상태 스트림을 연결하면 노드 색·통계·엣지 애니메이션이 자동 반영되도록 확장할 수 있습니다.
           </p>
         </div>
-        <div className="min-h-0 min-w-0 flex-1">
-          <AgentFlowCanvas agentCount={agentCount} compact={compact} />
+        <div className="flex min-h-0 min-w-0 flex-1 gap-3">
+          <div
+            className={clsx(
+              "min-h-[min(72vh,820px)] min-w-0 flex-1 overflow-hidden transition-[opacity] duration-300 ease-out",
+              panelOpen && "opacity-[0.98]",
+            )}
+          >
+            <AgentFlowCanvas
+              agentCount={agentCount}
+              compact={compact}
+              workspacePanelNodeId={ws?.sourceNodeId ?? null}
+              onWorkspacePanelToggle={onWorkspacePanelToggle}
+            />
+          </div>
+          <div
+            className={clsx(
+              "min-h-0 shrink-0 overflow-hidden transition-[width,opacity] duration-300 ease-[cubic-bezier(0.33,1,0.68,1)]",
+              panelOpen
+                ? "w-[min(36rem,calc(100vw-2rem),42vw)] min-w-[min(18rem,100%)] opacity-100"
+                : "w-0 min-w-0 opacity-0 pointer-events-none",
+            )}
+          >
+            {ws && (
+              <div className="h-full w-full min-w-0">
+                <UtAgentWorkspacePanel
+                  key={ws.workspaceKey}
+                  workspaceKey={ws.workspaceKey}
+                  nodeLabel={ws.label}
+                  onClose={() => setWs(null)}
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

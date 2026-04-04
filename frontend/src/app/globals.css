@@ -94,4 +94,77 @@
     stroke-dasharray: 10 8;
     animation: ut-edge-dash 1.4s linear infinite;
   }
+
+  /** UT Agent 워크스페이스 — API(marked)에서 만든 HTML */
+  .ut-workspace-html {
+    @apply text-zinc-300;
+  }
+
+  .ut-workspace-html h1 {
+    @apply mb-3 mt-1 border-b border-zinc-700/80 pb-2 text-lg font-bold text-zinc-100;
+  }
+
+  .ut-workspace-html h2 {
+    @apply mb-2 mt-4 text-base font-semibold text-zinc-100;
+  }
+
+  .ut-workspace-html h3 {
+    @apply mb-1.5 mt-3 text-sm font-semibold text-zinc-200;
+  }
+
+  .ut-workspace-html p {
+    @apply mb-2.5 leading-relaxed;
+  }
+
+  .ut-workspace-html ul {
+    @apply mb-2.5 list-disc space-y-1 pl-5;
+  }
+
+  .ut-workspace-html ol {
+    @apply mb-2.5 list-decimal space-y-1 pl-5;
+  }
+
+  .ut-workspace-html li {
+    @apply leading-relaxed;
+  }
+
+  .ut-workspace-html a {
+    @apply text-cyan-400 underline decoration-cyan-500/40 underline-offset-2 hover:text-cyan-300;
+  }
+
+  .ut-workspace-html code {
+    @apply rounded bg-zinc-800/90 px-1 py-0.5 font-mono text-[0.85em] text-cyan-200/90;
+  }
+
+  .ut-workspace-html pre {
+    @apply mb-3 overflow-x-auto rounded-lg border border-zinc-700/80 bg-zinc-950/90 p-3 font-mono text-sm text-zinc-200;
+  }
+
+  .ut-workspace-html pre code {
+    @apply border-0 bg-transparent p-0 text-inherit;
+  }
+
+  .ut-workspace-html blockquote {
+    @apply mb-3 border-l-2 border-cyan-500/40 pl-3 italic text-zinc-400;
+  }
+
+  .ut-workspace-html table {
+    @apply mb-3 w-full border-collapse text-left text-xs;
+  }
+
+  .ut-workspace-html th {
+    @apply border border-zinc-700 bg-zinc-800/80 px-2 py-1.5 font-semibold text-zinc-100;
+  }
+
+  .ut-workspace-html td {
+    @apply border border-zinc-700/80 px-2 py-1.5;
+  }
+
+  .ut-workspace-html hr {
+    @apply my-4 border-zinc-700/80;
+  }
+
+  .ut-workspace-html strong {
+    @apply font-semibold text-zinc-100;
+  }
 }

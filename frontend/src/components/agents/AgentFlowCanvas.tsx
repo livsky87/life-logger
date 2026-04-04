@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Minus, Plus, Maximize2 } from "lucide-react";
 import {
   buildUtAgentGraph,
@@ -12,6 +12,7 @@ import {
   type UtTopologyNode,
 } from "./buildUtAgentGraph";
 import { TopologyAgentCard, TopologyControlCard } from "./TopologyNodeCards";
+import { nodeIdToWorkspaceKey } from "./openclawWorkspaceKey";
 
 type Rect = { x: number; y: number; w: number; h: number };
 
@@ -146,15 +147,27 @@ function TopologyEdgesSvg({
   );
 }
 
+export type WorkspacePanelPayload = {
+  sourceNodeId: string;
+  label: string;
+  workspaceKey: string;
+};
+
 interface Props {
   agentCount: number;
   compact: boolean;
+  workspacePanelNodeId: string | null;
+  onWorkspacePanelToggle: (payload: WorkspacePanelPayload | null) => void;
 }
 
-export function AgentFlowCanvas({ agentCount, compact }: Props) {
+export function AgentFlowCanvas({
+  agentCount,
+  compact,
+  workspacePanelNodeId,
+  onWorkspacePanelToggle,
+}: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [flowSourceId, setFlowSourceId] = useState<string | null>(null);
 
   const { nodes, edges, layoutWidth, layoutHeight } = useMemo(
@@ -174,9 +187,30 @@ export function AgentFlowCanvas({ agentCount, compact }: Props) {
     el.scrollTo({ left: 0, top: 0 });
   }, [layoutWidth, layoutHeight]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     applyFit();
   }, [agentCount, compact, applyFit]);
+
+  /** 오른쪽 워크스페이스 패널 열림/닫힘·width 전환 시에도 뷰포트에 맞춤 */
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    let raf = 0;
+    const scheduleFit = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        applyFit();
+      });
+    };
+    const ro = new ResizeObserver(scheduleFit);
+    ro.observe(el);
+    scheduleFit();
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      ro.disconnect();
+    };
+  }, [applyFit]);
 
   useEffect(() => {
     setFlowSourceId(null);
@@ -227,7 +261,8 @@ export function AgentFlowCanvas({ agentCount, compact }: Props) {
       <div className="absolute left-2 top-2 z-20 max-w-[min(100%,18rem)] rounded-lg border border-zinc-600/80 bg-zinc-900/92 p-3 text-[11px] text-zinc-300 shadow-lg backdrop-blur-sm">
         <p className="mb-2 font-semibold text-zinc-100">연결 관계</p>
         <p className="mb-2 text-[10px] leading-snug text-zinc-500">
-          연결은 기본 얇은 점선입니다. 컨트롤 카드를 클릭하면 해당 색만 흐름 애니메이션이 켜집니다.
+          컨트롤·에이전트 카드를 클릭하면 오른쪽에 OpenClaw 워크스페이스(.md)가 열립니다. 컨트롤은 같은 클릭으로 연결
+          흐름 애니메이션도 켜집니다.
         </p>
         <ul className="space-y-1.5 leading-snug text-zinc-400">
           <li className="flex items-center gap-2">
@@ -303,14 +338,22 @@ export function AgentFlowCanvas({ agentCount, compact }: Props) {
                     type="button"
                     className="absolute cursor-pointer text-left outline-none"
                     style={{ left: r.x, top: r.y, width: r.w }}
-                    title="클릭: 이 노드에서 에이전트로 가는 연결에 흐름 애니메이션. 다시 클릭하면 끕니다."
-                    onClick={() =>
-                      setFlowSourceId((cur) => (cur === n.id ? null : n.id))
-                    }
+                    title="클릭: 연결 흐름 + 워크스페이스 패널. 다시 클릭하면 끕니다."
+                    onClick={() => {
+                      setFlowSourceId((cur) => (cur === n.id ? null : n.id));
+                      const data = n.data as UtControlNodeData;
+                      const key = nodeIdToWorkspaceKey(n.id, "utControl");
+                      if (!key) return;
+                      onWorkspacePanelToggle(
+                        workspacePanelNodeId === n.id
+                          ? null
+                          : { sourceNodeId: n.id, label: data.label, workspaceKey: key },
+                      );
+                    }}
                   >
                     <TopologyControlCard
                       data={n.data as UtControlNodeData}
-                      selected={flowSourceId === n.id}
+                      selected={flowSourceId === n.id || workspacePanelNodeId === n.id}
                     />
                   </button>
                 );
@@ -322,9 +365,17 @@ export function AgentFlowCanvas({ agentCount, compact }: Props) {
                   type="button"
                   className="absolute cursor-pointer text-left outline-none"
                   style={{ left: r.x, top: r.y, width: r.w }}
-                  onClick={() => setSelectedId((id) => (id === n.id ? null : n.id))}
+                  onClick={() => {
+                    const key = nodeIdToWorkspaceKey(n.id, "utAgent");
+                    if (!key) return;
+                    onWorkspacePanelToggle(
+                      workspacePanelNodeId === n.id
+                        ? null
+                        : { sourceNodeId: n.id, label: ad.label, workspaceKey: key },
+                    );
+                  }}
                 >
-                  <TopologyAgentCard data={ad} selected={selectedId === n.id} />
+                  <TopologyAgentCard data={ad} selected={workspacePanelNodeId === n.id} />
                 </button>
               );
             })}

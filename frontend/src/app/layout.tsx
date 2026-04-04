@@ -9,6 +9,9 @@ export const metadata: Metadata = {
   title: "Life Logger — UT Agent 콘솔 | Home Data Engine",
   description:
     "Home Data Engine 산하 UT Agent를 관리·분석하는 Life Logger입니다. 스케줄, 타임라인, 시뮬레이션을 한곳에서 다룹니다.",
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
