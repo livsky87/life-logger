@@ -1,13 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
-import { format } from "date-fns";
-import { ko } from "date-fns/locale";
+import { useCallback, useMemo } from "react";
 import {
-  Bar,
-  BarChart,
   CartesianGrid,
-  Cell,
   ComposedChart,
   LabelList,
   ReferenceArea,
@@ -33,20 +28,20 @@ import {
 import type { ApiCallMarker } from "./scheduleTimelineChartUtils";
 import {
   buildApiCallMarkers,
-  buildDensityMap,
+  buildHourBucketsForRange,
   buildMergedRuns,
   buildPerTagMergedRuns,
   collectDistinctStatusTags,
+  HOUR_MS,
   laneTagToDisplayLabel,
   schedulePresenceIdentity,
   type MergedRun,
 } from "./scheduleTimelineChartUtils";
-
-function formatKst(dt: string): string {
-  const d = new Date(dt);
-  const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
-  return `${String(kst.getUTCHours()).padStart(2, "0")}:${String(kst.getUTCMinutes()).padStart(2, "0")}`;
-}
+import {
+  formatTimeInTimeZone,
+  formatTimelineDayInZone,
+  formatTimelineShortDateInZone,
+} from "./timelineUtils";
 
 function shortUrl(url: string, max = 52): string {
   if (url.length <= max) return url;
@@ -60,6 +55,7 @@ interface DotPayload {
   entry: Schedule;
   statusLabel: string | null;
   dotFill: string;
+  timeZone: string;
 }
 
 interface ApiHitPayload {
@@ -67,6 +63,7 @@ interface ApiHitPayload {
   y: number;
   kind: "api";
   marker: ApiCallMarker;
+  timeZone: string;
 }
 
 function StateRunTooltip({ payload }: { payload: DotPayload }) {
@@ -91,8 +88,8 @@ function StateRunTooltip({ payload }: { payload: DotPayload }) {
         </div>
         <div className="mt-0.5 font-mono text-[10px] font-medium tabular-nums text-indigo-300">
           {sameInstant
-            ? formatKst(first.datetime)
-            : `${formatKst(first.datetime)} → ${formatKst(last.datetime)}`}
+            ? formatTimeInTimeZone(new Date(first.datetime).getTime(), payload.timeZone)
+            : `${formatTimeInTimeZone(new Date(first.datetime).getTime(), payload.timeZone)} → ${formatTimeInTimeZone(new Date(last.datetime).getTime(), payload.timeZone)}`}
         </div>
         {run.entries.length > 1 && (
           <div className="mt-1 text-[10px] text-stone-400">
@@ -114,7 +111,7 @@ function StateRunTooltip({ payload }: { payload: DotPayload }) {
   );
 }
 
-function ApiCallTooltip({ marker }: { marker: ApiCallMarker }) {
+function ApiCallTooltip({ marker, timeZone }: { marker: ApiCallMarker; timeZone: string }) {
   const { call, scheduleEntry, category } = marker;
   const line = API_RESULT_LINE[category];
   return (
@@ -138,7 +135,7 @@ function ApiCallTooltip({ marker }: { marker: ApiCallMarker }) {
           {API_RESULT_BADGE[category]}
         </span>
         <span className="font-mono text-[10px] font-medium text-indigo-300 tabular-nums">
-          {formatKst(new Date(marker.tMs).toISOString())}
+          {formatTimeInTimeZone(marker.tMs, timeZone)}
         </span>
         <span className="text-[10px] text-stone-500">dsec {call.dsec}</span>
       </div>
@@ -175,7 +172,8 @@ function TimelineTooltipContent({
   if (!active || !payload?.length) return null;
   const raw = payload[0].payload;
   if (raw && typeof raw === "object" && (raw as ApiHitPayload).kind === "api") {
-    return <ApiCallTooltip marker={(raw as ApiHitPayload).marker} />;
+    const p = raw as ApiHitPayload;
+    return <ApiCallTooltip marker={p.marker} timeZone={p.timeZone} />;
   }
   if (raw && typeof raw === "object" && "run" in raw && "entry" in raw) {
     return <StateRunTooltip payload={raw as DotPayload} />;
@@ -223,6 +221,9 @@ interface Props {
   rangeEnd: Date;
   days: number;
   displayFilter: ScheduleTimelineDisplayFilter;
+  timeZone: string;
+  /** false면 X축 눈금 숨김(같은 위치의 아래 행). 도메인·격자·세로선은 동일 */
+  showXAxis: boolean;
 }
 
 const X_DOMAIN = (rangeStart: Date, rangeEnd: Date): [number, number] => [
@@ -234,6 +235,12 @@ const X_DOMAIN = (rangeStart: Date, rangeEnd: Date): [number, number] => [
 const PRESENCE_STRIP = 0.28;
 const PRESENCE_PAD = 0.04;
 const LANE_INSET = 0.1;
+
+/**
+ * 플롯 시작까지 왼쪽 여백(Recharts: offset.left = margin.left + 보이는 Y축 width).
+ * margin.left 와 YAxis.width 를 동시에 크게 잡으면 합산되어 히트맵 paddingLeft(이 값)과 어긋남.
+ */
+const CHART_GUTTER = { left: 56, right: 10 } as const;
 
 function apiLineStyle(marker: ApiCallMarker) {
   const base = API_RESULT_LINE[marker.category];
@@ -250,9 +257,12 @@ export function ScheduleUserTimelineChart({
   rangeEnd,
   days,
   displayFilter,
+  timeZone,
+  showXAxis,
 }: Props) {
   const t0 = rangeStart.getTime();
   const t1 = rangeEnd.getTime();
+  const axisVisible = showXAxis && displayFilter.showHeaderTicks;
 
   const nowX = useMemo(() => {
     const nowMs = Date.now();
@@ -298,8 +308,9 @@ export function ScheduleUserTimelineChart({
       y: apiHitY,
       kind: "api" as const,
       marker,
+      timeZone,
     }));
-  }, [apiMarkers, displayFilter.showApiCallMarkers, apiHitY]);
+  }, [apiMarkers, displayFilter.showApiCallMarkers, apiHitY, timeZone]);
 
   const scatterData = useMemo((): DotPayload[] => {
     if (!displayFilter.showEntryDots || laneTags.length === 0) return [];
@@ -316,29 +327,57 @@ export function ScheduleUserTimelineChart({
           entry: run.entries[0],
           statusLabel: displayFilter.showStatusTags ? formatStatusRunLabel(run.identity) : null,
           dotFill: colors.dot,
+          timeZone,
         });
       }
     }
     return out;
-  }, [displayFilter.showEntryDots, displayFilter.showStatusTags, runsByLane, laneTags.length]);
+  }, [displayFilter.showEntryDots, displayFilter.showStatusTags, runsByLane, laneTags.length, timeZone]);
 
-  const heatmapData = useMemo(() => {
-    const d = buildDensityMap(entries);
-    const max = Math.max(...d, 1);
-    return d.map((count, hour) => ({
-      hour: String(hour),
-      count,
-      fill:
-        count === 0
-          ? "transparent"
-          : `rgba(79, 70, 229, ${0.12 + (count / max) * 0.55})`,
-    }));
-  }, [entries]);
+  const hourBuckets = useMemo(
+    () => buildHourBucketsForRange(entries, t0, t1),
+    [entries, t0, t1],
+  );
+  const heatmapMax = useMemo(() => Math.max(1, ...hourBuckets), [hourBuckets]);
 
-  const tickFormatter = (ts: number) => {
-    if (days <= 1) return format(new Date(ts), "HH:mm");
-    return format(new Date(ts), "M/d (EEE)", { locale: ko });
-  };
+  const xTicks = useMemo(() => {
+    const dayMs = 24 * 60 * 60 * 1000;
+    if (days <= 1) {
+      const hourMs = 60 * 60 * 1000;
+      const ticks: number[] = [];
+      for (let h = 0; h <= 24; h += 2) {
+        const x = t0 + h * hourMs;
+        if (x <= t1) ticks.push(x);
+      }
+      return ticks;
+    }
+    if (days <= 8) {
+      const ticks: number[] = [];
+      let x = t0;
+      while (x < t1) {
+        ticks.push(x);
+        x += dayMs;
+      }
+      return ticks;
+    }
+    const stepDays = days <= 14 ? 2 : 5;
+    const ticks: number[] = [];
+    let x = t0;
+    while (x < t1) {
+      ticks.push(x);
+      x += stepDays * dayMs;
+    }
+    return ticks;
+  }, [t0, t1, days]);
+
+  const tickFormatter = useCallback(
+    (ts: number) => {
+      if (days <= 1) return formatTimeInTimeZone(ts, timeZone);
+      if (days <= 8) return formatTimelineDayInZone(ts, timeZone);
+      return formatTimelineShortDateInZone(ts, timeZone);
+    },
+    [days, timeZone],
+  );
 
   const domain = X_DOMAIN(rangeStart, rangeEnd);
 
@@ -361,8 +400,25 @@ export function ScheduleUserTimelineChart({
     return Math.min(300, 12 + laneTags.length * 26 + 16);
   }, [laneTags.length]);
 
+  const chartMarginBottom = axisVisible
+    ? displayFilter.showStatusTags
+      ? 16
+      : 6
+    : displayFilter.showStatusTags
+      ? 12
+      : 3;
+
+  const plotAlignPad = useMemo(
+    () => ({ paddingLeft: CHART_GUTTER.left, paddingRight: CHART_GUTTER.right }),
+    [],
+  );
+
+  const hasLaneYAxis = laneTags.length > 0;
+  /** 태그 행 있음: Y축만 56px. 없음: 빈 여백만 margin.left 56px → 항상 플롯 시작 = 56px */
+  const chartMarginLeft = hasLaneYAxis ? 0 : CHART_GUTTER.left;
+
   return (
-    <div className="flex min-h-[60px] flex-1 flex-col justify-center gap-1 overflow-visible pr-1">
+    <div className="flex min-h-[60px] min-w-0 flex-1 flex-col justify-center gap-1 overflow-visible">
       <div
         className="relative z-0 w-full min-w-0 overflow-visible"
         style={{ height: chartPlotHeightPx }}
@@ -372,9 +428,9 @@ export function ScheduleUserTimelineChart({
             data={[]}
             margin={{
               top: 6,
-              right: 10,
-              bottom: displayFilter.showStatusTags ? 16 : 6,
-              left: laneTags.length > 0 ? 56 : 8,
+              right: CHART_GUTTER.right,
+              bottom: chartMarginBottom,
+              left: chartMarginLeft,
             }}
             barCategoryGap={0}
           >
@@ -383,7 +439,9 @@ export function ScheduleUserTimelineChart({
               dataKey="x"
               domain={domain}
               scale="time"
+              ticks={xTicks}
               tickFormatter={tickFormatter}
+              hide={!axisVisible}
               tick={{
                 fill: CHART_COLORS.axis,
                 fontSize: 10,
@@ -395,8 +453,8 @@ export function ScheduleUserTimelineChart({
             <YAxis
               type="number"
               domain={[0, yDomainMax]}
-              ticks={laneTags.length > 0 ? laneYTicks : undefined}
-              hide={laneTags.length === 0}
+              ticks={hasLaneYAxis ? laneYTicks : undefined}
+              hide={!hasLaneYAxis}
               tickFormatter={(v) => {
                 const k = Math.round(Number(v) - 0.5);
                 const tag = laneTags[k];
@@ -404,7 +462,7 @@ export function ScheduleUserTimelineChart({
                 return laneTagToDisplayLabel(tag);
               }}
               tick={{ fill: CHART_COLORS.axis, fontSize: 9 }}
-              width={52}
+              width={CHART_GUTTER.left}
               interval={0}
             />
             {displayFilter.showGridLines && (
@@ -548,7 +606,10 @@ export function ScheduleUserTimelineChart({
       </div>
 
       {displayFilter.showApiCallMarkers && apiMarkers.length > 0 && (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-[9px] text-stone-500">
+        <div
+          className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-[9px] text-stone-500"
+          style={plotAlignPad}
+        >
           <span className="font-medium text-stone-600">API 결과 패턴</span>
           {(Object.keys(API_RESULT_LINE) as Array<keyof typeof API_RESULT_LINE>).map((cat) => {
             const n = categoryCounts.get(cat) ?? 0;
@@ -574,19 +635,29 @@ export function ScheduleUserTimelineChart({
         </div>
       )}
 
-      {days === 1 && displayFilter.showActivityHeatmap && (
-        <div className="h-[7px] w-full min-w-0">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={heatmapData} margin={{ top: 0, right: 10, left: 6, bottom: 0 }} barCategoryGap={1}>
-              <XAxis type="category" dataKey="hour" hide />
-              <YAxis type="number" hide domain={[0, "dataMax"]} />
-              <Bar dataKey="count" radius={[1, 1, 0, 0]} isAnimationActive={false}>
-                {heatmapData.map((h) => (
-                  <Cell key={h.hour} fill={h.fill} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+      {days === 1 && displayFilter.showActivityHeatmap && hourBuckets.length > 0 && (
+        <div className="h-[7px] w-full min-w-0" style={plotAlignPad}>
+          <div
+            className="flex h-full min-w-0 gap-px"
+            role="img"
+            aria-label="시간대별 활동 밀도(차트와 동일 시간축)"
+          >
+            {hourBuckets.map((count, i) => {
+              const tSlot = t0 + i * HOUR_MS;
+              const fill =
+                count === 0
+                  ? "transparent"
+                  : `rgba(79, 70, 229, ${0.12 + (count / heatmapMax) * 0.55})`;
+              return (
+                <div
+                  key={i}
+                  className="min-h-0 min-w-0 flex-1 rounded-[1px]"
+                  style={{ backgroundColor: fill, flex: "1 1 0" }}
+                  title={`${formatTimeInTimeZone(tSlot, timeZone)} · ${count}건`}
+                />
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

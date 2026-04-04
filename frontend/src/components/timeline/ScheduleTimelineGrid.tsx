@@ -5,18 +5,13 @@ import { MapPin, ChevronDown, ChevronRight, Users } from "lucide-react";
 import { useScheduleTimeline } from "@/application/useSchedules";
 import type { ScheduleTimelineDisplayFilter } from "@/domain/scheduleTypes";
 import { ScheduleUserRow } from "./ScheduleUserRow";
-import { getTimeTicks } from "./timelineUtils";
+import { kstDateIntRangeToDates, normalizeTimelineTimeZone } from "./timelineUtils";
 
 interface Props {
   dateInt: number;
   days: number;
   displayFilter: ScheduleTimelineDisplayFilter;
   locationId?: string;
-}
-
-function dateIntToDate(n: number): Date {
-  const s = String(n);
-  return new Date(Number(s.slice(0, 4)), Number(s.slice(4, 6)) - 1, Number(s.slice(6, 8)));
 }
 
 function LocationBlock({
@@ -35,45 +30,27 @@ function LocationBlock({
   displayFilter: ScheduleTimelineDisplayFilter;
 }) {
   const [collapsed, setCollapsed] = useState(false);
-  const ticks = getTimeTicks(rangeStart, rangeEnd, location.timezone);
 
   return (
     <div className="mb-4 overflow-visible rounded-lg border border-stone-200/90 bg-white shadow-sm ring-1 ring-stone-900/[0.04]">
-      {/* Location header */}
-      <div className="flex h-11 select-none items-center bg-gradient-to-b from-stone-900 to-stone-950 text-white">
+      {/* 위치 헤더 — 시간축은 상태 차트 X축과 중복·불일치를 피하기 위해 제거 */}
+      <div className="flex h-10 select-none items-center bg-gradient-to-b from-stone-900 to-stone-950 text-white">
         <button
           type="button"
           onClick={() => setCollapsed((c) => !c)}
-          className="flex h-full w-[220px] shrink-0 items-center gap-2 border-r border-white/10 px-3 transition-colors hover:bg-white/5"
+          className="flex h-full w-full min-w-0 items-center gap-2 px-3 transition-colors hover:bg-white/5"
         >
           {collapsed
             ? <ChevronRight className="h-3.5 w-3.5 shrink-0 text-stone-500" />
             : <ChevronDown className="h-3.5 w-3.5 shrink-0 text-stone-500" />
           }
           <MapPin className="h-3.5 w-3.5 shrink-0 text-indigo-400" />
-          <span className="truncate text-sm font-semibold tracking-tight text-stone-100">{location.name}</span>
-          <div className="ml-auto flex items-center gap-1 tabular-nums text-stone-500">
+          <span className="min-w-0 truncate text-sm font-semibold tracking-tight text-stone-100">{location.name}</span>
+          <div className="ml-auto flex shrink-0 items-center gap-1 tabular-nums text-stone-500">
             <Users className="h-3 w-3" />
             <span className="text-[11px] font-medium">{location.users.length}</span>
           </div>
         </button>
-
-        {/* Time axis */}
-        <div className="relative flex-1 border-l border-white/5 bg-stone-950/40">
-          {displayFilter.showHeaderTicks &&
-            ticks.map((tick) => (
-              <div
-                key={tick.pct}
-                className="absolute top-0 flex h-full flex-col items-center justify-end pb-2"
-                style={{ left: `${tick.pct}%` }}
-              >
-                <div className="mb-0.5 h-2 w-px bg-stone-600" />
-                <span className="translate-x-0.5 whitespace-nowrap font-mono text-[10px] font-medium tabular-nums text-stone-500">
-                  {tick.label}
-                </span>
-              </div>
-            ))}
-        </div>
       </div>
 
       {/* User rows */}
@@ -87,6 +64,8 @@ function LocationBlock({
             rangeEnd={rangeEnd}
             days={days}
             displayFilter={displayFilter}
+            timeZone={normalizeTimelineTimeZone(location.timezone)}
+            showTimelineXAxis={idx === 0}
             isLast={idx === location.users.length - 1}
           />
         ))}
@@ -102,8 +81,7 @@ function LocationBlock({
 
 export function ScheduleTimelineGrid({ dateInt, days, displayFilter, locationId }: Props) {
   const { data, isLoading, isError, error } = useScheduleTimeline(dateInt, days, locationId);
-  const rangeStart = dateIntToDate(dateInt);
-  const rangeEnd = new Date(rangeStart.getTime() + days * 24 * 60 * 60 * 1000);
+  const { rangeStart, rangeEnd } = kstDateIntRangeToDates(dateInt, days);
 
   if (isLoading) {
     return (
