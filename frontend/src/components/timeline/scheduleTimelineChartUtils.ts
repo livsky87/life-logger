@@ -8,6 +8,11 @@ export interface MergedRun {
   tStart: number;
   tEnd: number;
   entries: Schedule[];
+  /**
+   * true면 조회 구간 끝까지 이어지며, 그 이후를 가르는 다음 레코드가 없음(끝 시각이 화면 밖·미정).
+   * false면 다음 전환 시각이 데이터에 있어 구간 끝이 명확함.
+   */
+  openEnded: boolean;
 }
 
 export function sortEntriesByTime(entries: Schedule[]): Schedule[] {
@@ -56,6 +61,7 @@ export function buildMergedRuns(
       tStart,
       tEnd: Math.max(tStart + 1, tEnd),
       entries: group,
+      openEnded: j >= sorted.length,
     });
     i = j;
   }
@@ -112,6 +118,72 @@ export function buildApiCallMarkers(entries: Schedule[]): ApiCallMarker[] {
   }
   return out;
 }
+
+const EMPTY_LANE_SENTINEL = "__EMPTY__";
+
+/** 스케줄에 등장하는 모든 상태 태그(정렬) + 비어 있음 행 */
+export function collectDistinctStatusTags(entries: Schedule[]): string[] {
+  const set = new Set<string>();
+  let hasEmpty = false;
+  for (const e of entries) {
+    if (!e.status?.length) hasEmpty = true;
+    else e.status.forEach((t) => set.add(t));
+  }
+  const tags = Array.from(set).sort((a, b) => a.localeCompare(b, "ko"));
+  if (hasEmpty) tags.push(EMPTY_LANE_SENTINEL);
+  return tags;
+}
+
+function entryHasStatusLaneTag(entry: Schedule, laneTag: string): boolean {
+  if (laneTag === EMPTY_LANE_SENTINEL) return !entry.status?.length;
+  return entry.status?.includes(laneTag) ?? false;
+}
+
+/**
+ * 한 태그(행) 안에서, 시간순으로 해당 태그가 붙어 있는 연속 구간을 캘린더 블록처럼 병합.
+ * 복합 태그 엔트리는 각 태그 행에 동시에 나타남.
+ */
+export function buildPerTagMergedRuns(
+  entries: Schedule[],
+  rangeEndMs: number,
+  laneTag: string,
+): MergedRun[] {
+  const sorted = sortEntriesByTime(entries);
+  if (sorted.length === 0) return [];
+  const out: MergedRun[] = [];
+  let i = 0;
+  const n = sorted.length;
+  while (i < n) {
+    while (i < n && !entryHasStatusLaneTag(sorted[i], laneTag)) i++;
+    if (i >= n) break;
+    const group: Schedule[] = [];
+    let j = i;
+    while (j < n && entryHasStatusLaneTag(sorted[j], laneTag)) {
+      group.push(sorted[j]);
+      j++;
+    }
+    const tStart = new Date(sorted[i].datetime).getTime();
+    const tEnd = j < n ? new Date(sorted[j].datetime).getTime() : rangeEndMs;
+    const identity = laneTag === EMPTY_LANE_SENTINEL ? "" : laneTag;
+    out.push({
+      key: `${laneTag}::${tStart}`,
+      identity,
+      tStart,
+      tEnd: Math.max(tStart + 1, tEnd),
+      entries: group,
+      openEnded: j >= n,
+    });
+    i = j;
+  }
+  return out;
+}
+
+export function laneTagToDisplayLabel(laneTag: string): string {
+  if (laneTag === EMPTY_LANE_SENTINEL) return "상태 없음";
+  return laneTag;
+}
+
+export { EMPTY_LANE_SENTINEL };
 
 export function buildDensityMap(entries: Schedule[]): number[] {
   const slots = new Array(24).fill(0);

@@ -35,8 +35,10 @@ import {
   buildApiCallMarkers,
   buildDensityMap,
   buildMergedRuns,
+  buildPerTagMergedRuns,
+  collectDistinctStatusTags,
+  laneTagToDisplayLabel,
   schedulePresenceIdentity,
-  scheduleStatusIdentity,
   type MergedRun,
 } from "./scheduleTimelineChartUtils";
 
@@ -94,7 +96,7 @@ function StateRunTooltip({ payload }: { payload: DotPayload }) {
         </div>
         {run.entries.length > 1 && (
           <div className="mt-1 text-[10px] text-stone-400">
-            동일 상태로 이어진 기록 {run.entries.length}건
+            이 태그 행에서 연속 기록 {run.entries.length}건
           </div>
         )}
       </div>
@@ -228,11 +230,10 @@ const X_DOMAIN = (rangeStart: Date, rangeEnd: Date): [number, number] => [
   rangeEnd.getTime(),
 ];
 
-const PRESENCE_Y = { y1: 0.06, y2: 0.26 } as const;
-const STATE_Y = { y1: 0.3, y2: 0.78 } as const;
-const DOT_Y = 0.54;
-/** 상태 점과 겹침 최소화 — API 세로선 호버는 선 근처에서 유지 */
-const API_HIT_Y = 0.38;
+/** 재실 스트립 높이(도메인 단위, 상태 행 아래에 붙음) */
+const PRESENCE_STRIP = 0.28;
+const PRESENCE_PAD = 0.04;
+const LANE_INSET = 0.1;
 
 function apiLineStyle(marker: ApiCallMarker) {
   const base = API_RESULT_LINE[marker.category];
@@ -259,10 +260,25 @@ export function ScheduleUserTimelineChart({
     return nowMs;
   }, [t0, t1]);
 
-  const stateRuns = useMemo(
-    () => buildMergedRuns(entries, t1, scheduleStatusIdentity),
-    [entries, t1],
-  );
+  const laneTags = useMemo(() => collectDistinctStatusTags(entries), [entries]);
+
+  const runsByLane = useMemo(() => {
+    return laneTags.map((tag, laneIndex) => ({
+      tag,
+      laneIndex,
+      runs: buildPerTagMergedRuns(entries, t1, tag),
+    }));
+  }, [entries, t1, laneTags]);
+
+  const yDomainMax = useMemo(() => {
+    const base = laneTags.length;
+    return base + PRESENCE_STRIP + PRESENCE_PAD;
+  }, [laneTags.length]);
+
+  const presenceY = useMemo(() => {
+    const y0 = laneTags.length;
+    return { y1: y0 + 0.02, y2: y0 + PRESENCE_STRIP };
+  }, [laneTags.length]);
 
   const presenceRuns = useMemo(
     () => buildMergedRuns(entries, t1, schedulePresenceIdentity),
@@ -273,30 +289,38 @@ export function ScheduleUserTimelineChart({
     return buildApiCallMarkers(entries).filter((m) => m.tMs >= t0 && m.tMs < t1);
   }, [entries, t0, t1]);
 
+  const apiHitY = laneTags.length > 0 ? laneTags.length / 2 : 0.14;
+
   const apiHitData = useMemo((): ApiHitPayload[] => {
     if (!displayFilter.showApiCallMarkers) return [];
     return apiMarkers.map((marker) => ({
       x: marker.tMs,
-      y: API_HIT_Y,
+      y: apiHitY,
       kind: "api" as const,
       marker,
     }));
-  }, [apiMarkers, displayFilter.showApiCallMarkers]);
+  }, [apiMarkers, displayFilter.showApiCallMarkers, apiHitY]);
 
   const scatterData = useMemo((): DotPayload[] => {
-    if (!displayFilter.showEntryDots) return [];
-    return stateRuns.map((run) => {
-      const colors = colorForStatusIdentity(run.identity);
-      return {
-        x: run.tStart,
-        y: DOT_Y,
-        run,
-        entry: run.entries[0],
-        statusLabel: displayFilter.showStatusTags ? formatStatusRunLabel(run.identity) : null,
-        dotFill: colors.dot,
-      };
-    });
-  }, [displayFilter.showEntryDots, displayFilter.showStatusTags, stateRuns]);
+    if (!displayFilter.showEntryDots || laneTags.length === 0) return [];
+    const out: DotPayload[] = [];
+    for (const { laneIndex, runs } of runsByLane) {
+      const y = laneIndex + 0.5;
+      for (const run of runs) {
+        if (!run.openEnded) continue;
+        const colors = colorForStatusIdentity(run.identity);
+        out.push({
+          x: run.tStart,
+          y,
+          run,
+          entry: run.entries[0],
+          statusLabel: displayFilter.showStatusTags ? formatStatusRunLabel(run.identity) : null,
+          dotFill: colors.dot,
+        });
+      }
+    }
+    return out;
+  }, [displayFilter.showEntryDots, displayFilter.showStatusTags, runsByLane, laneTags.length]);
 
   const heatmapData = useMemo(() => {
     const d = buildDensityMap(entries);
@@ -327,13 +351,31 @@ export function ScheduleUserTimelineChart({
     return m;
   }, [apiMarkers]);
 
+  const laneYTicks = useMemo(
+    () => laneTags.map((_, k) => k + 0.5),
+    [laneTags],
+  );
+
+  const chartPlotHeightPx = useMemo(() => {
+    if (laneTags.length === 0) return 40;
+    return Math.min(300, 12 + laneTags.length * 26 + 16);
+  }, [laneTags.length]);
+
   return (
     <div className="flex min-h-[60px] flex-1 flex-col justify-center gap-1 overflow-visible pr-1">
-      <div className="relative z-0 h-[48px] w-full min-w-0 overflow-visible">
+      <div
+        className="relative z-0 w-full min-w-0 overflow-visible"
+        style={{ height: chartPlotHeightPx }}
+      >
         <ResponsiveContainer width="100%" height="100%" className="!overflow-visible [&_.recharts-wrapper]:!overflow-visible">
           <ComposedChart
             data={[]}
-            margin={{ top: 6, right: 10, bottom: displayFilter.showStatusTags ? 16 : 6, left: 6 }}
+            margin={{
+              top: 6,
+              right: 10,
+              bottom: displayFilter.showStatusTags ? 16 : 6,
+              left: laneTags.length > 0 ? 56 : 8,
+            }}
             barCategoryGap={0}
           >
             <XAxis
@@ -350,7 +392,21 @@ export function ScheduleUserTimelineChart({
               tickLine={{ stroke: CHART_COLORS.gridStrong }}
               axisLine={{ stroke: CHART_COLORS.gridStrong }}
             />
-            <YAxis type="number" domain={[0, 1]} hide />
+            <YAxis
+              type="number"
+              domain={[0, yDomainMax]}
+              ticks={laneTags.length > 0 ? laneYTicks : undefined}
+              hide={laneTags.length === 0}
+              tickFormatter={(v) => {
+                const k = Math.round(Number(v) - 0.5);
+                const tag = laneTags[k];
+                if (tag == null) return "";
+                return laneTagToDisplayLabel(tag);
+              }}
+              tick={{ fill: CHART_COLORS.axis, fontSize: 9 }}
+              width={52}
+              interval={0}
+            />
             {displayFilter.showGridLines && (
               <CartesianGrid
                 strokeDasharray="4 4"
@@ -359,6 +415,18 @@ export function ScheduleUserTimelineChart({
                 horizontal={false}
               />
             )}
+            {laneTags.length > 1 &&
+              displayFilter.showGridLines &&
+              Array.from({ length: laneTags.length - 1 }, (_, i) => i + 1).map((yk) => (
+                <ReferenceLine
+                  key={`lane-h-${yk}`}
+                  y={yk}
+                  stroke={CHART_COLORS.grid}
+                  strokeDasharray="2 6"
+                  strokeOpacity={0.85}
+                  isFront={false}
+                />
+              ))}
             {displayFilter.showPresenceBars &&
               presenceRuns.map((run) => {
                 const seg = run.identity as SegmentType;
@@ -367,8 +435,8 @@ export function ScheduleUserTimelineChart({
                     key={`pr-${run.key}`}
                     x1={run.tStart}
                     x2={run.tEnd}
-                    y1={PRESENCE_Y.y1}
-                    y2={PRESENCE_Y.y2}
+                    y1={presenceY.y1}
+                    y2={presenceY.y2}
                     fill={SEGMENT_FILL[seg]}
                     stroke={SEGMENT_STROKE[seg]}
                     strokeWidth={0.5}
@@ -377,23 +445,29 @@ export function ScheduleUserTimelineChart({
                   />
                 );
               })}
-            {stateRuns.map((run) => {
-              const c = colorForStatusIdentity(run.identity);
-              return (
-                <ReferenceArea
-                  key={`sr-${run.key}`}
-                  x1={run.tStart}
-                  x2={run.tEnd}
-                  y1={STATE_Y.y1}
-                  y2={STATE_Y.y2}
-                  fill={c.fill}
-                  stroke={c.stroke}
-                  strokeWidth={0.6}
-                  fillOpacity={1}
-                  isAnimationActive={false}
-                />
-              );
-            })}
+            {runsByLane.flatMap(({ laneIndex, runs }) =>
+              runs
+                .filter((run) => !run.openEnded)
+                .map((run) => {
+                  const c = colorForStatusIdentity(run.identity);
+                  const y1 = laneIndex + LANE_INSET;
+                  const y2 = laneIndex + 1 - LANE_INSET;
+                  return (
+                    <ReferenceArea
+                      key={`sr-${run.key}`}
+                      x1={run.tStart}
+                      x2={run.tEnd}
+                      y1={y1}
+                      y2={y2}
+                      fill={c.fill}
+                      stroke={c.stroke}
+                      strokeWidth={0.6}
+                      fillOpacity={1}
+                      isAnimationActive={false}
+                    />
+                  );
+                }),
+            )}
             {displayFilter.showApiCallMarkers &&
               apiMarkers.map((marker) => {
                 const ls = apiLineStyle(marker);
