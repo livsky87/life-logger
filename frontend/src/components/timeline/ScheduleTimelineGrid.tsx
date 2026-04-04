@@ -38,36 +38,37 @@ function LocationBlock({
   const ticks = getTimeTicks(rangeStart, rangeEnd, location.timezone);
 
   return (
-    <div className="mb-3 rounded-md overflow-hidden border border-neutral-200 shadow-sm bg-white">
+    <div className="mb-4 overflow-visible rounded-lg border border-stone-200/90 bg-white shadow-sm ring-1 ring-stone-900/[0.04]">
       {/* Location header */}
-      <div className="flex h-10 bg-neutral-900 text-white items-center select-none">
+      <div className="flex h-11 select-none items-center bg-gradient-to-b from-stone-900 to-stone-950 text-white">
         <button
+          type="button"
           onClick={() => setCollapsed((c) => !c)}
-          className="w-[220px] shrink-0 flex items-center gap-2 px-3 h-full border-r border-neutral-700 hover:bg-neutral-800 transition-colors"
+          className="flex h-full w-[220px] shrink-0 items-center gap-2 border-r border-white/10 px-3 transition-colors hover:bg-white/5"
         >
           {collapsed
-            ? <ChevronRight className="w-3.5 h-3.5 text-neutral-500" />
-            : <ChevronDown className="w-3.5 h-3.5 text-neutral-500" />
+            ? <ChevronRight className="h-3.5 w-3.5 shrink-0 text-stone-500" />
+            : <ChevronDown className="h-3.5 w-3.5 shrink-0 text-stone-500" />
           }
-          <MapPin className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-          <span className="text-sm font-medium truncate text-neutral-100">{location.name}</span>
-          <div className="ml-auto flex items-center gap-1 text-neutral-500">
-            <Users className="w-3 h-3" />
-            <span className="text-xs">{location.users.length}</span>
+          <MapPin className="h-3.5 w-3.5 shrink-0 text-indigo-400" />
+          <span className="truncate text-sm font-semibold tracking-tight text-stone-100">{location.name}</span>
+          <div className="ml-auto flex items-center gap-1 tabular-nums text-stone-500">
+            <Users className="h-3 w-3" />
+            <span className="text-[11px] font-medium">{location.users.length}</span>
           </div>
         </button>
 
         {/* Time axis */}
-        <div className="relative flex-1 h-full">
+        <div className="relative flex-1 border-l border-white/5 bg-stone-950/40">
           {displayFilter.showHeaderTicks &&
             ticks.map((tick) => (
               <div
                 key={tick.pct}
-                className="absolute top-0 h-full flex flex-col items-center justify-end pb-1.5"
+                className="absolute top-0 flex h-full flex-col items-center justify-end pb-2"
                 style={{ left: `${tick.pct}%` }}
               >
-                <div className="w-px h-2.5 bg-neutral-700 mb-0.5" />
-                <span className="text-[10px] text-neutral-500 font-mono whitespace-nowrap translate-x-1">
+                <div className="mb-0.5 h-2 w-px bg-stone-600" />
+                <span className="translate-x-0.5 whitespace-nowrap font-mono text-[10px] font-medium tabular-nums text-stone-500">
                   {tick.label}
                 </span>
               </div>
