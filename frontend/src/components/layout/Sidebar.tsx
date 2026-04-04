@@ -53,8 +53,8 @@ export function Sidebar() {
         {!collapsed && (
           <div className="min-w-0">
             <span className="block truncate text-sm font-semibold tracking-tight text-zinc-100">Life Logger</span>
-            <span className="block truncate text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-500">
-              UT Agent · observability
+            <span className="block truncate text-[10px] font-medium tracking-wide text-zinc-500">
+              HDE · UT Agent System
             </span>
           </div>
         )}
