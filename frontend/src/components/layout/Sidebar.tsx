@@ -12,7 +12,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Activity,
+  Sun,
+  Moon,
 } from "lucide-react";
+import { useAppTheme } from "@/components/providers/ThemeProvider";
 
 const NAV_ITEMS = [
   { href: "/timeline", icon: BarChart2, label: "타임라인" },
@@ -25,29 +28,37 @@ const NAV_ITEMS = [
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
+  const { theme, setTheme } = useAppTheme();
 
   return (
     <aside
       className={`
-        relative flex flex-col shrink-0 bg-neutral-950 border-r border-neutral-800
-        transition-[width] duration-200 ease-in-out
+        relative flex flex-col shrink-0 border-r transition-[width] duration-200 ease-in-out
+        border-zinc-800/90 bg-zinc-950 bg-[linear-gradient(180deg,rgb(9_9_11)_0%,rgb(24_24_27)_45%,rgb(9_9_11)_100%)]
+        dark:border-zinc-800/90
         ${collapsed ? "w-[60px]" : "w-[220px]"}
       `}
     >
-      {/* Logo */}
-      <div className="flex items-center gap-2.5 px-4 h-14 border-b border-neutral-800 shrink-0 overflow-hidden">
-        <div className="shrink-0 w-7 h-7 rounded bg-indigo-600 flex items-center justify-center">
-          <Activity className="w-4 h-4 text-white" />
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-500/35 to-transparent"
+        aria-hidden
+      />
+
+      <div className="flex h-14 shrink-0 items-center gap-2.5 overflow-hidden border-b border-zinc-800/80 px-4">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-cyan-500/90 to-teal-600 shadow-[0_0_20px_-4px_rgba(34,211,238,0.45)]">
+          <Activity className="h-4 w-4 text-white" />
         </div>
         {!collapsed && (
-          <span className="text-sm font-semibold text-white tracking-tight whitespace-nowrap">
-            Life Logger
-          </span>
+          <div className="min-w-0">
+            <span className="block truncate text-sm font-semibold tracking-tight text-zinc-100">Life Logger</span>
+            <span className="block truncate text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-500">
+              UT Agent · observability
+            </span>
+          </div>
         )}
       </div>
 
-      {/* Nav items */}
-      <nav className="flex-1 py-3 overflow-hidden">
+      <nav className="flex-1 overflow-hidden py-3">
         {NAV_ITEMS.map(({ href, icon: Icon, label }) => {
           const active = pathname === href || pathname.startsWith(href + "/");
           return (
@@ -55,36 +66,47 @@ export function Sidebar() {
               key={href}
               href={href}
               className={`
-                flex items-center gap-3 h-10 px-4 mx-2 rounded-md mb-0.5
-                transition-colors duration-100 group
+                group mx-2 mb-0.5 flex h-10 items-center gap-3 rounded-md px-4 transition-colors duration-100
                 ${active
-                  ? "bg-indigo-600/20 text-indigo-400"
-                  : "text-neutral-400 hover:bg-neutral-800 hover:text-neutral-100"
+                  ? "bg-cyan-500/10 text-cyan-300 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.2)]"
+                  : "text-zinc-400 hover:bg-zinc-800/80 hover:text-zinc-100"
                 }
               `}
               title={collapsed ? label : undefined}
             >
               <Icon
-                className={`shrink-0 w-4 h-4 ${active ? "text-indigo-400" : "text-neutral-500 group-hover:text-neutral-300"}`}
+                className={`h-4 w-4 shrink-0 ${active ? "text-cyan-400" : "text-zinc-500 group-hover:text-zinc-300"}`}
               />
-              {!collapsed && (
-                <span className="text-sm font-medium whitespace-nowrap">{label}</span>
-              )}
-              {active && !collapsed && (
-                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-400" />
-              )}
+              {!collapsed && <span className="whitespace-nowrap text-sm font-medium">{label}</span>}
+              {active && !collapsed && <div className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]" />}
             </Link>
           );
         })}
       </nav>
 
-      {/* Collapse toggle */}
+      <div className="shrink-0 border-t border-zinc-800/80 p-2">
+        <button
+          type="button"
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          className={`
+            flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors
+            text-zinc-400 hover:bg-zinc-800/90 hover:text-zinc-100
+            ${collapsed ? "justify-center px-0" : ""}
+          `}
+          title={collapsed ? (theme === "dark" ? "라이트 모드" : "다크 모드") : undefined}
+        >
+          {theme === "dark" ? <Sun className="h-4 w-4 shrink-0 text-amber-400/90" /> : <Moon className="h-4 w-4 shrink-0 text-cyan-400/90" />}
+          {!collapsed && <span className="font-medium">{theme === "dark" ? "라이트 모드" : "다크 모드"}</span>}
+        </button>
+      </div>
+
       <button
+        type="button"
         onClick={() => setCollapsed((c) => !c)}
-        className="absolute -right-3 top-[52px] w-6 h-6 rounded-full bg-neutral-800 border border-neutral-700 flex items-center justify-center text-neutral-400 hover:text-white hover:bg-neutral-700 transition-colors z-10"
+        className="absolute -right-3 top-[52px] z-10 flex h-6 w-6 items-center justify-center rounded-full border border-zinc-700 bg-zinc-800 text-zinc-400 transition-colors hover:bg-zinc-700 hover:text-white"
         title={collapsed ? "펼치기" : "접기"}
       >
-        {collapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
+        {collapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
       </button>
     </aside>
   );

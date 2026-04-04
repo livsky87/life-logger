@@ -60,19 +60,20 @@ function TimelineContent() {
   const rangeLabel = days === 1 ? "1일" : `${days}일`;
 
   return (
-    <div className="flex h-full flex-col bg-stone-50/80">
-      {/* Page header */}
-      <div className="flex shrink-0 items-center gap-4 border-b border-stone-200/90 bg-white px-6 py-4 shadow-[0_1px_0_rgba(0,0,0,0.03)]">
+    <div className="flex h-full flex-col bg-zinc-100/90 dark:bg-zinc-950/40">
+      <div className="flex shrink-0 items-center gap-4 border-b border-zinc-200/90 bg-white/90 px-6 py-4 shadow-sm backdrop-blur-sm dark:border-zinc-800/90 dark:bg-zinc-900/85">
         <div>
-          <h1 className="mb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-stone-500">
+          <h1 className="mb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-500 dark:text-zinc-400">
             스케줄 타임라인
           </h1>
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-            <span className="text-xl font-bold tabular-nums tracking-tight text-stone-900">{dateLabel}</span>
-            <span className="text-sm font-medium text-stone-500">{rangeLabel}</span>
+            <span className="text-xl font-bold tabular-nums tracking-tight text-zinc-900 dark:text-zinc-50">{dateLabel}</span>
+            <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400">{rangeLabel}</span>
             <span
               className={`rounded-md px-2 py-0.5 text-sm font-medium tabular-nums ${
-                isTodayDate ? "bg-indigo-100 text-indigo-800" : "text-stone-400"
+                isTodayDate
+                  ? "bg-cyan-500/15 text-cyan-800 dark:bg-cyan-500/20 dark:text-cyan-300"
+                  : "text-zinc-400 dark:text-zinc-500"
               }`}
             >
               {dayLabel}
@@ -83,12 +84,12 @@ function TimelineContent() {
 
         <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
           <ScheduleTimelineFilterPanel filter={displayFilter} onChange={setDisplayFilter} />
-          <label className="flex items-center gap-1.5 px-2 py-1.5 border border-neutral-200 rounded text-xs text-neutral-600 bg-white">
+          <label className="flex items-center gap-1.5 rounded border border-zinc-200 bg-white px-2 py-1.5 text-xs text-zinc-600 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-300">
             <span>범위</span>
             <select
               value={days}
               onChange={(e) => setDays(clampDays(Number(e.target.value)))}
-              className="bg-transparent text-neutral-700 outline-none"
+              className="bg-transparent text-zinc-800 outline-none dark:text-zinc-200"
             >
               {[1, 7, 14, 30, 31].map((d) => (
                 <option key={d} value={d}>{d}일</option>
@@ -98,22 +99,22 @@ function TimelineContent() {
           {!isTodayDate && (
             <button
               onClick={handleToday}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded border border-neutral-200 text-neutral-600 hover:bg-neutral-50 transition-colors"
+              className="flex items-center gap-1.5 rounded border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-800/80"
             >
               <CalendarDays className="w-3.5 h-3.5" />
               오늘
             </button>
           )}
-          <div className="flex items-center border border-neutral-200 rounded overflow-hidden">
+          <div className="flex items-center overflow-hidden rounded border border-zinc-200 dark:border-zinc-700">
             <button
               onClick={() => handleShift(-1)}
-              className="p-1.5 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 transition-colors border-r border-neutral-200"
+              className="border-r border-zinc-200 p-1.5 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
               onClick={() => handleShift(1)}
-              className="p-1.5 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 transition-colors"
+              className="p-1.5 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
             >
               <ChevronRight className="w-4 h-4" />
             </button>

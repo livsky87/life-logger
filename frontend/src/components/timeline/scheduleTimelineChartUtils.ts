@@ -119,23 +119,21 @@ export function buildApiCallMarkers(entries: Schedule[]): ApiCallMarker[] {
   return out;
 }
 
-const EMPTY_LANE_SENTINEL = "__EMPTY__";
+/** 상태 태그 전용 행에서 제외(집 여부는 상단 is_home 막대로만 표시) */
+const OMIT_STATUS_LANE_TAGS = new Set(["재실", "부재"]);
 
-/** 스케줄에 등장하는 모든 상태 태그(정렬) + 비어 있음 행 */
+/** 스케줄에 등장하는 상태 태그만(정렬). 비어 있거나 생략 태그만 있는 일정은 전용 행 없음 */
 export function collectDistinctStatusTags(entries: Schedule[]): string[] {
   const set = new Set<string>();
-  let hasEmpty = false;
   for (const e of entries) {
-    if (!e.status?.length) hasEmpty = true;
-    else e.status.forEach((t) => set.add(t));
+    if (!e.status?.length) continue;
+    const visible = e.status.filter((t) => !OMIT_STATUS_LANE_TAGS.has(t));
+    visible.forEach((t) => set.add(t));
   }
-  const tags = Array.from(set).sort((a, b) => a.localeCompare(b, "ko"));
-  if (hasEmpty) tags.push(EMPTY_LANE_SENTINEL);
-  return tags;
+  return Array.from(set).sort((a, b) => a.localeCompare(b, "ko"));
 }
 
 function entryHasStatusLaneTag(entry: Schedule, laneTag: string): boolean {
-  if (laneTag === EMPTY_LANE_SENTINEL) return !entry.status?.length;
   return entry.status?.includes(laneTag) ?? false;
 }
 
@@ -164,10 +162,9 @@ export function buildPerTagMergedRuns(
     }
     const tStart = new Date(sorted[i].datetime).getTime();
     const tEnd = j < n ? new Date(sorted[j].datetime).getTime() : rangeEndMs;
-    const identity = laneTag === EMPTY_LANE_SENTINEL ? "" : laneTag;
     out.push({
       key: `${laneTag}::${tStart}`,
-      identity,
+      identity: laneTag,
       tStart,
       tEnd: Math.max(tStart + 1, tEnd),
       entries: group,
@@ -179,11 +176,8 @@ export function buildPerTagMergedRuns(
 }
 
 export function laneTagToDisplayLabel(laneTag: string): string {
-  if (laneTag === EMPTY_LANE_SENTINEL) return "상태 없음";
   return laneTag;
 }
-
-export { EMPTY_LANE_SENTINEL };
 
 function hourInTimeZone(d: Date, timeZone: string): number {
   const parts = new Intl.DateTimeFormat("en-US", {

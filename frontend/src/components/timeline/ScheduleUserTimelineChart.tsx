@@ -18,13 +18,14 @@ import type { Schedule, ScheduleTimelineDisplayFilter } from "@/domain/scheduleT
 import {
   API_RESULT_BADGE,
   API_RESULT_LINE,
-  CHART_COLORS,
   SEGMENT_FILL,
   SEGMENT_STROKE,
   colorForStatusIdentity,
   formatStatusRunLabel,
+  getChartColors,
   type SegmentType,
 } from "./scheduleTimelineChartTheme";
+import { useAppTheme } from "@/components/providers/ThemeProvider";
 import type { ApiCallMarker } from "./scheduleTimelineChartUtils";
 import {
   buildApiCallMarkers,
@@ -67,6 +68,8 @@ interface ApiHitPayload {
 }
 
 function StateRunTooltip({ payload }: { payload: DotPayload }) {
+  const { theme } = useAppTheme();
+  const cc = getChartColors(theme);
   const { run, entry } = payload;
   const first = run.entries[0];
   const last = run.entries[run.entries.length - 1];
@@ -77,8 +80,8 @@ function StateRunTooltip({ payload }: { payload: DotPayload }) {
     <div
       className="max-w-[280px] rounded-md border px-3 py-2 text-xs shadow-lg"
       style={{
-        backgroundColor: CHART_COLORS.tooltipBg,
-        borderColor: CHART_COLORS.tooltipBorder,
+        backgroundColor: cc.tooltipBg,
+        borderColor: cc.tooltipBorder,
         color: "#e7e5e4",
       }}
     >
@@ -112,14 +115,16 @@ function StateRunTooltip({ payload }: { payload: DotPayload }) {
 }
 
 function ApiCallTooltip({ marker, timeZone }: { marker: ApiCallMarker; timeZone: string }) {
+  const { theme } = useAppTheme();
+  const cc = getChartColors(theme);
   const { call, scheduleEntry, category } = marker;
   const line = API_RESULT_LINE[category];
   return (
     <div
       className="max-w-[300px] rounded-md border px-3 py-2 text-xs shadow-lg"
       style={{
-        backgroundColor: CHART_COLORS.tooltipBg,
-        borderColor: CHART_COLORS.tooltipBorder,
+        backgroundColor: cc.tooltipBg,
+        borderColor: cc.tooltipBorder,
         color: "#e7e5e4",
       }}
     >
@@ -231,9 +236,9 @@ const X_DOMAIN = (rangeStart: Date, rangeEnd: Date): [number, number] => [
   rangeEnd.getTime(),
 ];
 
-/** 재실 스트립 높이(도메인 단위, 상태 행 아래에 붙음) */
-const PRESENCE_STRIP = 0.28;
-const PRESENCE_PAD = 0.04;
+/** 집·밖(is_home) 구간 막대 — 도메인 단위, 차트 최상단(상태 태그 행 위) */
+const PRESENCE_STRIP = 0.52;
+const PRESENCE_PAD = 0.06;
 const LANE_INSET = 0.1;
 
 /**
@@ -260,6 +265,8 @@ export function ScheduleUserTimelineChart({
   timeZone,
   showXAxis,
 }: Props) {
+  const { theme: appTheme } = useAppTheme();
+  const cc = getChartColors(appTheme);
   const t0 = rangeStart.getTime();
   const t1 = rangeEnd.getTime();
   const axisVisible = showXAxis && displayFilter.showHeaderTicks;
@@ -396,8 +403,9 @@ export function ScheduleUserTimelineChart({
   );
 
   const chartPlotHeightPx = useMemo(() => {
-    if (laneTags.length === 0) return 40;
-    return Math.min(300, 12 + laneTags.length * 26 + 16);
+    const presencePx = 36;
+    if (laneTags.length === 0) return Math.min(120, 28 + presencePx);
+    return Math.min(340, 12 + laneTags.length * 26 + presencePx);
   }, [laneTags.length]);
 
   const chartMarginBottom = axisVisible
@@ -443,12 +451,12 @@ export function ScheduleUserTimelineChart({
               tickFormatter={tickFormatter}
               hide={!axisVisible}
               tick={{
-                fill: CHART_COLORS.axis,
+                fill: cc.axis,
                 fontSize: 10,
                 fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
               }}
-              tickLine={{ stroke: CHART_COLORS.gridStrong }}
-              axisLine={{ stroke: CHART_COLORS.gridStrong }}
+              tickLine={{ stroke: cc.gridStrong }}
+              axisLine={{ stroke: cc.gridStrong }}
             />
             <YAxis
               type="number"
@@ -461,14 +469,14 @@ export function ScheduleUserTimelineChart({
                 if (tag == null) return "";
                 return laneTagToDisplayLabel(tag);
               }}
-              tick={{ fill: CHART_COLORS.axis, fontSize: 9 }}
+              tick={{ fill: cc.axis, fontSize: 9 }}
               width={CHART_GUTTER.left}
               interval={0}
             />
             {displayFilter.showGridLines && (
               <CartesianGrid
                 strokeDasharray="4 4"
-                stroke={CHART_COLORS.grid}
+                stroke={cc.grid}
                 vertical
                 horizontal={false}
               />
@@ -479,7 +487,7 @@ export function ScheduleUserTimelineChart({
                 <ReferenceLine
                   key={`lane-h-${yk}`}
                   y={yk}
-                  stroke={CHART_COLORS.grid}
+                  stroke={cc.grid}
                   strokeDasharray="2 6"
                   strokeOpacity={0.85}
                   isFront={false}
@@ -543,7 +551,7 @@ export function ScheduleUserTimelineChart({
             {displayFilter.showNowLine && nowX != null && (
               <ReferenceLine
                 x={nowX}
-                stroke={CHART_COLORS.now}
+                stroke={cc.now}
                 strokeWidth={1}
                 strokeDasharray="3 3"
                 isFront
@@ -551,7 +559,7 @@ export function ScheduleUserTimelineChart({
             )}
             <Tooltip
               allowEscapeViewBox={{ x: true, y: true }}
-              cursor={{ stroke: CHART_COLORS.gridStrong, strokeWidth: 1 }}
+              cursor={{ stroke: cc.gridStrong, strokeWidth: 1 }}
               wrapperStyle={{ zIndex: 80, outline: "none" }}
               content={({ active, payload }) => (
                 <TimelineTooltipContent active={active} payload={payload} />
@@ -591,7 +599,7 @@ export function ScheduleUserTimelineChart({
                         y={p.y + 18}
                         fontSize={9}
                         fontWeight={600}
-                        fill="#44403c"
+                        fill={cc.statusTagFill}
                         className="tabular-nums"
                       >
                         {String(v)}
@@ -607,10 +615,10 @@ export function ScheduleUserTimelineChart({
 
       {displayFilter.showApiCallMarkers && apiMarkers.length > 0 && (
         <div
-          className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-[9px] text-stone-500"
+          className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-[9px] text-zinc-500 dark:text-zinc-400"
           style={plotAlignPad}
         >
-          <span className="font-medium text-stone-600">API 결과 패턴</span>
+          <span className="font-medium text-zinc-600 dark:text-zinc-300">API 결과 패턴</span>
           {(Object.keys(API_RESULT_LINE) as Array<keyof typeof API_RESULT_LINE>).map((cat) => {
             const n = categoryCounts.get(cat) ?? 0;
             if (n === 0) return null;
@@ -628,7 +636,8 @@ export function ScheduleUserTimelineChart({
                     strokeDasharray={ls.strokeDasharray?.replace(/\s+/g, " ")}
                   />
                 </svg>
-                {API_RESULT_BADGE[cat]} <span className="text-stone-400">×{n}</span>
+                {API_RESULT_BADGE[cat]}{" "}
+                <span className="text-zinc-400 dark:text-zinc-500">×{n}</span>
               </span>
             );
           })}
