@@ -236,9 +236,9 @@ const X_DOMAIN = (rangeStart: Date, rangeEnd: Date): [number, number] => [
   rangeEnd.getTime(),
 ];
 
-/** 재실 스트립 높이(도메인 단위, 상태 행 아래에 붙음) */
-const PRESENCE_STRIP = 0.28;
-const PRESENCE_PAD = 0.04;
+/** 집·밖(is_home) 구간 막대 — 도메인 단위, 차트 최상단(상태 태그 행 위) */
+const PRESENCE_STRIP = 0.52;
+const PRESENCE_PAD = 0.06;
 const LANE_INSET = 0.1;
 
 /**
@@ -403,8 +403,9 @@ export function ScheduleUserTimelineChart({
   );
 
   const chartPlotHeightPx = useMemo(() => {
-    if (laneTags.length === 0) return 40;
-    return Math.min(300, 12 + laneTags.length * 26 + 16);
+    const presencePx = 36;
+    if (laneTags.length === 0) return Math.min(120, 28 + presencePx);
+    return Math.min(340, 12 + laneTags.length * 26 + presencePx);
   }, [laneTags.length]);
 
   const chartMarginBottom = axisVisible

@@ -102,8 +102,6 @@ const STATUS_RUN_THEME: Record<string, { fill: string; stroke: string; dot: stri
   업무: { fill: "rgba(124, 58, 237, 0.32)", stroke: "rgba(109, 40, 217, 0.5)", dot: "#6d28d9" },
   외출: { fill: "rgba(225, 29, 72, 0.28)", stroke: "rgba(190, 18, 60, 0.48)", dot: "#be123c" },
   귀가: { fill: "rgba(13, 148, 136, 0.32)", stroke: "rgba(15, 118, 110, 0.5)", dot: "#0f766e" },
-  재실: { fill: "rgba(79, 70, 229, 0.3)", stroke: "rgba(67, 56, 202, 0.48)", dot: "#4338ca" },
-  부재: { fill: "rgba(120, 113, 108, 0.38)", stroke: "rgba(87, 83, 78, 0.5)", dot: "#57534e" },
   "펫 활동": { fill: "rgba(219, 39, 119, 0.28)", stroke: "rgba(190, 24, 93, 0.48)", dot: "#be185d" },
 };
 

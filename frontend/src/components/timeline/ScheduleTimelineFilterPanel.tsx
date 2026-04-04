@@ -14,7 +14,7 @@ interface Props {
 const ROWS: { key: keyof ScheduleTimelineDisplayFilter; label: string }[] = [
   { key: "showHeaderTicks", label: "시간 축 눈금 (차트, 위치당 첫 행)" },
   { key: "showGridLines", label: "세로 격자선" },
-  { key: "showPresenceBars", label: "재실/위치 구간 막대" },
+  { key: "showPresenceBars", label: "집·밖(is_home) 구간 막대" },
   { key: "showEntryDots", label: "일정 시점(점)" },
   { key: "showStatusTags", label: "상태 뱃지" },
   { key: "showApiCallMarkers", label: "API 호출 표시" },
