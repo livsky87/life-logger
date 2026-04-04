@@ -8,6 +8,7 @@ import {
   CalendarDays,
   HomeIcon,
   MapPin,
+  Network,
   ScrollText,
   ChevronLeft,
   ChevronRight,
@@ -18,6 +19,7 @@ import {
 import { useAppTheme } from "@/components/providers/ThemeProvider";
 
 const NAV_ITEMS = [
+  { href: "/agents", icon: Network, label: "UT 에이전트" },
   { href: "/timeline", icon: BarChart2, label: "타임라인" },
   { href: "/schedule", icon: CalendarDays, label: "스케줄" },
   { href: "/simulation", icon: HomeIcon, label: "시뮬레이션" },

@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useCallback } from "react";
 import Link from "next/link";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import type { LifeLogEvent, TimelineUser, TimelineFilter } from "@/domain/types";
 import type { Schedule } from "@/domain/scheduleTypes";
 import { getEventStyle, type EventStyle } from "./eventConfig";
@@ -25,15 +25,7 @@ interface TooltipState {
 // ── Schedule overlay helpers ──────────────────────────────────────────────────
 
 function scheduleEntryToDate(entry: Schedule): Date {
-  const s = String(entry.date);
-  return new Date(
-    Number(s.slice(0, 4)),
-    Number(s.slice(4, 6)) - 1,
-    Number(s.slice(6, 8)),
-    entry.hour,
-    entry.minute,
-    0,
-  );
+  return parseISO(entry.datetime);
 }
 
 function calcLeftPct(date: Date, rangeStart: Date, rangeEnd: Date): number {
@@ -95,7 +87,7 @@ function buildScheduleTooltip(entry: Schedule): React.ReactNode {
   return (
     <div>
       <div className="font-semibold text-violet-300">
-        {String(entry.hour).padStart(2, "0")}:{String(entry.minute).padStart(2, "0")}
+        {format(parseISO(entry.datetime), "HH:mm")}
         {entry.location && <span className="ml-1.5 text-gray-400">📍 {entry.location}</span>}
       </div>
       <div className="text-gray-300 mt-0.5 max-w-[200px] whitespace-normal">{entry.description}</div>
@@ -109,8 +101,8 @@ function buildScheduleTooltip(entry: Schedule): React.ReactNode {
 function buildCallTooltip(entry: Schedule): React.ReactNode {
   return (
     <div className="min-w-max max-w-xs">
-      <div className="font-semibold text-amber-300 mb-1">
-        {String(entry.hour).padStart(2, "0")}:{String(entry.minute).padStart(2, "0")} API 호출
+      <div className="mb-1 font-semibold text-amber-300">
+        {format(parseISO(entry.datetime), "HH:mm")} API 호출
       </div>
       {entry.calls.map((c, i) => (
         <div key={i} className="text-gray-300 mt-0.5">

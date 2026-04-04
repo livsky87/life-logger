@@ -83,4 +83,15 @@
   html.dark .schedule-next-highlight {
     animation-name: schedule-next-pulse-dark;
   }
+
+  @keyframes ut-edge-dash {
+    to {
+      stroke-dashoffset: -24;
+    }
+  }
+
+  .ut-edge-flow {
+    stroke-dasharray: 10 8;
+    animation: ut-edge-dash 1.4s linear infinite;
+  }
 }
