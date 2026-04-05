@@ -7,6 +7,7 @@ import { useLocations } from "@/application/useLocations";
 import { useUsers } from "@/application/useUsers";
 import { useLogs } from "@/application/useLogs";
 import { useDeleteLifeLog, useEndLifeLog } from "@/application/useMutations";
+import { useAdminAuth } from "@/components/providers/AdminAuthProvider";
 import { getEventStyle } from "@/components/timeline/eventConfig";
 import type { Category, LifeLog } from "@/domain/types";
 
@@ -32,6 +33,7 @@ interface Props {
 }
 
 export function LogManager({ onSuccess, onError }: Props) {
+  const { isAdmin } = useAdminAuth();
   const [filterLocId, setFilterLocId] = useState("");
   const [filterUserId, setFilterUserId] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
@@ -182,26 +184,32 @@ export function LogManager({ onSuccess, onError }: Props) {
                     </td>
                     <td className="px-4 py-3 text-gray-400 text-xs max-w-32 truncate">{dataStr || "—"}</td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-2 justify-end">
-                        {isOpen && (
+                      {isAdmin ? (
+                        <div className="flex items-center gap-2 justify-end">
+                          {isOpen && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEndingLog(log);
+                                setEndedAt(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
+                              }}
+                              className="px-2.5 py-1 text-xs rounded-lg bg-amber-100 text-amber-700 hover:bg-amber-200 transition font-medium"
+                            >
+                              종료
+                            </button>
+                          )}
                           <button
-                            onClick={() => {
-                              setEndingLog(log);
-                              setEndedAt(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
-                            }}
-                            className="px-2.5 py-1 text-xs rounded-lg bg-amber-100 text-amber-700 hover:bg-amber-200 transition font-medium"
+                            type="button"
+                            onClick={() => handleDelete(log)}
+                            disabled={deleteLog.isPending}
+                            className="px-2.5 py-1 text-xs rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition font-medium disabled:opacity-50"
                           >
-                            종료
+                            삭제
                           </button>
-                        )}
-                        <button
-                          onClick={() => handleDelete(log)}
-                          disabled={deleteLog.isPending}
-                          className="px-2.5 py-1 text-xs rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition font-medium disabled:opacity-50"
-                        >
-                          삭제
-                        </button>
-                      </div>
+                        </div>
+                      ) : (
+                        <span className="block text-right text-xs text-gray-400">조회만</span>
+                      )}
                     </td>
                   </tr>
                 );

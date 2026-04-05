@@ -149,6 +149,7 @@ open http://localhost:3000
 ```bash
 curl -sS -X POST "http://localhost:8000/api/v1/schedules/batch" \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer hde-system" \
   -d @sample-schedule-batch.json
 ```
 
@@ -169,7 +170,7 @@ curl -sS "http://localhost:8000/api/v1/schedules/timeline?date=20260404&days=7"
 ### 하루만 다시 올리기
 
 같은 사용자·같은 KST 날에 대해 `replace: true`로 다시 `batch` 요청을 내면 해당 날 데이터만 교체됩니다.  
-개별 삭제는 `DELETE /api/v1/schedules/day?user_id={uuid}&date=YYYYMMDD` 도 사용할 수 있습니다.
+개별 삭제는 `DELETE /api/v1/schedules/day?user_id={uuid}&date=YYYYMMDD`(동일 `Authorization` 헤더 필요)도 사용할 수 있습니다.
 
 ### 흔한 이슈
 
@@ -249,6 +250,21 @@ life-logger/
 ---
 
 ## API 주요 엔드포인트
+
+### 인증 (관리자 토큰)
+
+`/api/v1` 아래 **GET·HEAD·OPTIONS를 제외한 모든 메서드**(POST, PUT, PATCH, DELETE 등)는 헤더가 필요합니다.
+
+```http
+Authorization: Bearer hde-system
+```
+
+기본 토큰 문자열은 `hde-system`입니다. 백엔드는 환경 변수 `API_ADMIN_TOKEN`으로 바꿀 수 있습니다.
+
+**웹 UI:** 사이드바 **관리자 로그인**에 동일한 토큰을 입력하면(검증용 기본값은 `NEXT_PUBLIC_API_ADMIN_TOKEN` 환경 변수, 없으면 `hde-system`) 브라우저 `sessionStorage`에 저장되고, **POST·PUT·PATCH·DELETE** 요청에만 `Authorization: Bearer …`가 붙습니다. 로그인하지 않은 상태에서는 조회만 가능합니다.  
+Docker 빌드 시 `NEXT_PUBLIC_API_ADMIN_TOKEN`을 백엔드와 맞추면 로그인 시 입력해야 할 토큰도 그 값으로 맞춰집니다.
+
+Swagger(`/docs`)의 Try it out으로 POST·DELETE 등을 호출할 때는 요청에 `Authorization: Bearer hde-system` 헤더를 직접 추가하세요(미들웨어에서 검사합니다).
 
 ### 타임라인 조회
 

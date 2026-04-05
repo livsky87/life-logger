@@ -15,8 +15,11 @@ import {
   Activity,
   Sun,
   Moon,
+  Shield,
+  LogOut,
 } from "lucide-react";
 import { useAppTheme } from "@/components/providers/ThemeProvider";
+import { useAdminAuth } from "@/components/providers/AdminAuthProvider";
 
 const NAV_ITEMS = [
   { href: "/agents", icon: Network, label: "UT 에이전트" },
@@ -31,6 +34,7 @@ export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
   const { theme, setTheme } = useAppTheme();
+  const { isAdmin, openLoginModal, logout } = useAdminAuth();
 
   return (
     <aside
@@ -86,7 +90,36 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="shrink-0 border-t border-zinc-800/80 p-2">
+      <div className="shrink-0 space-y-1 border-t border-zinc-800/80 p-2">
+        {isAdmin ? (
+          <button
+            type="button"
+            onClick={logout}
+            className={`
+              flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors
+              text-emerald-400/90 hover:bg-zinc-800/90 hover:text-emerald-300
+              ${collapsed ? "justify-center px-0" : ""}
+            `}
+            title={collapsed ? "관리자 로그아웃" : undefined}
+          >
+            <LogOut className="h-4 w-4 shrink-0" />
+            {!collapsed && <span className="font-medium">관리자 로그아웃</span>}
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={openLoginModal}
+            className={`
+              flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors
+              text-zinc-400 hover:bg-zinc-800/90 hover:text-cyan-300
+              ${collapsed ? "justify-center px-0" : ""}
+            `}
+            title={collapsed ? "관리자 로그인" : undefined}
+          >
+            <Shield className="h-4 w-4 shrink-0 text-cyan-500/80" />
+            {!collapsed && <span className="font-medium">관리자 로그인</span>}
+          </button>
+        )}
         <button
           type="button"
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}

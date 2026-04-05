@@ -13,6 +13,7 @@ import { useUsers } from "@/application/useUsers";
 import { ScheduleEntryForm } from "@/components/manage/ScheduleEntryForm";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { Toast, type ToastType } from "@/components/ui/Toast";
+import { useAdminAuth } from "@/components/providers/AdminAuthProvider";
 
 function todayAsInt(): number {
   const now = new Date();
@@ -95,6 +96,7 @@ function SchedulePageContent() {
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
   const pastEditCloseWarnedRef = useRef(false);
+  const { isAdmin } = useAdminAuth();
 
   const { data: users = [] } = useUsers();
   const { data: schedules, isLoading } = useSchedules(dateInt, selectedUserId || null);
@@ -179,6 +181,14 @@ function SchedulePageContent() {
     pastEditCloseWarnedRef.current = false;
   }, [editTarget?.id]);
 
+  useEffect(() => {
+    if (!isAdmin) {
+      setShowForm(false);
+      setEditTarget(null);
+      setConfirmDelete(null);
+    }
+  }, [isAdmin]);
+
   /** 수정 폼을 연 채로 일정 시각이 지나면 자동 종료(저장은 이미 불가) */
   useEffect(() => {
     if (!showForm || !editTarget || !isPastEntry(editTarget)) return;
@@ -254,11 +264,15 @@ function SchedulePageContent() {
             </button>
           </div>
           <button
+            type="button"
+            disabled={!isAdmin}
+            title={!isAdmin ? "관리자 로그인 후 사용할 수 있습니다" : undefined}
             onClick={() => {
+              if (!isAdmin) return;
               setEditTarget(null);
               setShowForm(true);
             }}
-            className="flex items-center gap-1.5 rounded bg-cyan-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-cyan-700 dark:bg-cyan-600 dark:hover:bg-cyan-500"
+            className="flex items-center gap-1.5 rounded bg-cyan-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-cyan-600 dark:hover:bg-cyan-500"
           >
             <Plus className="w-3.5 h-3.5" />
             항목 추가
@@ -336,7 +350,7 @@ function SchedulePageContent() {
                     <div
                       className={clsx(
                         "flex shrink-0 items-center justify-end gap-1",
-                        past ? "" : "opacity-0 transition group-hover:opacity-100",
+                        past ? "" : isAdmin ? "opacity-0 transition group-hover:opacity-100" : "",
                       )}
                     >
                       {past ? (
@@ -354,7 +368,7 @@ function SchedulePageContent() {
                             삭제
                           </span>
                         </>
-                      ) : (
+                      ) : isAdmin ? (
                         <>
                           <button
                             type="button"
@@ -374,6 +388,8 @@ function SchedulePageContent() {
                             삭제
                           </button>
                         </>
+                      ) : (
+                        <span className="text-[10px] text-zinc-400 dark:text-zinc-500">조회만</span>
                       )}
                     </div>
                   </div>
@@ -385,7 +401,7 @@ function SchedulePageContent() {
       </div>
       </div>
 
-      {showForm && (
+      {showForm && isAdmin && (
         <ScheduleEntryForm
           initialDate={dateInt}
           initialData={editTarget ?? undefined}

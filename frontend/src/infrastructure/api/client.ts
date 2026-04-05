@@ -1,3 +1,5 @@
+import { getAdminSessionToken } from "@/lib/adminSession";
+
 // In browser: use relative path (goes through Next.js rewrites → backend)
 // In server components / SSR: call backend directly via env var
 const getBaseUrl = () => {
@@ -11,11 +13,24 @@ export class ApiError extends Error {
   }
 }
 
+function buildHeaders(init?: RequestInit): Headers {
+  const method = (init?.method ?? "GET").toUpperCase();
+  const headers = new Headers(init?.headers ?? undefined);
+  if (!headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+  const token = getAdminSessionToken();
+  if (token && !["GET", "HEAD", "OPTIONS"].includes(method)) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+  return headers;
+}
+
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const url = `${getBaseUrl()}${path}`;
   const res = await fetch(url, {
     ...init,
-    headers: { "Content-Type": "application/json", ...init?.headers },
+    headers: buildHeaders(init),
   });
   if (!res.ok) {
     const text = await res.text();
