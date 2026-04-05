@@ -36,6 +36,30 @@ export function formatTimeInTimeZone(ms: number, timeZone: string): string {
   return `${hh}:${mm}`;
 }
 
+/** 호버 시각과 이벤트가 타임존 기준 같은 연·월·일·시·분인지 (차트 ‘8:24’와 일정/Device/HDE 정렬) */
+export function isSameWallClockMinute(
+  aMs: number,
+  bMs: number,
+  timeZone: string,
+): boolean {
+  const opts: Intl.DateTimeFormatOptions = {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  };
+  const wallKey = (ms: number) => {
+    const parts = new Intl.DateTimeFormat("en-CA", opts).formatToParts(new Date(ms));
+    const g = (t: Intl.DateTimeFormatPart["type"]) =>
+      parts.find((p) => p.type === t)?.value ?? "";
+    return `${g("year")}-${g("month")}-${g("day")} ${g("hour")}:${g("minute")}`;
+  };
+  return wallKey(aMs) === wallKey(bMs);
+}
+
 /** X축 다일: 월/일·요일 */
 export function formatTimelineDayInZone(ms: number, timeZone: string): string {
   return new Intl.DateTimeFormat("ko-KR", {

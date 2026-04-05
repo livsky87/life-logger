@@ -52,6 +52,7 @@ import {
   formatTimeInTimeZone,
   formatTimelineDayInZone,
   formatTimelineShortDateInZone,
+  isSameWallClockMinute,
 } from "./timelineUtils";
 
 function shortUrl(url: string, max = 52): string {
@@ -59,10 +60,8 @@ function shortUrl(url: string, max = 52): string {
   return `${url.slice(0, max - 1)}…`;
 }
 
-/** 호버 시각과 같은 묶음으로 볼 Device/HDE 이벤트(ms) */
-const HOVER_EVENT_SNAP_MS = 1400;
-/** “이 시각” 일정 행으로 볼 datetime 근접 허용(ms) */
-const HOVER_INSTANT_ENTRY_MS = 2000;
+/** 같은 벽시계 분이 아닐 때만 쓰는 보조 허용 오차(분 경계·픽셀 보간 ms 단위 어긋남) */
+const HOVER_TIME_FALLBACK_MS = 15_000;
 
 const PRESENCE_KO: Record<SegmentType, string> = {
   home: "재실",
@@ -114,9 +113,15 @@ interface HoverSnapshot {
   periodicObservations: ApiObservation[];
 }
 
+function hoverMatchesEventTime(tMs: number, eventMs: number, timeZone: string): boolean {
+  if (isSameWallClockMinute(tMs, eventMs, timeZone)) return true;
+  return Math.abs(eventMs - tMs) <= HOVER_TIME_FALLBACK_MS;
+}
+
 function buildHoverSnapshot(
   tMs: number,
   ctx: {
+    timeZone: string;
     entries: Schedule[];
     presenceRuns: MergedRun[];
     runsByLane: Array<{ tag: string; laneIndex: number; runs: MergedRun[] }>;
@@ -124,7 +129,7 @@ function buildHoverSnapshot(
     periodicMarkers: Array<{ tMs: number; observation: ApiObservation }>;
   },
 ): HoverSnapshot {
-  const { entries, presenceRuns, runsByLane, apiMarkers, periodicMarkers } = ctx;
+  const { timeZone, entries, presenceRuns, runsByLane, apiMarkers, periodicMarkers } = ctx;
 
   const presence =
     presenceRuns.find((r) => tMs >= r.tStart && tMs < r.tEnd) ?? null;
@@ -153,15 +158,15 @@ function buildHoverSnapshot(
 
   const instantEntries = sorted.filter((e) => {
     const et = new Date(e.datetime).getTime();
-    return Math.abs(et - tMs) <= HOVER_INSTANT_ENTRY_MS;
+    return hoverMatchesEventTime(tMs, et, timeZone);
   });
 
   const apiNear = apiMarkers
-    .filter((m) => Math.abs(m.tMs - tMs) <= HOVER_EVENT_SNAP_MS)
+    .filter((m) => hoverMatchesEventTime(tMs, m.tMs, timeZone))
     .sort((a, b) => Math.abs(a.tMs - tMs) - Math.abs(b.tMs - tMs));
 
   const periodicNear = periodicMarkers
-    .filter((p) => Math.abs(p.tMs - tMs) <= HOVER_EVENT_SNAP_MS)
+    .filter((p) => hoverMatchesEventTime(tMs, p.tMs, timeZone))
     .sort((a, b) => Math.abs(a.tMs - tMs) - Math.abs(b.tMs - tMs))
     .map((p) => p.observation);
 
@@ -794,13 +799,14 @@ export function ScheduleUserTimelineChart({
   const hoverSnapshot = useMemo(() => {
     if (pointerHover == null) return null;
     return buildHoverSnapshot(pointerHover.tMs, {
+      timeZone,
       entries,
       presenceRuns,
       runsByLane,
       apiMarkers,
       periodicMarkers,
     });
-  }, [pointerHover, entries, presenceRuns, runsByLane, apiMarkers, periodicMarkers]);
+  }, [pointerHover, timeZone, entries, presenceRuns, runsByLane, apiMarkers, periodicMarkers]);
 
   const hoverTooltipPos = useMemo(() => {
     if (pointerHover == null) return null;
