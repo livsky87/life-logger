@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useRef, useLayoutEffect } from "react";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import type { LifeLogEvent, TimelineUser, TimelineFilter } from "@/domain/types";
@@ -13,6 +13,7 @@ const LANE_GAP = 2;
 const LANE_PAD = 4;
 const DOT_ZONE = 24;
 const LOC_H = 8;
+const GLOBAL_TOOLTIP_GAP = 14;
 
 // ── Tooltip types ─────────────────────────────────────────────────────────────
 
@@ -73,7 +74,7 @@ const PresenceSegments = React.memo(function PresenceSegments({
             key={entry.id}
             className={`absolute rounded-sm opacity-70 ${entry.is_home ? "bg-blue-400" : "bg-gray-300"}`}
             style={{ left: `${leftPct}%`, width: `${widthPct}%`, height: 6, top: rowHeight - 6 }}
-            title={entry.is_home ? "집 안" : "집 밖"}
+            title={entry.is_home ? "재실" : "부재"}
           />
         );
       })}
@@ -102,13 +103,12 @@ function buildCallTooltip(entry: Schedule): React.ReactNode {
   return (
     <div className="min-w-max max-w-xs">
       <div className="mb-1 font-semibold text-amber-300">
-        {format(parseISO(entry.datetime), "HH:mm")} API 호출
+        {format(parseISO(entry.datetime), "HH:mm")} Device 호출
       </div>
       {entry.calls.map((c, i) => (
         <div key={i} className="text-gray-300 mt-0.5">
           <span className="text-yellow-300 font-mono">{c.method}</span>{" "}
           <span className="text-blue-300 text-[10px]">{c.url.slice(0, 40)}{c.url.length > 40 ? "…" : ""}</span>
-          {c.dsec > 0 && <span className="text-gray-500 ml-1">@{c.dsec}초</span>}
         </div>
       ))}
     </div>
@@ -131,11 +131,40 @@ function buildEventTooltip(event: LifeLogEvent, style: EventStyle): React.ReactN
 // ── Shared Tooltip ────────────────────────────────────────────────────────────
 
 function GlobalTooltip({ tooltip }: { tooltip: TooltipState | null }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
+
+  useLayoutEffect(() => {
+    if (!tooltip) {
+      setPos(null);
+      return;
+    }
+    const el = ref.current;
+    if (!el) return;
+    const margin = 10;
+    const w = el.offsetWidth;
+    const h = el.offsetHeight;
+    let left = tooltip.x + GLOBAL_TOOLTIP_GAP;
+    if (left + w > window.innerWidth - margin) {
+      left = tooltip.x - GLOBAL_TOOLTIP_GAP - w;
+    }
+    left = Math.max(margin, Math.min(left, window.innerWidth - margin - w));
+    let top = tooltip.y - 60;
+    top = Math.max(margin, Math.min(top, window.innerHeight - margin - h));
+    setPos({ left, top });
+  }, [tooltip]);
+
   if (!tooltip) return null;
+
   return (
     <div
-      className="fixed z-[9999] rounded-lg bg-gray-900 px-3 py-2 text-xs text-white shadow-xl pointer-events-none"
-      style={{ left: tooltip.x + 14, top: tooltip.y - 60 }}
+      ref={ref}
+      className="fixed z-[9999] max-w-xs rounded-lg bg-gray-900 px-3 py-2 text-xs text-white shadow-xl pointer-events-none"
+      style={{
+        left: pos?.left ?? tooltip.x + GLOBAL_TOOLTIP_GAP,
+        top: pos?.top ?? tooltip.y - 60,
+        visibility: pos ? "visible" : "hidden",
+      }}
     >
       {tooltip.content}
     </div>

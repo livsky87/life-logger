@@ -74,6 +74,18 @@ class SQLAlchemyScheduleRepository(ScheduleRepository):
         result = await self._session.execute(q)
         return [_to_domain(row) for row in result.scalars()]
 
+    async def list_all_in_range(self, date_start: datetime, date_end: datetime) -> list[Schedule]:
+        q = (
+            select(ScheduleORM)
+            .where(
+                ScheduleORM.timestamp >= date_start,
+                ScheduleORM.timestamp < date_end,
+            )
+            .order_by(ScheduleORM.timestamp)
+        )
+        result = await self._session.execute(q)
+        return [_to_domain(row) for row in result.scalars()]
+
     async def bulk_create(self, entries: list[dict]) -> list[Schedule]:
         """Insert multiple schedule entries at once."""
         orms = [

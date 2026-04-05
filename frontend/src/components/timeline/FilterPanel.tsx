@@ -137,7 +137,7 @@ export function FilterPanel({ filter, onChange, period }: Props) {
 
           {/* Location */}
           <Section
-            label="📍 위치 (집)"
+            label="📍 위치 (재실)"
             checked={filter.showLocation}
             onToggle={() => onChange({ ...filter, showLocation: !filter.showLocation })}
           />

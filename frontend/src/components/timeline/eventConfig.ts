@@ -7,7 +7,7 @@ export interface EventStyle {
 }
 
 const locationStyles: Record<string, EventStyle> = {
-  home:    { label: "집",    color: "bg-blue-500",  textColor: "text-white" },
+  home:    { label: "재실",    color: "bg-blue-500",  textColor: "text-white" },
   office:  { label: "회사",  color: "bg-indigo-500", textColor: "text-white" },
   gym:     { label: "헬스장", color: "bg-green-500", textColor: "text-white" },
   outside: { label: "외출",  color: "bg-sky-400",   textColor: "text-white" },

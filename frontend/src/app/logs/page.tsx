@@ -37,7 +37,6 @@ function CallDetail({ call, idx }: { call: ScheduleCall; idx: number }) {
         <span className="flex-1 truncate font-mono text-xs text-zinc-600 dark:text-zinc-300">
           {call.url.replace("{deviceId}", call.deviceId || "{deviceId}")}
         </span>
-        {call.dsec > 0 && <span className="shrink-0 text-xs text-zinc-400 dark:text-zinc-500">+{call.dsec}s</span>}
         {call.result && (
           <span className={`text-xs shrink-0 ${isSuccess ? "text-green-600" : "text-red-500"}`}>
             {isSuccess ? "✓" : "✗"}
@@ -50,7 +49,7 @@ function CallDetail({ call, idx }: { call: ScheduleCall; idx: number }) {
       {open && (
         <div className="space-y-1.5 border-t border-zinc-100 bg-zinc-50 px-4 pb-3 pt-1 dark:border-zinc-800 dark:bg-zinc-950/80">
           <div className="flex gap-2 text-xs">
-            <span className="shrink-0 text-zinc-500 dark:text-zinc-400">device:</span>
+            <span className="shrink-0 text-zinc-500 dark:text-zinc-400">Device:</span>
             <span className="font-mono text-zinc-700 dark:text-zinc-200">{call.deviceId || "-"}</span>
           </div>
           {call.commands.length > 0 && (
@@ -144,7 +143,7 @@ function LogsContent() {
     <div className="mx-auto max-w-4xl p-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">로그</h1>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">스케줄 기반 API 호출 내역을 조회합니다</p>
+        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">스케줄 기반 Device 호출 내역을 조회합니다</p>
       </div>
 
       <div className="mb-5 flex flex-wrap items-center gap-3">
@@ -200,7 +199,7 @@ function LogsContent() {
           <div className="py-16 text-center text-sm text-zinc-400 dark:text-zinc-500">로딩 중...</div>
         ) : entriesWithCalls.length === 0 ? (
           <div className="rounded-2xl border border-zinc-200 bg-white py-16 text-center text-sm text-zinc-400 dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-500">
-            이 날짜에 API 호출 기록이 없습니다
+            이 날짜에 Device 호출 기록이 없습니다
           </div>
         ) : (
           entriesWithCalls.map((entry) => (

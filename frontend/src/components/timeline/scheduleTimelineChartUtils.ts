@@ -119,7 +119,7 @@ export function buildApiCallMarkers(entries: Schedule[]): ApiCallMarker[] {
   return out;
 }
 
-/** 상태 태그 전용 행에서 제외(집 여부는 상단 is_home 막대로만 표시) */
+/** 상태 태그 전용 행에서 제외(재실 여부는 상단 is_home 막대로만 표시) */
 const OMIT_STATUS_LANE_TAGS = new Set(["재실", "부재"]);
 
 /** 스케줄에 등장하는 상태 태그만(정렬). 비어 있거나 생략 태그만 있는 일정은 전용 행 없음 */

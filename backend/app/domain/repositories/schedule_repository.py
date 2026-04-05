@@ -31,6 +31,9 @@ class ScheduleRepository(ABC):
     ) -> list[Schedule]: ...
 
     @abstractmethod
+    async def list_all_in_range(self, date_start: datetime, date_end: datetime) -> list[Schedule]: ...
+
+    @abstractmethod
     async def bulk_create(self, entries: list[dict]) -> list[Schedule]: ...
 
     @abstractmethod
