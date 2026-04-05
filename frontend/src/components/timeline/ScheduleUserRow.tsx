@@ -92,10 +92,18 @@ export const ScheduleUserRow = React.memo(function ScheduleUserRow({
           >
             {user.user_name}
           </Link>
-          {user.user_job && (
+          {(user.user_job || user.age != null || user.gender) && (
             <div className="mt-0.5 truncate text-[11px] leading-tight text-zinc-500 dark:text-zinc-400">
-              {user.user_job}
+              {[user.user_job, user.age != null ? `${user.age}세` : null, user.gender].filter(Boolean).join(" · ")}
             </div>
+          )}
+          {(user.personality || user.daily_style) && (
+            <p
+              className="mt-0.5 line-clamp-2 text-[10px] leading-snug text-zinc-500 dark:text-zinc-500"
+              title={[user.personality, user.daily_style].filter(Boolean).join("\n")}
+            >
+              {[user.personality, user.daily_style].filter(Boolean).join(" · ")}
+            </p>
           )}
         </div>
         <button

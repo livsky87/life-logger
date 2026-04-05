@@ -18,6 +18,9 @@ class LocationORM(Base):
     name: Mapped[str] = mapped_column(Text, nullable=False)
     description: Mapped[str | None] = mapped_column(Text)
     timezone: Mapped[str] = mapped_column(Text, nullable=False, server_default="UTC")
+    residence_city: Mapped[str | None] = mapped_column(Text)
+    residence_type: Mapped[str | None] = mapped_column(Text)
+    country: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     users: Mapped[list["UserORM"]] = relationship("UserORM", back_populates="location")
@@ -32,6 +35,10 @@ class UserORM(Base):
     name: Mapped[str] = mapped_column(Text, nullable=False)
     email: Mapped[str | None] = mapped_column(Text, unique=True)
     job: Mapped[str | None] = mapped_column(Text)
+    age: Mapped[int | None] = mapped_column(Integer)
+    gender: Mapped[str | None] = mapped_column(Text)
+    personality: Mapped[str | None] = mapped_column(Text)
+    daily_style: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     location: Mapped["LocationORM"] = relationship("LocationORM", back_populates="users")
@@ -68,18 +75,6 @@ class ScheduleORM(Base):
     metadata_: Mapped[dict] = mapped_column("metadata", JSONB, nullable=False, server_default="{}")
     status: Mapped[list] = mapped_column(JSONB, nullable=False, server_default="[]")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-
-
-class SimulationORM(Base):
-    __tablename__ = "simulations"
-
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    location_id: Mapped[str] = mapped_column(Text, nullable=False)
-    name: Mapped[str] = mapped_column(Text, nullable=False)
-    devices: Mapped[list] = mapped_column(JSONB, nullable=False, server_default="[]")
-    metadata_: Mapped[dict] = mapped_column("metadata", JSONB, nullable=False, server_default="{}")
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class ApiObservationORM(Base):

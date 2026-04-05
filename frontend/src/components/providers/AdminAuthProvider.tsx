@@ -9,7 +9,12 @@ import {
   useState,
 } from "react";
 import { Shield, X } from "lucide-react";
-import { clearAdminSession, getAdminSessionToken, tryAdminLogin } from "@/lib/adminSession";
+import {
+  clearAdminSession,
+  getAdminSessionToken,
+  isAdminTokenHintConfigured,
+  tryAdminLogin,
+} from "@/lib/adminSession";
 
 type AdminAuthContextValue = {
   isAdmin: boolean;
@@ -45,6 +50,10 @@ function AdminLoginModal({
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!phrase.trim()) {
+      setError("토큰을 입력하세요.");
+      return;
+    }
     if (tryAdminLogin(phrase)) {
       onLoggedIn();
       onClose();
@@ -52,7 +61,11 @@ function AdminLoginModal({
       setError(null);
       return;
     }
-    setError("토큰이 올바르지 않습니다.");
+    setError(
+      isAdminTokenHintConfigured()
+        ? "토큰이 올바르지 않습니다."
+        : "세션에 저장하지 못했습니다. 브라우저 설정을 확인하세요.",
+    );
   };
 
   return (
@@ -80,8 +93,16 @@ function AdminLoginModal({
               관리자 로그인
             </h2>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              수정·삭제 등 변경 작업에 필요합니다.
+              수정·삭제 등 변경 작업에 필요합니다. 토큰은{" "}
+              <code className="rounded bg-zinc-100 px-1 font-mono text-[10px] dark:bg-zinc-800">API_ADMIN_TOKEN</code>
+              과 동일해야 합니다.
             </p>
+            {!isAdminTokenHintConfigured() && (
+              <p className="mt-1 text-[10px] leading-snug text-amber-700 dark:text-amber-400/90">
+                <code className="font-mono">NEXT_PUBLIC_API_ADMIN_TOKEN</code>이 비어 있으면 서버에 설정한 비밀 토큰을
+                직접 입력하면 됩니다(클라이언트 번들에 힌트가 없음).
+              </p>
+            )}
           </div>
         </div>
         <form onSubmit={submit} className="space-y-3">

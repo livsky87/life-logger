@@ -21,6 +21,8 @@ export interface Schedule {
 }
 
 export interface ScheduleCreate {
+  /** Household account id — same role as user_id when user_id is omitted */
+  account_id?: string | null;
   user_id?: string | null;
   datetime: string;
   description: string;
@@ -32,6 +34,7 @@ export interface ScheduleCreate {
 }
 
 export interface ScheduleUpdate {
+  account_id?: string | null;
   user_id?: string | null;
   datetime?: string;
   description?: string;
@@ -45,17 +48,27 @@ export interface ScheduleUpdate {
 export interface ScheduleBatchCreate {
   entries: ScheduleCreate[];
   replace?: boolean;
+  /** If set and first entry has no user_id/account_id, used as batch user id */
+  account_id?: string;
   user_name?: string;
   user_job?: string;
+  user_age?: number | null;
+  user_gender?: string | null;
+  user_personality?: string | null;
+  user_daily_style?: string | null;
   location_id?: string;
   location_name?: string;
   timezone?: string;
+  residence_city?: string | null;
+  residence_type?: string | null;
+  country?: string | null;
 }
 
 export interface ScheduleBatchResult {
   deleted: number;
   created: number;
   user_id: string;
+  account_id: string;
   location_id: string;
   date: number;
 }
@@ -64,8 +77,13 @@ export interface ScheduleBatchResult {
 
 export interface ScheduleTimelineUser {
   user_id: string;
+  account_id: string;
   user_name: string;
   user_job: string | null;
+  age: number | null;
+  gender: string | null;
+  personality: string | null;
+  daily_style: string | null;
   entries: Schedule[];
 }
 
@@ -73,6 +91,9 @@ export interface ScheduleTimelineLocation {
   location_id: string;
   name: string;
   timezone: string;
+  residence_city: string | null;
+  residence_type: string | null;
+  country: string | null;
   users: ScheduleTimelineUser[];
 }
 

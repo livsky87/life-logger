@@ -1,11 +1,15 @@
 services:
+  # PostgreSQL 데이터는 아래 명명 볼륨(postgres_data)에 저장됩니다.
+  # `docker compose down`만 실행하면 볼륨은 유지되고, `docker compose down -v`일 때만 삭제됩니다.
   postgres:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-life_logger}
       POSTGRES_USER: ${POSTGRES_USER:-life_logger}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
     volumes:
+      # /var/lib/postgresql/data — 초기화는 디렉터리가 비어 있을 때만 수행됨(비밀번호·DB명은 그때 고정)
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-life_logger}"]
@@ -25,7 +29,7 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-life_logger}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DB:-life_logger}
       CORS_ORIGINS: http://localhost:3000
-      API_ADMIN_TOKEN: ${API_ADMIN_TOKEN:-hde-system}
+      API_ADMIN_TOKEN: ${API_ADMIN_TOKEN:?Set API_ADMIN_TOKEN in .env - see .env.example}
     ports:
       - "8000:8000"
 
@@ -34,12 +38,13 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_ADMIN_TOKEN: ${NEXT_PUBLIC_API_ADMIN_TOKEN:-hde-system}
+        # 비우면 가능(번들에 힌트 없음). 값이 있으면 API_ADMIN_TOKEN 과 동일 권장.
+        NEXT_PUBLIC_API_ADMIN_TOKEN: ${NEXT_PUBLIC_API_ADMIN_TOKEN:-}
     depends_on:
       - backend
     environment:
       NEXT_PUBLIC_API_URL: http://backend:8000
-      NEXT_PUBLIC_API_ADMIN_TOKEN: ${NEXT_PUBLIC_API_ADMIN_TOKEN:-hde-system}
+      NEXT_PUBLIC_API_ADMIN_TOKEN: ${NEXT_PUBLIC_API_ADMIN_TOKEN:-}
       # 호스트 OpenClaw 디렉터리 마운트 시(getOpenclawBase). 비도커 로컬은 미설정으로 ~/.openclaw 사용.
       OPENCLAW_HOME: /openclaw
     volumes:
@@ -50,4 +55,5 @@ services:
       - "3000:3000"
 
 volumes:
+  # 명명 볼륨: 실제 Docker 이름은 보통「Compose 프로젝트명_postgres_data」(예: life-logger_postgres_data)
   postgres_data:

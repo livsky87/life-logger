@@ -9,6 +9,9 @@ class LocationCreate(BaseModel):
     name: str
     timezone: str = "UTC"
     description: str | None = None
+    residence_city: str | None = None
+    residence_type: str | None = None
+    country: str | None = None
 
 
 class LocationResponse(BaseModel):
@@ -17,6 +20,9 @@ class LocationResponse(BaseModel):
     name: str
     timezone: str
     description: str | None
+    residence_city: str | None = None
+    residence_type: str | None = None
+    country: str | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

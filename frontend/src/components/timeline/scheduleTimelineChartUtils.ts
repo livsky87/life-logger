@@ -176,6 +176,8 @@ export function buildPerTagMergedRuns(
 }
 
 export function laneTagToDisplayLabel(laneTag: string): string {
+  if (laneTag === "true") return "재실";
+  if (laneTag === "false") return "부재";
   return laneTag;
 }
 

@@ -49,6 +49,9 @@ export interface Location {
   name: string;
   timezone: string;
   description: string | null;
+  residence_city: string | null;
+  residence_type: string | null;
+  country: string | null;
   created_at: string;
 }
 
@@ -58,6 +61,10 @@ export interface User {
   name: string;
   email: string | null;
   job: string | null;
+  age: number | null;
+  gender: string | null;
+  personality: string | null;
+  daily_style: string | null;
   created_at: string;
 }
 

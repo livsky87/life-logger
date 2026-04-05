@@ -111,7 +111,7 @@ _FAKE_SCHEDULE_DAY: list[tuple[int, int, str, str, bool, list, list[str]]] = [
 # (outcome, http_status, detail, description) — 가짜 API 점검 패턴 순환
 _FAKE_OBS_PATTERN: list[tuple[str, int | None, str, str]] = [
     ("success", 200, "GET /api/v1/locations", "가짜: 목록 조회 성공"),
-    ("success", 204, "GET /api/v1/proxy/home-presence/status", "가짜: No Content"),
+    ("success", 200, "GET /api/v1/users", "가짜: 사용자 목록"),
     ("warning", 429, "POST /api/v1/life-logs", "가짜: rate limit"),
     ("success", 201, "POST /api/v1/schedules", "가짜: 스케줄 생성"),
     ("failure", 503, "GET /api/v1/fake/upstream", "가짜: upstream timeout"),

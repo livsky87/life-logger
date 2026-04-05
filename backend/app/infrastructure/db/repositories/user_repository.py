@@ -15,6 +15,10 @@ def _to_domain(orm: UserORM) -> User:
         name=orm.name,
         email=orm.email,
         job=orm.job,
+        age=orm.age,
+        gender=orm.gender,
+        personality=orm.personality,
+        daily_style=orm.daily_style,
         created_at=orm.created_at,
     )
 
@@ -34,8 +38,27 @@ class SQLAlchemyUserRepository(UserRepository):
         orm = await self._session.get(UserORM, user_id)
         return _to_domain(orm) if orm else None
 
-    async def create(self, location_id: UUID, name: str, email: str | None, job: str | None = None) -> User:
-        orm = UserORM(location_id=location_id, name=name, email=email, job=job)
+    async def create(
+        self,
+        location_id: UUID,
+        name: str,
+        email: str | None,
+        job: str | None = None,
+        age: int | None = None,
+        gender: str | None = None,
+        personality: str | None = None,
+        daily_style: str | None = None,
+    ) -> User:
+        orm = UserORM(
+            location_id=location_id,
+            name=name,
+            email=email,
+            job=job,
+            age=age,
+            gender=gender,
+            personality=personality,
+            daily_style=daily_style,
+        )
         self._session.add(orm)
         await self._session.flush()
         await self._session.refresh(orm)

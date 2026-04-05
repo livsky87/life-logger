@@ -10,4 +10,8 @@ class User:
     name: str
     email: str | None
     job: str | None
+    age: int | None
+    gender: str | None
+    personality: str | None
+    daily_style: str | None
     created_at: datetime

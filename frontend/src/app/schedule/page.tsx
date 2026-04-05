@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useMemo, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { format, addDays, subDays, isToday, parseISO } from "date-fns";
+import { format, addDays, subDays, parseISO } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
 import { ko } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, CalendarDays, Plus, Home, LogOut, Zap } from "lucide-react";
@@ -14,6 +14,7 @@ import { ScheduleEntryForm } from "@/components/manage/ScheduleEntryForm";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { Toast, type ToastType } from "@/components/ui/Toast";
 import { useAdminAuth } from "@/components/providers/AdminAuthProvider";
+import { useIsClientCalendarToday } from "@/lib/useClientToday";
 
 function todayAsInt(): number {
   const now = new Date();
@@ -165,7 +166,7 @@ function SchedulePageContent() {
 
   const selectedUser = users.find((u) => u.id === selectedUserId);
 
-  const isTodayDate = isToday(currentDate);
+  const isTodayDate = useIsClientCalendarToday(currentDate);
 
   /** 현재 시각이 바뀌면 ‘다음 일정’ 하이라이트가 다음 행으로 넘어가도록 주기 갱신 */
   const [scheduleClockTick, setScheduleClockTick] = useState(0);

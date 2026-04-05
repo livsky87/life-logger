@@ -69,7 +69,14 @@ function LocationBlock({
             : <ChevronDown className="h-3.5 w-3.5 shrink-0 text-stone-500" />
           }
           <MapPin className="h-3.5 w-3.5 shrink-0 text-indigo-400" />
-          <span className="min-w-0 truncate text-sm font-semibold tracking-tight text-stone-100">{location.name}</span>
+          <span className="min-w-0 flex flex-col items-start gap-0.5 text-left sm:flex-row sm:items-baseline sm:gap-2">
+            <span className="truncate text-sm font-semibold tracking-tight text-stone-100">{location.name}</span>
+            {(location.residence_city || location.residence_type || location.country) && (
+              <span className="max-w-[min(100%,14rem)] truncate text-[10px] font-normal text-stone-400 sm:max-w-[20rem]">
+                {[location.residence_city, location.residence_type, location.country].filter(Boolean).join(" · ")}
+              </span>
+            )}
+          </span>
           <div className="ml-auto flex shrink-0 items-center gap-1 tabular-nums text-stone-500">
             <Users className="h-3 w-3" />
             <span className="text-[11px] font-medium">{location.users.length}</span>

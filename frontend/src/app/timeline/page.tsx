@@ -1,17 +1,14 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect, Suspense } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { useSearchParams, useRouter } from "next/navigation";
-import { format, addDays, subDays, startOfDay, isToday } from "date-fns";
+import { format, addDays, subDays, startOfDay } from "date-fns";
 import { ko } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
-import { useLocations } from "@/application/useLocations";
+import { useIsClientCalendarToday } from "@/lib/useClientToday";
 import { ScheduleTimelineGrid } from "@/components/timeline/ScheduleTimelineGrid";
 import { ScheduleTimelineFilterPanel } from "@/components/timeline/ScheduleTimelineFilterPanel";
 import { defaultScheduleTimelineDisplayFilter } from "@/domain/scheduleTypes";
-import { getAdminSessionToken } from "@/lib/adminSession";
-import { probeLocationsListAndReport } from "@/lib/timelineApiProbe";
 
 function dateToInt(d: Date): number {
   return Number(`${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`);
@@ -39,30 +36,6 @@ function TimelineContent() {
   const [dateInt, setDateInt] = useState(initDateInt);
   const [days, setDays] = useState(() => clampDays(Number(searchParams.get("days") ?? "1")));
   const [displayFilter, setDisplayFilter] = useState(defaultScheduleTimelineDisplayFilter);
-  /** 0 = 끄기; 초 단위 간격으로 /api/v1/locations 점검 후 기록(관리자 세션 필요) */
-  const [probeIntervalSec, setProbeIntervalSec] = useState(0);
-  const [clientReady, setClientReady] = useState(false);
-  const qc = useQueryClient();
-  const { data: locations } = useLocations();
-  const probeLocationId = locations?.[0]?.id;
-
-  useEffect(() => {
-    setClientReady(true);
-  }, []);
-
-  useEffect(() => {
-    if (probeIntervalSec <= 0 || !probeLocationId) return;
-    if (!getAdminSessionToken()) return;
-
-    const tick = () => {
-      probeLocationsListAndReport(probeLocationId)
-        .then(() => qc.invalidateQueries({ queryKey: ["api-observations"] }))
-        .catch(() => {});
-    };
-    tick();
-    const id = window.setInterval(tick, probeIntervalSec * 1000);
-    return () => window.clearInterval(id);
-  }, [probeIntervalSec, probeLocationId, qc]);
 
   useEffect(() => {
     router.replace(`/timeline?date=${dateInt}&days=${days}`, { scroll: false });
@@ -84,12 +57,12 @@ function TimelineContent() {
     format(currentDate, "yyyy년 M월 d일", { locale: ko }), [currentDate]);
   const dayLabel = useMemo(() =>
     format(currentDate, "EEE", { locale: ko }), [currentDate]);
-  const isTodayDate = isToday(currentDate);
+  const isTodayDate = useIsClientCalendarToday(currentDate);
   const rangeLabel = days === 1 ? "1일" : `${days}일`;
 
   return (
     <div className="flex h-full flex-col bg-zinc-100/90 dark:bg-zinc-950/40">
-      <div className="flex shrink-0 items-center gap-4 border-b border-zinc-200/90 bg-white/90 px-6 py-4 shadow-sm backdrop-blur-sm dark:border-zinc-800/90 dark:bg-zinc-900/85">
+      <div className="relative z-30 flex shrink-0 items-center gap-4 border-b border-zinc-200/90 bg-white/90 px-6 py-4 shadow-sm backdrop-blur-sm dark:border-zinc-800/90 dark:bg-zinc-900/85">
         <div>
           <h1 className="mb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-500 dark:text-zinc-400">
             스케줄 타임라인
@@ -112,27 +85,6 @@ function TimelineContent() {
 
         <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
           <ScheduleTimelineFilterPanel filter={displayFilter} onChange={setDisplayFilter} />
-          <label className="flex items-center gap-1.5 rounded border border-zinc-200 bg-white px-2 py-1.5 text-xs text-zinc-600 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-300">
-            <span className="whitespace-nowrap">자동 점검</span>
-            <select
-              value={probeIntervalSec}
-              onChange={(e) => setProbeIntervalSec(Number(e.target.value))}
-              className="max-w-[5.5rem] bg-transparent text-zinc-800 outline-none dark:text-zinc-200"
-              title="첫 번째 위치에 대해 GET /api/v1/locations 호출 결과를 기록합니다. POST는 관리자 로그인 필요."
-            >
-              <option value={0}>끄기</option>
-              <option value={60}>1분</option>
-              <option value={300}>5분</option>
-            </select>
-          </label>
-          {probeIntervalSec > 0 && !probeLocationId && (
-            <span className="text-[11px] text-amber-600 dark:text-amber-400">위치가 없어 점검을 건너뜁니다</span>
-          )}
-          {clientReady && probeIntervalSec > 0 && probeLocationId && !getAdminSessionToken() && (
-            <span className="max-w-[200px] text-[11px] leading-tight text-amber-600 dark:text-amber-400">
-              관리자 로그인 시에만 서버에 기록됩니다
-            </span>
-          )}
           <label className="flex items-center gap-1.5 rounded border border-zinc-200 bg-white px-2 py-1.5 text-xs text-zinc-600 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-300">
             <span>범위</span>
             <select
@@ -172,7 +124,7 @@ function TimelineContent() {
       </div>
 
       {/* Timeline content */}
-      <div className="flex-1 overflow-auto p-5 md:p-6">
+      <div className="relative z-0 flex-1 overflow-auto p-5 md:p-6">
         <ScheduleTimelineGrid dateInt={dateInt} days={days} displayFilter={displayFilter} />
       </div>
     </div>
