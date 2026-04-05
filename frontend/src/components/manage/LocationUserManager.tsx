@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useLocations } from "@/application/useLocations";
 import { useUsers } from "@/application/useUsers";
 import { useCreateLocation, useCreateUser } from "@/application/useMutations";
+import { useAdminAuth } from "@/components/providers/AdminAuthProvider";
 
 const TIMEZONES = [
   "Asia/Seoul",
@@ -22,6 +23,7 @@ interface Props {
 }
 
 export function LocationUserManager({ onSuccess, onError }: Props) {
+  const { isAdmin } = useAdminAuth();
   const { data: locations } = useLocations();
 
   // Location form
@@ -43,6 +45,7 @@ export function LocationUserManager({ onSuccess, onError }: Props) {
 
   const handleCreateLocation = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAdmin) return;
     if (!locName.trim()) return;
     try {
       await createLoc.mutateAsync({ location_code: locCode || undefined, name: locName, timezone: locTz, description: locDesc || undefined });
@@ -55,6 +58,7 @@ export function LocationUserManager({ onSuccess, onError }: Props) {
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAdmin) return;
     if (!userName.trim() || !userLocId) return;
     try {
       await createUser.mutateAsync({ name: userName, location_id: userLocId, email: userEmail || undefined, job: userJob || undefined });
@@ -67,6 +71,11 @@ export function LocationUserManager({ onSuccess, onError }: Props) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {!isAdmin && (
+        <p className="md:col-span-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
+          관리자 로그인 후 위치·사용자를 추가할 수 있습니다.
+        </p>
+      )}
       {/* ── 위치 관리 ── */}
       <div className="space-y-4">
         <h3 className="font-semibold text-gray-800 text-base">위치 목록</h3>
@@ -93,6 +102,7 @@ export function LocationUserManager({ onSuccess, onError }: Props) {
 
         <form onSubmit={handleCreateLocation} className="border-t pt-4 space-y-3">
           <h4 className="text-sm font-semibold text-gray-600">위치 추가</h4>
+          <fieldset disabled={!isAdmin} className="space-y-3 border-0 p-0 disabled:opacity-60">
           <input
             type="text"
             placeholder="위치 코드 (선택, 예: home-seoul)"
@@ -126,11 +136,12 @@ export function LocationUserManager({ onSuccess, onError }: Props) {
           </select>
           <button
             type="submit"
-            disabled={createLoc.isPending}
+            disabled={createLoc.isPending || !isAdmin}
             className="w-full py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition disabled:opacity-50"
           >
             {createLoc.isPending ? "추가 중..." : "위치 추가"}
           </button>
+          </fieldset>
         </form>
       </div>
 
@@ -178,6 +189,7 @@ export function LocationUserManager({ onSuccess, onError }: Props) {
 
         <form onSubmit={handleCreateUser} className="border-t pt-4 space-y-3">
           <h4 className="text-sm font-semibold text-gray-600">사용자 추가</h4>
+          <fieldset disabled={!isAdmin} className="space-y-3 border-0 p-0 disabled:opacity-60">
           <select
             value={userLocId}
             onChange={(e) => setUserLocId(e.target.value)}
@@ -213,11 +225,12 @@ export function LocationUserManager({ onSuccess, onError }: Props) {
           />
           <button
             type="submit"
-            disabled={createUser.isPending}
+            disabled={createUser.isPending || !isAdmin}
             className="w-full py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition disabled:opacity-50"
           >
             {createUser.isPending ? "추가 중..." : "사용자 추가"}
           </button>
+          </fieldset>
         </form>
       </div>
     </div>

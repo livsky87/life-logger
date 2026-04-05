@@ -6,6 +6,7 @@ import type { Category } from "@/domain/types";
 import { useLocations } from "@/application/useLocations";
 import { useUsers } from "@/application/useUsers";
 import { useCreateLifeLog } from "@/application/useMutations";
+import { useAdminAuth } from "@/components/providers/AdminAuthProvider";
 
 const EVENT_TYPES: Record<Category, { value: string; label: string }[]> = {
   location: [
@@ -72,6 +73,7 @@ interface Props {
 }
 
 export function LogInputForm({ onSuccess, onError }: Props) {
+  const { isAdmin } = useAdminAuth();
   const now = toLocalDatetimeValue(new Date());
 
   const [locationId, setLocationId] = useState("");
@@ -108,6 +110,7 @@ export function LogInputForm({ onSuccess, onError }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAdmin) return;
     if (!userId || !locationId || !resolvedEventType) {
       onError("사용자, 위치, 이벤트 종류를 모두 선택해주세요.");
       return;
@@ -135,6 +138,12 @@ export function LogInputForm({ onSuccess, onError }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {!isAdmin && (
+        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
+          관리자 로그인 후 이벤트를 기록할 수 있습니다.
+        </p>
+      )}
+      <fieldset disabled={!isAdmin} className="min-w-0 space-y-5 border-0 p-0 disabled:opacity-60">
       {/* Location + User */}
       <div className="grid grid-cols-2 gap-4">
         <div>
@@ -301,11 +310,12 @@ export function LogInputForm({ onSuccess, onError }: Props) {
 
       <button
         type="submit"
-        disabled={mutation.isPending}
+        disabled={mutation.isPending || !isAdmin}
         className="w-full py-2.5 rounded-lg bg-indigo-600 text-white font-semibold text-sm hover:bg-indigo-700 transition disabled:opacity-50"
       >
         {mutation.isPending ? "저장 중..." : "이벤트 기록"}
       </button>
+      </fieldset>
     </form>
   );
 }

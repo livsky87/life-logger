@@ -5,6 +5,8 @@ RUN npm install
 
 FROM node:18-alpine AS builder
 WORKDIR /app
+ARG NEXT_PUBLIC_API_ADMIN_TOKEN=hde-system
+ENV NEXT_PUBLIC_API_ADMIN_TOKEN=$NEXT_PUBLIC_API_ADMIN_TOKEN
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN mkdir -p /app/public && npm run build

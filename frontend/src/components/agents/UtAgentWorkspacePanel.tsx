@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Check, ChevronDown, ChevronRight, FileText, FolderOpen, Loader2, RotateCcw } from "lucide-react";
 import clsx from "clsx";
+import { useAdminAuth } from "@/components/providers/AdminAuthProvider";
 import { readWorkspaceRootOverride, writeWorkspaceRootOverride } from "./utWorkspaceStorage";
 
 type ListResponse = {
@@ -63,6 +64,7 @@ interface Props {
 }
 
 export function UtAgentWorkspacePanel({ workspaceKey, nodeLabel, onClose }: Props) {
+  const { isAdmin } = useAdminAuth();
   const [rootOverride, setRootOverride] = useState<string | null>(null);
   const [folderUiOpen, setFolderUiOpen] = useState(false);
   const [pathDraft, setPathDraft] = useState("");
@@ -70,6 +72,10 @@ export function UtAgentWorkspacePanel({ workspaceKey, nodeLabel, onClose }: Prop
   useEffect(() => {
     setRootOverride(readWorkspaceRootOverride(workspaceKey));
   }, [workspaceKey]);
+
+  useEffect(() => {
+    if (!isAdmin) setFolderUiOpen(false);
+  }, [isAdmin]);
 
   const [activePath, setActivePath] = useState<string | null>(null);
 
@@ -107,6 +113,7 @@ export function UtAgentWorkspacePanel({ workspaceKey, nodeLabel, onClose }: Prop
   }, [rootOverride, listQuery.data?.defaultWorkspacePath, listQuery.data?.workspacePath]);
 
   const applyFolder = useCallback(() => {
+    if (!isAdmin) return;
     const t = pathDraft.trim();
     if (t.length === 0) {
       writeWorkspaceRootOverride(workspaceKey, null);
@@ -117,14 +124,15 @@ export function UtAgentWorkspacePanel({ workspaceKey, nodeLabel, onClose }: Prop
     }
     setFolderUiOpen(false);
     setActivePath(null);
-  }, [pathDraft, workspaceKey]);
+  }, [pathDraft, workspaceKey, isAdmin]);
 
   const resetToDefault = useCallback(() => {
+    if (!isAdmin) return;
     writeWorkspaceRootOverride(workspaceKey, null);
     setRootOverride(null);
     setFolderUiOpen(false);
     setActivePath(null);
-  }, [workspaceKey]);
+  }, [workspaceKey, isAdmin]);
 
   const keyDisplay = listQuery.data?.workspaceKey ?? workspaceKey;
   const resolvedPath = listQuery.data?.workspacePath;
@@ -166,8 +174,13 @@ export function UtAgentWorkspacePanel({ workspaceKey, nodeLabel, onClose }: Prop
       <div className="shrink-0 border-b border-zinc-800 px-2 py-1.5">
         <button
           type="button"
-          onClick={() => (folderUiOpen ? setFolderUiOpen(false) : openFolderEditor())}
-          className="flex w-full items-center gap-1 rounded-md px-1.5 py-1 text-left text-[11px] text-zinc-400 hover:bg-zinc-800/80 hover:text-zinc-200"
+          disabled={!isAdmin}
+          title={!isAdmin ? "관리자 로그인 후 폴더를 바꿀 수 있습니다" : undefined}
+          onClick={() => {
+            if (!isAdmin) return;
+            folderUiOpen ? setFolderUiOpen(false) : openFolderEditor();
+          }}
+          className="flex w-full items-center gap-1 rounded-md px-1.5 py-1 text-left text-[11px] text-zinc-400 hover:bg-zinc-800/80 hover:text-zinc-200 disabled:cursor-not-allowed disabled:opacity-40"
         >
           {folderUiOpen ? (
             <ChevronDown className="h-3.5 w-3.5 shrink-0" />
@@ -176,7 +189,7 @@ export function UtAgentWorkspacePanel({ workspaceKey, nodeLabel, onClose }: Prop
           )}
           폴더 선택 (기본: ~/.openclaw/{keyDisplay})
         </button>
-        {folderUiOpen && (
+        {folderUiOpen && isAdmin && (
           <div className="mt-2 space-y-2 px-0.5 pb-1">
             <p className="text-[10px] leading-snug text-zinc-500">
               절대 경로를 입력하세요. <code className="text-zinc-400">~</code> 로 홈을 쓸 수 있습니다. 이 브라우저에만

@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { AdminAuthProvider } from "@/components/providers/AdminAuthProvider";
 import { ThemeScript } from "@/components/layout/ThemeScript";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { AdminReadOnlyBanner } from "@/components/layout/AdminReadOnlyBanner";
 
 export const metadata: Metadata = {
   title: "Life Logger — UT Agent 콘솔 | Home Data Engine",
@@ -21,10 +23,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeScript />
         <ThemeProvider>
           <QueryProvider>
-            <div className="flex h-screen overflow-hidden">
-              <Sidebar />
-              <main className="app-main-canvas flex-1 overflow-auto">{children}</main>
-            </div>
+            <AdminAuthProvider>
+              <div className="flex h-screen overflow-hidden">
+                <Sidebar />
+                <main className="app-main-canvas flex-1 overflow-auto">
+                  <AdminReadOnlyBanner />
+                  {children}
+                </main>
+              </div>
+            </AdminAuthProvider>
           </QueryProvider>
         </ThemeProvider>
       </body>

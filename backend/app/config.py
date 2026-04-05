@@ -6,6 +6,8 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+asyncpg://life_logger:changeme@localhost:5432/life_logger"
     cors_origins: str = "http://localhost:3000"
+    # 비-GET /api/v1 요청의 Authorization: Bearer 와 일치해야 함 (환경변수 API_ADMIN_TOKEN)
+    api_admin_token: str = "hde-system"
 
     @property
     def cors_origins_list(self) -> list[str]:

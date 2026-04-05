@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.router import router as v1_router
 from app.config import settings
 from app.database import engine
+from app.middleware.admin_token import AdminTokenMiddleware
 
 
 @asynccontextmanager
@@ -20,6 +21,8 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# CORS가 먼저 실행되도록 AdminToken을 먼저 등록(바깥쪽이 CORS)
+app.add_middleware(AdminTokenMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,

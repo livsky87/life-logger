@@ -25,6 +25,7 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-life_logger}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DB:-life_logger}
       CORS_ORIGINS: http://localhost:3000
+      API_ADMIN_TOKEN: ${API_ADMIN_TOKEN:-hde-system}
     ports:
       - "8000:8000"
 
@@ -32,10 +33,13 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_ADMIN_TOKEN: ${NEXT_PUBLIC_API_ADMIN_TOKEN:-hde-system}
     depends_on:
       - backend
     environment:
       NEXT_PUBLIC_API_URL: http://backend:8000
+      NEXT_PUBLIC_API_ADMIN_TOKEN: ${NEXT_PUBLIC_API_ADMIN_TOKEN:-hde-system}
       # 호스트 OpenClaw 디렉터리 마운트 시(getOpenclawBase). 비도커 로컬은 미설정으로 ~/.openclaw 사용.
       OPENCLAW_HOME: /openclaw
     volumes:
