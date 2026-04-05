@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Upload sample schedule and simulation data via API.
+Upload sample schedule data via API.
 
 Usage:
   python upload.py --api http://localhost:8000 --home a --user-id USER_UUID
@@ -57,16 +57,6 @@ def main():
 
     home_dir = os.path.join(os.path.dirname(__file__), f"home-{args.home}")
     schedules_file = os.path.join(home_dir, "schedules.json")
-    simulation_file = os.path.join(home_dir, "simulation.json")
-
-    # Upload simulation config
-    print(f"\n📦 Uploading simulation config (home-{args.home})...")
-    with open(simulation_file) as f:
-        sim_data = json.load(f)
-
-    result = api_post(args.api, "/api/v1/simulations", sim_data)
-    sim_id = result["id"]
-    print(f"  ✅ Simulation created: id={sim_id}, name={result['name']}")
 
     # Upload schedules
     print(f"\n📅 Uploading schedules (home-{args.home})...")
@@ -94,9 +84,8 @@ def main():
     print(f"\n🎉 Done! {total} schedules uploaded for home-{args.home}")
     if user_id:
         print(f"   User ID: {user_id}")
-    print(f"   Simulation ID: {sim_id}")
     print(f"\n👉 View schedule: http://localhost:3000/schedule?userId={user_id or ''}&date={dates[0] if dates else ''}")
-    print(f"👉 View simulation: http://localhost:3000/simulation")
+    print("👉 View simulation: http://localhost:3000/simulation")
 
 
 if __name__ == "__main__":

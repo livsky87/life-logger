@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:3000"
     # 비-GET /api/v1 요청의 Authorization: Bearer 와 일치해야 함 (환경변수 API_ADMIN_TOKEN)
     api_admin_token: str = "hde-system"
+    home_data_engine_url: str = ""
 
     @property
     def cors_origins_list(self) -> list[str]:

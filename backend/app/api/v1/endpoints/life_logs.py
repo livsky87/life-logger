@@ -61,14 +61,6 @@ async def list_logs(
     return [LifeLogResponse.model_validate(log) for log in logs]
 
 
-@router.get("/{log_id}", response_model=LifeLogResponse)
-async def get_log(log_id: int, service: LifeLogServiceDep):
-    log = await service.get_by_id(log_id)
-    if not log:
-        raise HTTPException(status_code=404, detail="Log not found")
-    return LifeLogResponse.model_validate(log)
-
-
 @router.delete("/{log_id}", status_code=204)
 async def delete_log(log_id: int, service: LifeLogServiceDep):
     deleted = await service.delete(log_id)
