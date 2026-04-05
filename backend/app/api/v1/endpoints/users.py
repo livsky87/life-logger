@@ -16,5 +16,14 @@ async def list_users(service: UserServiceDep, location_id: UUID | None = None):
 
 @router.post("", response_model=UserResponse, status_code=201)
 async def create_user(body: UserCreate, service: UserServiceDep):
-    user = await service.create(location_id=body.location_id, name=body.name, email=body.email, job=body.job)
+    user = await service.create(
+        location_id=body.location_id,
+        name=body.name,
+        email=body.email,
+        job=body.job,
+        age=body.age,
+        gender=body.gender,
+        personality=body.personality,
+        daily_style=body.daily_style,
+    )
     return UserResponse.model_validate(user)

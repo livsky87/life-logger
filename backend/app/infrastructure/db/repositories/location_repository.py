@@ -15,6 +15,9 @@ def _to_domain(orm: LocationORM) -> Location:
         name=orm.name,
         description=orm.description,
         timezone=orm.timezone,
+        residence_city=orm.residence_city,
+        residence_type=orm.residence_type,
+        country=orm.country,
         created_at=orm.created_at,
     )
 
@@ -31,8 +34,25 @@ class SQLAlchemyLocationRepository(LocationRepository):
         orm = await self._session.get(LocationORM, location_id)
         return _to_domain(orm) if orm else None
 
-    async def create(self, name: str, timezone: str, description: str | None, location_code: str | None = None) -> Location:
-        orm = LocationORM(name=name, timezone=timezone, description=description, location_code=location_code)
+    async def create(
+        self,
+        name: str,
+        timezone: str,
+        description: str | None,
+        location_code: str | None = None,
+        residence_city: str | None = None,
+        residence_type: str | None = None,
+        country: str | None = None,
+    ) -> Location:
+        orm = LocationORM(
+            name=name,
+            timezone=timezone,
+            description=description,
+            location_code=location_code,
+            residence_city=residence_city,
+            residence_type=residence_type,
+            country=country,
+        )
         self._session.add(orm)
         await self._session.flush()
         await self._session.refresh(orm)

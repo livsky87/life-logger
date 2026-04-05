@@ -10,4 +10,7 @@ class Location:
     name: str
     timezone: str
     description: str | None
+    residence_city: str | None
+    residence_type: str | None
+    country: str | None
     created_at: datetime

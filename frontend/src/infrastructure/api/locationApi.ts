@@ -10,6 +10,9 @@ export function createLocation(body: {
   name: string;
   timezone: string;
   description?: string;
+  residence_city?: string | null;
+  residence_type?: string | null;
+  country?: string | null;
 }): Promise<Location> {
   return apiFetch<Location>("/api/v1/locations", {
     method: "POST",

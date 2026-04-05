@@ -1,3 +1,5 @@
+import { laneTagToDisplayLabel } from "./scheduleTimelineChartUtils";
+
 export type SegmentType = "home" | "away" | "transit" | "work";
 
 /** API 응답(result) 문자열 분류 — 선 색·패턴 */
@@ -130,5 +132,5 @@ export function colorForStatusIdentity(identity: string): { fill: string; stroke
 
 export function formatStatusRunLabel(identity: string): string {
   if (!identity) return "상태 없음";
-  return identity.split("\u0001").join(" · ");
+  return identity.split("\u0001").map((t) => laneTagToDisplayLabel(t)).join(" · ");
 }

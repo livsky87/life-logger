@@ -586,6 +586,8 @@ export function ScheduleUserTimelineChart({
       showSchedApiBand ? schedTop + API_SCHEDULE_STRIP * 0.22 : null;
     const perLabelY =
       showPeriodicBand ? perBot - API_PERIODIC_STRIP * 0.22 : null;
+    /** 재실(is_home) 막대 밴드 — Device/HDE와 같이 왼쪽 Y축에 라벨 표시 */
+    const presenceLabelY = displayFilter.showPresenceBars ? (presTop + presBot) / 2 : null;
     return {
       laneH,
       presTop,
@@ -599,9 +601,10 @@ export function ScheduleUserTimelineChart({
       perMid,
       schedLabelY,
       perLabelY,
+      presenceLabelY,
       presenceY: { y1: presTop, y2: presBot },
     };
-  }, [laneTags.length, showSchedApiBand, showPeriodicBand]);
+  }, [laneTags.length, showSchedApiBand, showPeriodicBand, displayFilter.showPresenceBars]);
 
   const yDomainMax = layout.yMax;
   const presenceY = layout.presenceY;
@@ -747,20 +750,22 @@ export function ScheduleUserTimelineChart({
 
   const yAxisTicks = useMemo(() => {
     const ticks = [...laneYTicks];
+    if (layout.presenceLabelY != null) ticks.push(layout.presenceLabelY);
     if (layout.schedLabelY != null) ticks.push(layout.schedLabelY);
     if (layout.perLabelY != null) ticks.push(layout.perLabelY);
     return ticks.sort((a, b) => a - b);
-  }, [laneYTicks, layout.schedLabelY, layout.perLabelY]);
+  }, [laneYTicks, layout.presenceLabelY, layout.schedLabelY, layout.perLabelY]);
 
   const yAxisTickFormatter = useCallback(
     (v: number) => {
+      if (layout.presenceLabelY != null && Math.abs(v - layout.presenceLabelY) < 0.03) return "재실";
       if (layout.schedLabelY != null && Math.abs(v - layout.schedLabelY) < 0.03) return "Device";
       if (layout.perLabelY != null && Math.abs(v - layout.perLabelY) < 0.03) return "HDE";
       const k = Math.round(Number(v) - 0.5);
       const tag = laneTags[k];
       return tag != null ? laneTagToDisplayLabel(tag) : "";
     },
-    [laneTags, layout.schedLabelY, layout.perLabelY],
+    [laneTags, layout.presenceLabelY, layout.schedLabelY, layout.perLabelY],
   );
 
   const chartPlotHeightPx = useMemo(() => {
@@ -786,7 +791,10 @@ export function ScheduleUserTimelineChart({
   );
 
   const showYAxis =
-    laneTags.length > 0 || layout.schedLabelY != null || layout.perLabelY != null;
+    laneTags.length > 0 ||
+    layout.presenceLabelY != null ||
+    layout.schedLabelY != null ||
+    layout.perLabelY != null;
   /** Y축(상태 태그 + Device/HDE 밴드 라벨): width 56. 없으면 gutter만 */
   const chartMarginLeft = showYAxis ? 0 : CHART_GUTTER.left;
 

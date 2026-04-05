@@ -14,5 +14,24 @@ class UserService:
     async def get_by_id(self, user_id: UUID) -> User | None:
         return await self._repo.get_by_id(user_id)
 
-    async def create(self, location_id: UUID, name: str, email: str | None, job: str | None = None) -> User:
-        return await self._repo.create(location_id=location_id, name=name, email=email, job=job)
+    async def create(
+        self,
+        location_id: UUID,
+        name: str,
+        email: str | None,
+        job: str | None = None,
+        age: int | None = None,
+        gender: str | None = None,
+        personality: str | None = None,
+        daily_style: str | None = None,
+    ) -> User:
+        return await self._repo.create(
+            location_id=location_id,
+            name=name,
+            email=email,
+            job=job,
+            age=age,
+            gender=gender,
+            personality=personality,
+            daily_style=daily_style,
+        )

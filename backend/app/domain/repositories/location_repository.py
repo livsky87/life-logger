@@ -12,4 +12,13 @@ class LocationRepository(ABC):
     async def get_by_id(self, location_id: UUID) -> Location | None: ...
 
     @abstractmethod
-    async def create(self, name: str, timezone: str, description: str | None, location_code: str | None = None) -> Location: ...
+    async def create(
+        self,
+        name: str,
+        timezone: str,
+        description: str | None,
+        location_code: str | None = None,
+        residence_city: str | None = None,
+        residence_type: str | None = None,
+        country: str | None = None,
+    ) -> Location: ...

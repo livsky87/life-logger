@@ -40,22 +40,58 @@
 git clone <repo-url>
 cd life-logger
 
-# 2. 서비스 시작 (백엔드 + DB)
+# 2. 환경 변수 (.env) — Docker Compose 전에 필수
+cp .env.example .env
+# .env 를 열고 API_ADMIN_TOKEN 을 임의의 긴 비밀 문자열로 설정하세요 (예: openssl rand -hex 32).
+# NEXT_PUBLIC_API_ADMIN_TOKEN 은 선택입니다. 비우면 프론트 번들에 토큰 힌트가 없고, 관리자 로그인 시
+# 서버와 동일한 토큰을 직접 입력하면 됩니다. 값을 넣으면 API_ADMIN_TOKEN 과 같게 두는 것을 권장합니다.
+
+# 3. 서비스 시작 (백엔드 + DB)
 docker compose up -d
 
-# 3. DB 마이그레이션
+# 4. DB 마이그레이션
 docker compose exec backend alembic upgrade head
 
-# 4. 샘플 데이터 삽입 (life_logs 등 — 스케줄 테이블은 포함하지 않음)
+# 5. 샘플 데이터 삽입 (life_logs 등 — 스케줄 테이블은 포함하지 않음)
 docker compose exec backend python scripts/seed.py
 
-# 5. 프론트엔드 접속
+# 6. 프론트엔드 접속
 open http://localhost:3000
 ```
 
 > 백엔드 API: `http://localhost:8000`  
 > API 문서(Swagger): `http://localhost:8000/docs`  
 > `scripts/seed.py`는 **스케줄(`schedules`) 행을 넣지 않습니다.** 스케줄·스케줄 타임라인 화면을 쓰려면 아래 [스케줄·타임라인 데이터 올리기](#schedule-timeline-empty-db)를 따르세요.
+
+### PostgreSQL 데이터 영속성 (Docker)
+
+DB 데이터는 **Docker 명명 볼륨**에 저장됩니다(`docker-compose.yml`에서 `postgres_data` → 컨테이너의 `/var/lib/postgresql/data`). Compose가 붙이는 실제 볼륨 이름은 보통 **「프로젝트 디렉터리(또는 `-p`로 준 프로젝트명)_postgres_data」** 형식입니다(예: 폴더가 `life-logger`이면 `life-logger_postgres_data`). `docker volume ls`로 확인할 수 있습니다. 컨테이너만 지워도 이 볼륨이 남아 있으면 **`docker compose up` 시 이전 데이터가 그대로 복구**됩니다.
+
+| 동작 | 데이터 |
+|------|--------|
+| `docker compose up -d` / `docker compose down` | **유지** — 볼륨은 삭제되지 않음 |
+| `docker compose down -v` | **삭제** — `-v`는 사용하지 않은 볼륨까지 제거하므로, 프로덕션·중요 데이터 환경에서는 **피하는 것이 좋음** |
+| PC 재부팅 | **유지** — `postgres` 서비스에 `restart: unless-stopped`가 설정되어 있어 Compose를 다시 올리면 같은 볼륨에 붙음 |
+
+**초기화 시점:** PostgreSQL 이미지는 **데이터 디렉터리가 비어 있을 때만** `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB`로 클러스터를 만듭니다. 이미 볼륨에 데이터가 있는 상태에서 `.env`만 바꿔도 **기존 DB 인증 정보는 자동으로 바뀌지 않습니다.** 비밀번호를 바꾸려면 DB 안에서 `ALTER USER` 하거나, 정말 처음부터 다시 만들 때만 볼륨을 제거한 뒤 재기동하세요.
+
+**백업 예시 (덤프):**
+
+```bash
+# 전체 DB 논리 백업 (스키마+데이터)
+docker compose exec -T postgres pg_dump -U "${POSTGRES_USER:-life_logger}" "${POSTGRES_DB:-life_logger}" > backup_$(date +%Y%m%d).sql
+
+# 압축
+docker compose exec -T postgres pg_dump -U "${POSTGRES_USER:-life_logger}" "${POSTGRES_DB:-life_logger}" | gzip > backup_$(date +%Y%m%d).sql.gz
+```
+
+**복원 예시 (빈 DB 또는 덮어쓰기 전략에 맞게 조정):**
+
+```bash
+docker compose exec -T postgres psql -U "${POSTGRES_USER:-life_logger}" -d "${POSTGRES_DB:-life_logger}" < backup_20260404.sql
+```
+
+**볼륨 위치 확인:** Docker가 관리하는 경로이므로 직접 만질 필요는 거의 없습니다. `docker volume ls`로 `postgres_data`가 포함된 이름을 찾고, `docker volume inspect <볼륨이름>`으로 마운트 포인트 등을 볼 수 있습니다.
 
 ---
 
@@ -71,7 +107,7 @@ open http://localhost:3000
 |------|------|
 | **일괄 업로드** | `POST /api/v1/schedules/batch` — **한 요청 = 한 사용자의 하루(KST 기준)** 분량의 `entries` 배열 |
 | **날짜 결정** | 첫 번째 `entries[0].datetime`을 KST로 변환한 **달력 날**이 그날로 간주됩니다. 같은 배열 안의 모든 시각은 가능하면 그 KST 날짜에 맞춥니다. |
-| **사용자·가구** | 첫 번째 항목의 `user_id`가 그 배치 전체에 적용됩니다. `location_id`(또는 `metadata.home.locationId`)·`user_name` 등으로 **없으면 생성**됩니다. |
+| **사용자·가구** | 첫 번째 항목의 `user_id` 또는 `account_id`(또는 배치 최상단 `account_id`)가 그 배치 전체에 적용됩니다. `location_id`(또는 `metadata.home.locationId`)·`user_name` 등으로 **없으면 생성**됩니다. 가구 메타: `residence_city`, `residence_type`, `country`. 계정 메타: `user_age`, `user_gender`, `user_personality`, `user_daily_style`. |
 | **덮어쓰기** | `replace: true`(기본값)이면 해당 사용자·해당 KST 날의 기존 스케줄을 지운 뒤 다시 넣습니다. |
 | **타임라인 조회** | `GET /api/v1/schedules/timeline?date=YYYYMMDD&days=N` — `date`는 **KST** 기준 시작일, `days`는 1~31 |
 
@@ -81,19 +117,26 @@ open http://localhost:3000
 
 ### 최소 JSON 형식 (`POST /api/v1/schedules/batch`)
 
-필수에 가깝게 줄인 예시입니다. `user_id`와 `location_id`는 고정 UUID를 쓰면 재현하기 좋습니다.
+필수에 가깝게 줄인 예시입니다. `location_id`는 가구(집) UUID, `account_id`(또는 각 항목의 `user_id`)는 계정 UUID입니다. 배치 최상단에만 `account_id`를 두고 `entries`에서는 생략할 수 있습니다.
 
 ```json
 {
   "replace": true,
-  "user_name": "데모 사용자",
-  "user_job": "데모 직업",
-  "location_id": "11111111-1111-1111-1111-111111111111",
-  "location_name": "데모 집",
+  "account_id": "22222222-2222-2222-2222-222222222222",
+  "user_name": "Jongsoo Yoon",
+  "user_job": "Freelance developer",
+  "user_age": 26,
+  "user_gender": "Non-binary",
+  "user_personality": "Easygoing, creative, tech-savvy",
+  "user_daily_style": "Flexible hours, WFH-focused, uses smart devices for comfort and ambiance",
+  "location_id": "23ffd83d-d23a-438d-aede-4ab9413d79f2",
+  "location_name": "서울 원룸",
   "timezone": "Asia/Seoul",
+  "residence_city": "서울",
+  "residence_type": "원룸",
+  "country": "한국",
   "entries": [
     {
-      "user_id": "22222222-2222-2222-2222-222222222222",
       "datetime": "2026-04-04T07:00:00+09:00",
       "description": "기상",
       "calls": [],
@@ -103,7 +146,6 @@ open http://localhost:3000
       "status": []
     },
     {
-      "user_id": "22222222-2222-2222-2222-222222222222",
       "datetime": "2026-04-04T09:00:00+09:00",
       "description": "업무 시작",
       "calls": [],
@@ -120,7 +162,9 @@ open http://localhost:3000
 
 | 필드 | 타입 | 설명 |
 |------|------|------|
-| `user_id` | UUID 문자열 | 배치마다 첫 줄과 동일한 값 권장(서버는 첫 항목 기준으로 통일) |
+| `user_id` / `account_id` | UUID 문자열 | 동일 의미의 계정 id. 첫 항목 또는 배치 최상단 `account_id` 중 하나 필수 |
+| (배치 전용) | `user_age`, `user_gender`, `user_personality`, `user_daily_style` | 사용자 프로필(선택) |
+| (배치 전용) | `residence_city`, `residence_type`, `country` | 가구(위치) 메타(선택) |
 | `datetime` | ISO 8601 | **타임존 포함** 권장(예: `...+09:00` 또는 `Z`) |
 | `description` | 문자열 | 타임라인에 표시되는 한 줄 설명 |
 | `calls` | 배열 | API 호출 이력 UI용. 없으면 `[]` |
@@ -147,13 +191,15 @@ open http://localhost:3000
 `sample-schedule-batch.json` 파일을 위 본문처럼 만든 뒤:
 
 ```bash
+# 셸에서 .env 를 불러온 뒤(또는 직접 값을 넣어) Bearer 토큰을 지정하세요.
+set -a && source .env && set +a   # bash — zsh 는 `export $(grep -v '^#' .env | xargs)` 등 사용
 curl -sS -X POST "http://localhost:8000/api/v1/schedules/batch" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer hde-system" \
+  -H "Authorization: Bearer ${API_ADMIN_TOKEN}" \
   -d @sample-schedule-batch.json
 ```
 
-성공 시 `201`과 함께 `created`, `date`(YYYYMMDD), `user_id`, `location_id` 등이 돌아옵니다.
+성공 시 `201`과 함께 `created`, `date`(YYYYMMDD), `user_id`, `account_id`(동일 값), `location_id` 등이 돌아옵니다.
 
 ### 타임라인이 잡히는지 확인
 
@@ -256,15 +302,15 @@ life-logger/
 `/api/v1` 아래 **GET·HEAD·OPTIONS를 제외한 모든 메서드**(POST, PUT, PATCH, DELETE 등)는 헤더가 필요합니다.
 
 ```http
-Authorization: Bearer hde-system
+Authorization: Bearer <API_ADMIN_TOKEN 값>
 ```
 
-기본 토큰 문자열은 `hde-system`입니다. 백엔드는 환경 변수 `API_ADMIN_TOKEN`으로 바꿀 수 있습니다.
+- **백엔드** `API_ADMIN_TOKEN`은 **소스 코드에 기본값이 없습니다.** 반드시 환경 변수 또는 `.env`로 설정하세요(로컬 실행 시 `backend/` 또는 저장소 루트의 `.env`를 읽습니다).
+- **Docker Compose**는 프로젝트 루트 `.env`의 `API_ADMIN_TOKEN`을 컨테이너에 넣습니다. 미설정 시 Compose가 시작 단계에서 오류를 냅니다.
+- **프론트(Next.js)** `NEXT_PUBLIC_API_ADMIN_TOKEN`은 **선택**입니다. Docker 빌드 인자·환경으로 넣으면, 관리자 로그인 모달에서 입력값이 이 값과 일치할 때만 `sessionStorage`에 저장됩니다(클라이언트 번들에 값이 포함되므로 공개 배포 시 비우고 수동 입력만 쓰는 편이 더 안전할 수 있습니다). 비어 있으면 사용자가 **서버와 동일한 비밀 토큰**을 직접 입력해 저장하고, **POST·PUT·PATCH·DELETE** 시 그대로 `Authorization: Bearer …`로 전송합니다.
+- 로그인하지 않은 상태에서는 조회(GET 등)만 가능합니다.
 
-**웹 UI:** 사이드바 **관리자 로그인**에 동일한 토큰을 입력하면(검증용 기본값은 `NEXT_PUBLIC_API_ADMIN_TOKEN` 환경 변수, 없으면 `hde-system`) 브라우저 `sessionStorage`에 저장되고, **POST·PUT·PATCH·DELETE** 요청에만 `Authorization: Bearer …`가 붙습니다. 로그인하지 않은 상태에서는 조회만 가능합니다.  
-Docker 빌드 시 `NEXT_PUBLIC_API_ADMIN_TOKEN`을 백엔드와 맞추면 로그인 시 입력해야 할 토큰도 그 값으로 맞춰집니다.
-
-Swagger(`/docs`)의 Try it out으로 POST·DELETE 등을 호출할 때는 요청에 `Authorization: Bearer hde-system` 헤더를 직접 추가하세요(미들웨어에서 검사합니다).
+Swagger(`/docs`)의 Try it out으로 POST·DELETE 등을 호출할 때는 `.env`에 넣은 토큰과 동일한 `Authorization: Bearer …` 헤더를 추가하세요.
 
 ### 타임라인 조회
 
@@ -320,6 +366,8 @@ DELETE /api/v1/schedules/day?user_id={uuid}&date=YYYYMMDD
 
 ### 백엔드 로컬 실행
 
+`API_ADMIN_TOKEN`이 없으면 앱이 기동하지 않습니다. 저장소 루트의 `.env`에 두거나, `backend/.env`에 두거나, 셸에서 `export API_ADMIN_TOKEN=...` 하세요.
+
 ```bash
 cd backend
 pip install -r requirements.txt
@@ -327,6 +375,8 @@ uvicorn app.main:app --reload
 ```
 
 ### 프론트엔드 로컬 실행
+
+`frontend/.env.example`을 참고해 `frontend/.env.local`에 `NEXT_PUBLIC_API_URL`·`NEXT_PUBLIC_API_ADMIN_TOKEN`(선택)을 넣으세요.
 
 ```bash
 cd frontend
@@ -346,8 +396,8 @@ docker compose exec backend alembic upgrade head
 DB 초기화 후 다시 삽입할 때:
 
 ```bash
-# DB 초기화
-docker compose exec db psql -U life_logger -c "TRUNCATE life_logs, users, locations RESTART IDENTITY CASCADE;"
+# DB 초기화 (테이블 데이터만 비움 — Docker 볼륨은 그대로)
+docker compose exec postgres psql -U life_logger -d life_logger -c "TRUNCATE life_logs, users, locations RESTART IDENTITY CASCADE;"
 
 # 재삽입
 docker compose exec backend python scripts/seed.py

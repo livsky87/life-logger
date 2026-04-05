@@ -50,6 +50,15 @@ def _datetime_to_date_int(dt: DateTime) -> int:
     return int(kst_dt.strftime("%Y%m%d"))
 
 
+def _apply_location_residence(loc: LocationORM, body: ScheduleBatchCreate) -> None:
+    if body.residence_city is not None:
+        loc.residence_city = body.residence_city
+    if body.residence_type is not None:
+        loc.residence_type = body.residence_type
+    if body.country is not None:
+        loc.country = body.country
+
+
 @router.post("/batch", response_model=ScheduleBatchResult, status_code=201)
 async def batch_upload_schedules(
     body: ScheduleBatchCreate,
@@ -59,7 +68,9 @@ async def batch_upload_schedules(
     """
     Batch upload a full day's schedule for one user.
     - location_id in body takes priority over metadata.home.locationId.
-    - user_job is stored if provided.
+    - account_id on the batch or first entry is the same as user_id (household account).
+    - residence_city / residence_type / country update the location row when provided.
+    - user_* profile fields update the user row when provided.
     - Derives date from first entry's datetime (KST).
     - If replace=True, deletes existing entries for that user+day first.
     """
@@ -67,10 +78,12 @@ async def batch_upload_schedules(
         raise HTTPException(status_code=400, detail="entries must not be empty")
 
     first = body.entries[0]
-    if first.user_id is None:
-        raise HTTPException(status_code=400, detail="user_id is required in entries")
-
-    user_id = first.user_id
+    user_id = first.user_id or body.account_id
+    if user_id is None:
+        raise HTTPException(
+            status_code=400,
+            detail="user_id or account_id required in first entry, or account_id at batch level",
+        )
     date_int = _datetime_to_date_int(first.datetime)
     date_start, date_end = _date_range(date_int)
 
@@ -100,12 +113,23 @@ async def batch_upload_schedules(
                 id=location_id,
                 name=loc_name,
                 timezone=body.timezone,
+                residence_city=body.residence_city,
+                residence_type=body.residence_type,
+                country=body.country,
             )
             db.add(loc_orm)
             await db.flush()
+        else:
+            _apply_location_residence(loc_orm, body)
     else:
         loc_name = body.location_name or "홈"
-        loc_orm = LocationORM(name=loc_name, timezone=body.timezone)
+        loc_orm = LocationORM(
+            name=loc_name,
+            timezone=body.timezone,
+            residence_city=body.residence_city,
+            residence_type=body.residence_type,
+            country=body.country,
+        )
         db.add(loc_orm)
         await db.flush()
         location_id = loc_orm.id
@@ -118,15 +142,26 @@ async def batch_upload_schedules(
             location_id=location_id,
             name=body.user_name or f"사용자_{str(user_id)[:8]}",
             job=body.user_job,
+            age=body.user_age,
+            gender=body.user_gender,
+            personality=body.user_personality,
+            daily_style=body.user_daily_style,
         )
         db.add(user_orm)
         await db.flush()
     else:
-        # Update name/job if provided
         if body.user_name:
             user_orm.name = body.user_name
-        if body.user_job:
+        if body.user_job is not None:
             user_orm.job = body.user_job
+        if body.user_age is not None:
+            user_orm.age = body.user_age
+        if body.user_gender is not None:
+            user_orm.gender = body.user_gender
+        if body.user_personality is not None:
+            user_orm.personality = body.user_personality
+        if body.user_daily_style is not None:
+            user_orm.daily_style = body.user_daily_style
 
     # Delete existing if replace=True
     deleted = 0
@@ -149,10 +184,12 @@ async def batch_upload_schedules(
     ]
     created_list = await service.bulk_create(entries_dicts)
 
+    uid_str = str(user_id)
     return ScheduleBatchResult(
         deleted=deleted,
         created=len(created_list),
-        user_id=str(user_id),
+        user_id=uid_str,
+        account_id=uid_str,
         location_id=str(location_id),
         date=date_int,
     )
@@ -193,12 +230,15 @@ async def get_schedule_timeline(
                         location_id=str(loc.id),
                         name=loc.name,
                         timezone=loc.timezone,
+                        residence_city=loc.residence_city,
+                        residence_type=loc.residence_type,
+                        country=loc.country,
                         users=[],
                     )],
                 )
         return ScheduleTimelineResponse(date=date, range_days=days, locations=[])
 
-    user_ids = list({s.user_id for s in schedules if s.user_id})
+    user_ids = list({str(s.user_id) for s in schedules if s.user_id})
 
     users_result = await db.execute(
         select(UserORM).where(UserORM.id.in_([UUID(uid) for uid in user_ids]))
@@ -213,7 +253,11 @@ async def get_schedule_timeline(
 
     if location_id:
         target_loc_id = str(location_id)
-        user_ids = [uid for uid in user_ids if str(users_map.get(uid, UserORM()).location_id) == target_loc_id]
+        user_ids = [
+            uid
+            for uid in user_ids
+            if (u := users_map.get(uid)) is not None and str(u.location_id) == target_loc_id
+        ]
         locs_map = {k: v for k, v in locs_map.items() if k == target_loc_id}
 
     from collections import defaultdict
@@ -222,13 +266,14 @@ async def get_schedule_timeline(
     for sched in schedules:
         if not sched.user_id:
             continue
-        user = users_map.get(sched.user_id)
+        uid_str = str(sched.user_id)
+        user = users_map.get(uid_str)
         if not user:
             continue
         loc_id_str = str(user.location_id)
         if location_id and loc_id_str != str(location_id):
             continue
-        loc_user_entries[loc_id_str][sched.user_id].append(sched)
+        loc_user_entries[loc_id_str][uid_str].append(sched)
 
     locations_out = []
     for loc_id_str, user_entries in loc_user_entries.items():
@@ -236,20 +281,28 @@ async def get_schedule_timeline(
         if not loc:
             continue
         users_out = []
-        for uid, entries in user_entries.items():
-            user = users_map.get(uid)
+        for uid_str, entries in user_entries.items():
+            user = users_map.get(uid_str)
             if not user:
                 continue
             users_out.append(ScheduleTimelineUser(
-                user_id=uid,
+                user_id=uid_str,
+                account_id=uid_str,
                 user_name=user.name,
                 user_job=user.job,
+                age=user.age,
+                gender=user.gender,
+                personality=user.personality,
+                daily_style=user.daily_style,
                 entries=[_to_response(e) for e in sorted(entries, key=lambda x: x.timestamp)],
             ))
         locations_out.append(ScheduleTimelineLocation(
             location_id=loc_id_str,
             name=loc.name,
             timezone=loc.timezone,
+            residence_city=loc.residence_city,
+            residence_type=loc.residence_type,
+            country=loc.country,
             users=users_out,
         ))
 
@@ -258,6 +311,8 @@ async def get_schedule_timeline(
 
 @router.post("", response_model=ScheduleResponse, status_code=201)
 async def create_schedule(body: ScheduleCreate, service: ScheduleServiceDep):
+    if body.user_id is None:
+        raise HTTPException(status_code=400, detail="user_id or account_id is required")
     schedule = await service.create(
         user_id=body.user_id,
         timestamp=body.datetime,

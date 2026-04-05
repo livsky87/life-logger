@@ -5,19 +5,19 @@
 사전: 백엔드 기동, alembic 적용, 위치(location) UUID 확보.
 
   # 1) 2026-04-01 KST 스케줄을 오늘 날짜로 복제(오늘 기존 분 삭제)
-  python demo_prepare_timeline.py --api http://localhost:8000 --token hde-system \\
+  python demo_prepare_timeline.py --api http://localhost:8000 --token "$API_ADMIN_TOKEN" \\
     --source-date 20260401 --shift-only
 
   # 2) 5분마다 GET /health 프로브 → api_observations 적재 (Ctrl+C 종료)
-  python demo_prepare_timeline.py --api http://localhost:8000 --token hde-system \\
+  python demo_prepare_timeline.py --api http://localhost:8000 --token "$API_ADMIN_TOKEN" \\
     --location-id <UUID> --heartbeat-every 300
 
   # 3) 한 번에: 시프트 + 하트비트 루프
-  python demo_prepare_timeline.py --api http://localhost:8000 --token hde-system \\
+  python demo_prepare_timeline.py --api http://localhost:8000 --token "$API_ADMIN_TOKEN" \\
     --source-date 20260401 --location-id <UUID> --heartbeat-every 300
 
   # 4) DB가 비어 있어도: 오늘 가짜 스케줄 + 5분 간격 가짜 api_observations 일괄 삽입
-  python demo_prepare_timeline.py --api http://localhost:8000 --token hde-system --seed-fake-today
+  python demo_prepare_timeline.py --api http://localhost:8000 --token "$API_ADMIN_TOKEN" --seed-fake-today
 """
 
 from __future__ import annotations

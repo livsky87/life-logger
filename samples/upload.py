@@ -85,7 +85,7 @@ def main():
     if user_id:
         print(f"   User ID: {user_id}")
     print(f"\n👉 View schedule: http://localhost:3000/schedule?userId={user_id or ''}&date={dates[0] if dates else ''}")
-    print("👉 View simulation: http://localhost:3000/simulation")
+    print("👉 Schedule playback: http://localhost:3000/simulation")
 
 
 if __name__ == "__main__":

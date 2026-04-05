@@ -26,25 +26,37 @@ DATES = ["2026-04-02", "2026-04-03", "2026-04-04"]
 
 
 def parse_identity(identity_path: Path) -> dict:
-    """Extract name and job from IDENTITY.md."""
+    """Extract name, job, persona fields from IDENTITY.md."""
     text = identity_path.read_text()
     name = re.search(r"\*\*Name:\*\*\s*(.+)", text)
     job = re.search(r"\*\*Job:\*\*\s*(.+)", text)
+    age_m = re.search(r"\*\*Age:\*\*\s*(\d+)", text)
+    gender_m = re.search(r"\*\*Gender:\*\*\s*(.+)", text)
+    personality_m = re.search(r"\*\*Personality:\*\*\s*(.+)", text)
+    daily_m = re.search(r"\*\*Daily style:\*\*\s*(.+)", text)
     return {
         "user_name": name.group(1).strip() if name else None,
         "user_job": job.group(1).strip() if job else None,
+        "user_age": int(age_m.group(1)) if age_m else None,
+        "user_gender": gender_m.group(1).strip() if gender_m else None,
+        "user_personality": personality_m.group(1).strip() if personality_m else None,
+        "user_daily_style": daily_m.group(1).strip() if daily_m else None,
     }
 
 
 def parse_home(home_path: Path) -> dict:
-    """Extract locationId, residence_city, residence_type from HOME.md."""
+    """Extract locationId, residence fields from HOME.md."""
     text = home_path.read_text()
     loc_id = re.search(r"\*\*locationId:\*\*\s*(.+)", text)
     city = re.search(r"\*\*residence_city:\*\*\s*(.+)", text)
     res_type = re.search(r"\*\*residence_type:\*\*\s*(.+)", text)
+    country = re.search(r"\*\*country:\*\*\s*(.+)", text)
     return {
         "location_id": loc_id.group(1).strip() if loc_id else None,
         "location_name": f"{city.group(1).strip()} {res_type.group(1).strip()}" if city and res_type else None,
+        "residence_city": city.group(1).strip() if city else None,
+        "residence_type": res_type.group(1).strip() if res_type else None,
+        "country": country.group(1).strip() if country else None,
     }
 
 
@@ -111,9 +123,16 @@ def main():
                 "replace": True,
                 "user_name": identity["user_name"],
                 "user_job": identity["user_job"],
+                "user_age": identity["user_age"],
+                "user_gender": identity["user_gender"],
+                "user_personality": identity["user_personality"],
+                "user_daily_style": identity["user_daily_style"],
                 "location_id": home["location_id"],
                 "location_name": home["location_name"],
                 "timezone": "Asia/Seoul",
+                "residence_city": home["residence_city"],
+                "residence_type": home["residence_type"],
+                "country": home["country"],
             }
 
             try:

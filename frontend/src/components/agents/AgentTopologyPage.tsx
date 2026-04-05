@@ -44,24 +44,6 @@ export function AgentTopologyPage() {
             <Network className="h-5 w-5 shrink-0 text-cyan-500 dark:text-cyan-400" />
             <h1 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">UT 에이전트 토폴로지</h1>
           </div>
-          <p className="mt-1 max-w-3xl text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-            Token Manager·UT Master·Validator는 그리드와 정렬해 두었습니다. 연결은 모두 얇은 점선이며, 컨트롤 카드를 클릭하면 해당 색 연결에 흐름 애니메이션이 켜집니다.
-            <span className="mt-1 block">
-              컨트롤·에이전트 카드를 클릭하면 오른쪽 패널에서{" "}
-              <code className="rounded bg-zinc-200/80 px-1 py-0.5 font-mono text-[10px] dark:bg-zinc-800">
-                ~/.openclaw/workspace-ut-*
-              </code>{" "}
-              아래 Markdown 문서를 볼 수 있습니다. (예:{" "}
-              <code className="rounded bg-zinc-200/80 px-1 py-0.5 font-mono text-[10px] dark:bg-zinc-800">
-                workspace-ut-master
-              </code>
-              ,{" "}
-              <code className="rounded bg-zinc-200/80 px-1 py-0.5 font-mono text-[10px] dark:bg-zinc-800">
-                workspace-ut-bot-001
-              </code>
-              )
-            </span>
-          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:justify-end">
           <div className="flex items-center gap-1 rounded-lg border border-zinc-200 p-0.5 dark:border-zinc-700">
