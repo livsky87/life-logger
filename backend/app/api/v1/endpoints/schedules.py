@@ -282,14 +282,6 @@ async def list_schedules(
     return [_to_response(s) for s in schedules]
 
 
-@router.get("/{schedule_id}", response_model=ScheduleResponse)
-async def get_schedule(schedule_id: int, service: ScheduleServiceDep):
-    schedule = await service.get_by_id(schedule_id)
-    if not schedule:
-        raise HTTPException(status_code=404, detail="Schedule not found")
-    return _to_response(schedule)
-
-
 @router.put("/{schedule_id}", response_model=ScheduleResponse)
 async def update_schedule(schedule_id: int, body: ScheduleUpdate, service: ScheduleServiceDep):
     calls_raw = [c.model_dump() for c in body.calls] if body.calls is not None else None

@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """
-Delete sample schedule and simulation data via API.
+Delete sample schedule data via API.
 
 Usage:
   python delete.py --api http://localhost:8000 --user-id USER_UUID --date 20260401
   python delete.py --api http://localhost:8000 --user-id USER_UUID --all-dates
-  python delete.py --api http://localhost:8000 --simulation-id 1
 """
 
 import argparse
@@ -55,15 +54,9 @@ def main():
     parser.add_argument("--user-id", default="", help="User UUID whose schedules to delete")
     parser.add_argument("--date", type=int, help="Specific date (YYYYMMDD) to delete schedules for")
     parser.add_argument("--all-dates", action="store_true", help="Delete schedules for all sample dates")
-    parser.add_argument("--simulation-id", type=int, help="Simulation ID to delete")
     args = parser.parse_args()
 
     user_id = args.user_id.strip() or None
-
-    if args.simulation_id:
-        print(f"\n🗑️  Deleting simulation id={args.simulation_id}...")
-        ok = api_delete(args.api, f"/api/v1/simulations/{args.simulation_id}")
-        print(f"  {'✅ Deleted' if ok else '⚠️  Not found'}")
 
     if args.date:
         print(f"\n🗑️  Deleting schedules for date={args.date} (user={user_id or 'all'})...")
@@ -80,7 +73,7 @@ def main():
             total += count
         print(f"\n🎉 Done! {total} schedules deleted total")
 
-    if not any([args.date, args.all_dates, args.simulation_id]):
+    if not any([args.date, args.all_dates]):
         parser.print_help()
 
 

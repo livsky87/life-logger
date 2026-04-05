@@ -7,10 +7,6 @@ export async function fetchSchedules(date: number, userId?: string | null): Prom
   return apiFetch<Schedule[]>(url);
 }
 
-export async function fetchSchedule(id: number): Promise<Schedule> {
-  return apiFetch<Schedule>(`/api/v1/schedules/${id}`);
-}
-
 export async function createSchedule(body: ScheduleCreate): Promise<Schedule> {
   return apiFetch<Schedule>("/api/v1/schedules", {
     method: "POST",
