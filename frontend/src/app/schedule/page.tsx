@@ -52,7 +52,7 @@ function CallsTooltipContent({ calls }: { calls: Schedule["calls"] }) {
   if (!calls.length) return null;
   return (
     <div className="space-y-1.5 min-w-[240px]">
-      <p className="font-semibold text-xs text-gray-300 mb-1">API 호출 목록</p>
+      <p className="font-semibold text-xs text-gray-300 mb-1">Device 호출 목록</p>
       {calls.map((c, i) => (
         <div key={i} className="border-b border-white/10 pb-1.5 last:border-0 last:pb-0">
           <div className="flex items-center gap-1.5">
@@ -61,12 +61,11 @@ function CallsTooltipContent({ calls }: { calls: Schedule["calls"] }) {
           </div>
           {c.deviceId && (
             <div className="text-gray-400 text-xs font-mono mt-0.5">
-              device: {c.deviceId.slice(0, 8)}…
+              Device: {c.deviceId.slice(0, 8)}…
             </div>
           )}
           <div className="flex gap-3 text-gray-400 text-xs mt-0.5">
             {c.commands.length > 0 && <span>commands: {c.commands.length}개</span>}
-            {c.dsec > 0 && <span>@{c.dsec}초</span>}
             {c.result && (
               <span className={c.result === "success" ? "text-green-400" : "text-red-400"}>
                 {c.result}
@@ -315,7 +314,7 @@ function SchedulePageContent() {
                   </div>
                   <div
                     className="flex h-5 w-9 shrink-0 items-center justify-center pt-0.5 sm:pt-0"
-                    title={entry.is_home ? "집" : "외부"}
+                    title={entry.is_home ? "재실" : "부재"}
                   >
                     {entry.is_home ? (
                       <Home className="h-3.5 w-3.5 shrink-0 text-cyan-500 dark:text-cyan-400" />

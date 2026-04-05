@@ -1,9 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useQueries } from "@tanstack/react-query";
 import { MapPin, ChevronDown, ChevronRight, Users } from "lucide-react";
 import { useScheduleTimeline } from "@/application/useSchedules";
-import type { ScheduleTimelineDisplayFilter } from "@/domain/scheduleTypes";
+import { apiObservationsQueryKey } from "@/application/useApiObservations";
+import type { ApiObservation } from "@/domain/apiObservationTypes";
+import type { ScheduleTimelineDisplayFilter, ScheduleTimelineLocation } from "@/domain/scheduleTypes";
+import { fetchApiObservationsForLocation } from "@/infrastructure/api/apiObservationApi";
 import { ScheduleUserRow } from "./ScheduleUserRow";
 import { kstDateIntRangeToDates, normalizeTimelineTimeZone } from "./timelineUtils";
 
@@ -14,6 +18,20 @@ interface Props {
   locationId?: string;
 }
 
+function groupObservationsForLocation(observations: ApiObservation[]) {
+  const system: ApiObservation[] = [];
+  const byUser: Record<string, ApiObservation[]> = {};
+  for (const o of observations) {
+    if (!o.user_id) {
+      system.push(o);
+      continue;
+    }
+    if (!byUser[o.user_id]) byUser[o.user_id] = [];
+    byUser[o.user_id].push(o);
+  }
+  return { systemObs: system, obsByUserId: byUser };
+}
+
 function LocationBlock({
   location,
   dateInt,
@@ -21,19 +39,25 @@ function LocationBlock({
   rangeEnd,
   days,
   displayFilter,
+  observations,
 }: {
-  location: { location_id: string; name: string; timezone: string; users: any[] };
+  location: ScheduleTimelineLocation;
   dateInt: number;
   rangeStart: Date;
   rangeEnd: Date;
   days: number;
   displayFilter: ScheduleTimelineDisplayFilter;
+  observations: ApiObservation[];
 }) {
   const [collapsed, setCollapsed] = useState(false);
+  const { systemObs, obsByUserId } = useMemo(
+    () => groupObservationsForLocation(observations),
+    [observations],
+  );
+  const timeZone = normalizeTimelineTimeZone(location.timezone);
 
   return (
     <div className="mb-4 overflow-visible rounded-lg border border-zinc-200/90 bg-white shadow-sm ring-1 ring-zinc-900/[0.04] dark:border-zinc-800 dark:bg-zinc-900/60 dark:ring-zinc-950/40">
-      {/* 위치 헤더 — 시간축은 상태 차트 X축과 중복·불일치를 피하기 위해 제거 */}
       <div className="flex h-10 select-none items-center bg-gradient-to-b from-stone-900 to-stone-950 text-white">
         <button
           type="button"
@@ -53,7 +77,6 @@ function LocationBlock({
         </button>
       </div>
 
-      {/* User rows */}
       {!collapsed &&
         location.users.map((user, idx) => (
           <ScheduleUserRow
@@ -64,9 +87,11 @@ function LocationBlock({
             rangeEnd={rangeEnd}
             days={days}
             displayFilter={displayFilter}
-            timeZone={normalizeTimelineTimeZone(location.timezone)}
+            timeZone={timeZone}
             showTimelineXAxis={idx === 0}
             isLast={idx === location.users.length - 1}
+            observationEvents={obsByUserId[user.user_id] ?? []}
+            locationPeriodicObservations={systemObs}
           />
         ))}
 
@@ -82,6 +107,20 @@ function LocationBlock({
 export function ScheduleTimelineGrid({ dateInt, days, displayFilter, locationId }: Props) {
   const { data, isLoading, isError, error } = useScheduleTimeline(dateInt, days, locationId);
   const { rangeStart, rangeEnd } = kstDateIntRangeToDates(dateInt, days);
+  const startIso = rangeStart.toISOString();
+  const endIso = rangeEnd.toISOString();
+
+  const locations = data?.locations ?? [];
+
+  const obsQueries = useQueries({
+    queries: locations.map((loc) => ({
+      queryKey: apiObservationsQueryKey(loc.location_id, startIso, endIso),
+      queryFn: () => fetchApiObservationsForLocation(startIso, endIso, loc.location_id),
+      enabled: !!data && displayFilter.showPeriodicObservations,
+      staleTime: 15_000,
+      refetchInterval: 60_000 as const,
+    })),
+  });
 
   if (isLoading) {
     return (
@@ -120,7 +159,7 @@ export function ScheduleTimelineGrid({ dateInt, days, displayFilter, locationId 
 
   return (
     <div>
-      {data.locations.map((loc) => (
+      {data.locations.map((loc, i) => (
         <LocationBlock
           key={loc.location_id}
           location={loc}
@@ -129,6 +168,7 @@ export function ScheduleTimelineGrid({ dateInt, days, displayFilter, locationId 
           rangeEnd={rangeEnd}
           days={days}
           displayFilter={displayFilter}
+          observations={obsQueries[i]?.data ?? []}
         />
       ))}
     </div>

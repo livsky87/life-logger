@@ -138,7 +138,7 @@ export function ScheduleEntryForm({ initialDate, initialData, onSave, onClose }:
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">집 안 여부</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">재실 여부</label>
                 <div className="flex gap-2 mt-1">
                   <button
                     type="button"
@@ -147,7 +147,7 @@ export function ScheduleEntryForm({ initialDate, initialData, onSave, onClose }:
                       isHome ? "bg-blue-600 border-blue-600 text-white" : "border-gray-200 text-gray-600 hover:bg-gray-50"
                     }`}
                   >
-                    집 안
+                    재실
                   </button>
                   <button
                     type="button"
@@ -156,7 +156,7 @@ export function ScheduleEntryForm({ initialDate, initialData, onSave, onClose }:
                       !isHome ? "bg-gray-600 border-gray-600 text-white" : "border-gray-200 text-gray-600 hover:bg-gray-50"
                     }`}
                   >
-                    집 밖
+                    부재
                   </button>
                 </div>
               </div>
@@ -174,10 +174,10 @@ export function ScheduleEntryForm({ initialDate, initialData, onSave, onClose }:
               />
             </div>
 
-            {/* API Calls */}
+            {/* Device calls (schedule) */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-medium text-gray-700">API 호출</label>
+                <label className="text-sm font-medium text-gray-700">Device 호출</label>
                 <button
                   type="button"
                   onClick={addCall}

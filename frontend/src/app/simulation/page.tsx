@@ -219,9 +219,6 @@ function SimulationContent() {
                         <span className="truncate text-xs text-zinc-600 dark:text-zinc-300">
                           {call.deviceId || call.url.slice(0, 40)}
                         </span>
-                        {call.dsec > 0 && (
-                          <span className="ml-auto shrink-0 text-xs text-zinc-400 dark:text-zinc-500">+{call.dsec}s</span>
-                        )}
                       </div>
                     ))}
                   </div>

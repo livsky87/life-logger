@@ -4,6 +4,7 @@ import React, { useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Play } from "lucide-react";
+import type { ApiObservation } from "@/domain/apiObservationTypes";
 import type { ScheduleTimelineDisplayFilter, ScheduleTimelineUser } from "@/domain/scheduleTypes";
 import { collectDistinctStatusTags } from "./scheduleTimelineChartUtils";
 import { ScheduleUserTimelineChart } from "./ScheduleUserTimelineChart";
@@ -15,11 +16,15 @@ interface Props {
   rangeEnd: Date;
   days: number;
   displayFilter: ScheduleTimelineDisplayFilter;
-  /** 집(위치) 타임존 — 축·툴팁·히트맵·밀도 스트립이 동일 기준 */
+  /** 위치 타임존 — 축·툴팁·히트맵·밀도 스트립이 동일 기준 */
   timeZone: string;
   /** 위치당 첫 행만 시간 축 눈금(상태 차트와 동일 도메인) */
   showTimelineXAxis: boolean;
   isLast: boolean;
+  /** 해당 사용자 전용 HDE 수집 */
+  observationEvents: ApiObservation[];
+  /** 위치 공통 HDE 수집 — 상태 타임라인과 동일 차트에 합쳐 표시 */
+  locationPeriodicObservations: ApiObservation[];
 }
 
 /** Recharts 기반 최소 행 높이 (범례·히트맵 여유) */
@@ -35,17 +40,41 @@ export const ScheduleUserRow = React.memo(function ScheduleUserRow({
   timeZone,
   showTimelineXAxis,
   isLast,
+  observationEvents,
+  locationPeriodicObservations,
 }: Props) {
   const router = useRouter();
   const dateStr = useMemo(() => String(dateInt), [dateInt]);
+
+  const mergedPeriodicObservations = useMemo((): ApiObservation[] => {
+    const byId = new Map<number, ApiObservation>();
+    for (const o of locationPeriodicObservations) {
+      byId.set(o.id, o);
+    }
+    for (const o of observationEvents) {
+      byId.set(o.id, o);
+    }
+    return Array.from(byId.values()).sort(
+      (a, b) => new Date(a.observed_at).getTime() - new Date(b.observed_at).getTime(),
+    );
+  }, [locationPeriodicObservations, observationEvents]);
 
   const laneCount = useMemo(() => collectDistinctStatusTags(user.entries).length, [user.entries]);
   const rowMinHeight = useMemo(() => {
     const plot = laneCount === 0 ? 44 : 12 + laneCount * 26 + 24;
     const apiLegend = displayFilter.showApiCallMarkers ? 22 : 0;
+    const periodicLegend =
+      displayFilter.showPeriodicObservations && mergedPeriodicObservations.length > 0 ? 20 : 0;
     const heatmap = days === 1 && displayFilter.showActivityHeatmap ? 12 : 0;
-    return Math.max(ROW_MIN_HEIGHT, plot + apiLegend + heatmap + 10);
-  }, [laneCount, displayFilter.showApiCallMarkers, displayFilter.showActivityHeatmap, days]);
+    return Math.max(ROW_MIN_HEIGHT, plot + apiLegend + periodicLegend + heatmap + 10);
+  }, [
+    laneCount,
+    displayFilter.showApiCallMarkers,
+    displayFilter.showPeriodicObservations,
+    mergedPeriodicObservations.length,
+    displayFilter.showActivityHeatmap,
+    days,
+  ]);
 
   return (
     <div
@@ -79,15 +108,18 @@ export const ScheduleUserRow = React.memo(function ScheduleUserRow({
         </button>
       </div>
 
-      <ScheduleUserTimelineChart
-        entries={user.entries}
-        rangeStart={rangeStart}
-        rangeEnd={rangeEnd}
-        days={days}
-        displayFilter={displayFilter}
-        timeZone={timeZone}
-        showXAxis={showTimelineXAxis}
-      />
+      <div className="flex min-w-0 min-h-0 flex-1 flex-col">
+        <ScheduleUserTimelineChart
+          entries={user.entries}
+          rangeStart={rangeStart}
+          rangeEnd={rangeEnd}
+          days={days}
+          displayFilter={displayFilter}
+          timeZone={timeZone}
+          showXAxis={showTimelineXAxis}
+          periodicObservations={mergedPeriodicObservations}
+        />
+      </div>
     </div>
   );
 });

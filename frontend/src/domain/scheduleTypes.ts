@@ -89,9 +89,12 @@ export interface ScheduleTimelineDisplayFilter {
   showPresenceBars: boolean;
   showEntryDots: boolean;
   showStatusTags: boolean;
+  /** 스케줄 Device 호출 세로선·밴드 */
   showApiCallMarkers: boolean;
   showNowLine: boolean;
   showActivityHeatmap: boolean;
+  /** HDE 수집 데이터(하단 밴드) */
+  showPeriodicObservations: boolean;
 }
 
 export function defaultScheduleTimelineDisplayFilter(): ScheduleTimelineDisplayFilter {
@@ -104,5 +107,6 @@ export function defaultScheduleTimelineDisplayFilter(): ScheduleTimelineDisplayF
     showApiCallMarkers: true,
     showNowLine: true,
     showActivityHeatmap: true,
+    showPeriodicObservations: true,
   };
 }
