@@ -492,6 +492,36 @@ interface Props {
   showXAxis: boolean;
   /** Device(스케줄) 마커와 동일 차트·시간축에 그릴 HDE 수집(위치 공통+사용자별 병합본) */
   periodicObservations?: ApiObservation[];
+  /**
+   * 구간 시작 직전 마지막 기록의 재실 여부. 있으면 재실 막대 병합에만 t0 가상 이벤트로 반영(점·히트맵·호버 문맥에는 미포함).
+   */
+  presenceCarryInIsHome?: boolean | null;
+}
+
+/** 재실 병합 전용 가상 행 — 실제 entries와 분리해 두어 호버·마커에 섞이지 않게 함 */
+const PRESENCE_CARRY_IN_ENTRY_ID = -9_000_000_001;
+
+function entriesForPresenceMerge(
+  entries: Schedule[],
+  rangeStart: Date,
+  carryIn: boolean | null | undefined,
+): Schedule[] {
+  if (carryIn !== true && carryIn !== false) return entries;
+  const iso = rangeStart.toISOString();
+  const userId = entries[0]?.user_id ?? null;
+  const synthetic: Schedule = {
+    id: PRESENCE_CARRY_IN_ENTRY_ID,
+    user_id: userId,
+    datetime: iso,
+    description: "",
+    calls: [],
+    location: "",
+    is_home: carryIn,
+    metadata: {},
+    status: [],
+    created_at: iso,
+  };
+  return [synthetic, ...entries];
 }
 
 const X_DOMAIN = (rangeStart: Date, rangeEnd: Date): [number, number] => [
@@ -533,6 +563,7 @@ export function ScheduleUserTimelineChart({
   timeZone,
   showXAxis,
   periodicObservations = [],
+  presenceCarryInIsHome = null,
 }: Props) {
   const { theme: appTheme } = useAppTheme();
   const cc = getChartColors(appTheme);
@@ -609,9 +640,14 @@ export function ScheduleUserTimelineChart({
   const yDomainMax = layout.yMax;
   const presenceY = layout.presenceY;
 
+  const entriesForPresence = useMemo(
+    () => entriesForPresenceMerge(entries, rangeStart, presenceCarryInIsHome),
+    [entries, rangeStart, presenceCarryInIsHome],
+  );
+
   const presenceRuns = useMemo(
-    () => buildMergedRuns(entries, t1, schedulePresenceIdentity),
-    [entries, t1],
+    () => buildMergedRuns(entriesForPresence, t1, schedulePresenceIdentity),
+    [entriesForPresence, t1],
   );
 
   const apiMarkers = useMemo(() => {

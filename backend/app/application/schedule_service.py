@@ -42,6 +42,11 @@ class ScheduleService:
     ) -> list[Schedule]:
         return await self._repo.get_by_date(date_start, date_end, user_id=user_id)
 
+    async def presence_is_home_before_range(
+        self, user_ids: list[UUID], range_start: datetime
+    ) -> dict[str, bool | None]:
+        return await self._repo.get_is_home_immediately_before(user_ids, range_start)
+
     async def list_all_in_range(self, date_start: datetime, date_end: datetime) -> list[Schedule]:
         return await self._repo.list_all_in_range(date_start, date_end)
 

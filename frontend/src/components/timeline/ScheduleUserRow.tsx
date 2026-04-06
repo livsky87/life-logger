@@ -126,6 +126,7 @@ export const ScheduleUserRow = React.memo(function ScheduleUserRow({
           timeZone={timeZone}
           showXAxis={showTimelineXAxis}
           periodicObservations={mergedPeriodicObservations}
+          presenceCarryInIsHome={user.presence_is_home_before_range ?? null}
         />
       </div>
     </div>

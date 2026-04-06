@@ -84,6 +84,8 @@ export interface ScheduleTimelineUser {
   gender: string | null;
   personality: string | null;
   daily_style: string | null;
+  /** 조회 구간 시작 직전 마지막 스케줄의 재실 여부 — 재실 막대가 전날과 이어지도록 쓰임 */
+  presence_is_home_before_range?: boolean | null;
   entries: Schedule[];
 }
 

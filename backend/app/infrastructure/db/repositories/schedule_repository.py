@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import delete, select
+from sqlalchemy import and_, delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.models.schedule import Schedule
@@ -73,6 +73,43 @@ class SQLAlchemyScheduleRepository(ScheduleRepository):
         q = q.order_by(ScheduleORM.timestamp)
         result = await self._session.execute(q)
         return [_to_domain(row) for row in result.scalars()]
+
+    async def get_is_home_immediately_before(
+        self, user_ids: list[UUID], before: datetime
+    ) -> dict[str, bool | None]:
+        """Per user, `is_home` on the latest row with timestamp strictly before `before`."""
+        out: dict[str, bool | None] = {str(u): None for u in user_ids}
+        if not user_ids:
+            return out
+
+        subq = (
+            select(
+                ScheduleORM.user_id.label("uid"),
+                func.max(ScheduleORM.timestamp).label("mts"),
+            )
+            .where(
+                ScheduleORM.user_id.in_(user_ids),
+                ScheduleORM.timestamp < before,
+            )
+            .group_by(ScheduleORM.user_id)
+        ).subquery()
+
+        q = select(ScheduleORM).join(
+            subq,
+            and_(
+                ScheduleORM.user_id == subq.c.uid,
+                ScheduleORM.timestamp == subq.c.mts,
+            ),
+        )
+        result = await self._session.execute(q)
+        seen: set[str] = set()
+        for orm in result.scalars():
+            k = str(orm.user_id)
+            if k in seen:
+                continue
+            seen.add(k)
+            out[k] = orm.is_home
+        return out
 
     async def list_all_in_range(self, date_start: datetime, date_end: datetime) -> list[Schedule]:
         q = (
