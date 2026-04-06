@@ -31,6 +31,11 @@ class ScheduleRepository(ABC):
     ) -> list[Schedule]: ...
 
     @abstractmethod
+    async def get_is_home_immediately_before(
+        self, user_ids: list[UUID], before: datetime
+    ) -> dict[str, bool | None]: ...
+
+    @abstractmethod
     async def list_all_in_range(self, date_start: datetime, date_end: datetime) -> list[Schedule]: ...
 
     @abstractmethod

@@ -261,6 +261,7 @@ async def get_schedule_timeline(
         locs_map = {k: v for k, v in locs_map.items() if k == target_loc_id}
 
     from collections import defaultdict
+
     loc_user_entries: dict[str, dict[str, list]] = defaultdict(lambda: defaultdict(list))
 
     for sched in schedules:
@@ -274,6 +275,14 @@ async def get_schedule_timeline(
         if location_id and loc_id_str != str(location_id):
             continue
         loc_user_entries[loc_id_str][uid_str].append(sched)
+
+    timeline_user_ids = {uid for ue in loc_user_entries.values() for uid in ue.keys()}
+    carry_map: dict[str, bool | None] = {}
+    if timeline_user_ids:
+        carry_map = await service.presence_is_home_before_range(
+            [UUID(uid) for uid in timeline_user_ids],
+            date_start,
+        )
 
     locations_out = []
     for loc_id_str, user_entries in loc_user_entries.items():
@@ -294,6 +303,7 @@ async def get_schedule_timeline(
                 gender=user.gender,
                 personality=user.personality,
                 daily_style=user.daily_style,
+                presence_is_home_before_range=carry_map.get(uid_str),
                 entries=[_to_response(e) for e in sorted(entries, key=lambda x: x.timestamp)],
             ))
         locations_out.append(ScheduleTimelineLocation(

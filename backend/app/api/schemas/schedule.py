@@ -110,6 +110,10 @@ class ScheduleTimelineUser(BaseModel):
     gender: str | None = None
     personality: str | None = None
     daily_style: str | None = None
+    presence_is_home_before_range: bool | None = Field(
+        default=None,
+        description="Last schedule's is_home before range start; null if no prior row.",
+    )
     entries: list[ScheduleResponse]
 
 

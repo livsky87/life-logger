@@ -29,7 +29,7 @@ export function scheduleStatusIdentity(entry: Schedule): string {
 }
 
 export function schedulePresenceIdentity(entry: Schedule): string {
-  return getSegmentType(entry.location, entry.is_home);
+  return getSegmentType(entry.is_home);
 }
 
 /**
@@ -68,13 +68,9 @@ export function buildMergedRuns(
   return out;
 }
 
-export function getSegmentType(location: string, isHome: boolean): SegmentType {
-  if (!isHome) {
-    if (location.includes("이동") || location.includes("출근") || location.includes("귀가")) return "transit";
-    if (location.includes("회사") || location.includes("사무")) return "work";
-    return "away";
-  }
-  return "home";
+/** 타임라인 재실 막대·병합 구간 identity. 재실/부재는 `is_home`만 사용(위치 텍스트로 분기하지 않음). */
+export function getSegmentType(isHome: boolean): SegmentType {
+  return isHome ? "home" : "away";
 }
 
 /** API result 문자열 → 시각화 카테고리 */
