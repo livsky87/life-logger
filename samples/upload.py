@@ -14,6 +14,37 @@ import os
 import sys
 import urllib.request
 import urllib.error
+from datetime import datetime, timedelta, timezone
+
+KST = timezone(timedelta(hours=9))
+
+
+def _entry_to_api_payload(entry: dict, user_id: str | None) -> dict:
+    """샘플의 date/hour/minute → API `datetime` / `status` list 로 변환."""
+    s = str(entry["date"]).zfill(8)
+    y, m, d = int(s[:4]), int(s[4:6]), int(s[6:8])
+    h = int(entry.get("hour", 0))
+    minute = int(entry.get("minute", 0))
+    kst = datetime(y, m, d, h, minute, 0, tzinfo=KST)
+    out: dict = {
+        "description": entry["description"],
+        "datetime": kst.astimezone(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "calls": entry.get("calls") or [],
+        "location": entry.get("location", ""),
+        "is_home": bool(entry.get("is_home", True)),
+        "metadata": entry.get("metadata") or {},
+    }
+    st = entry.get("status", [])
+    if isinstance(st, str):
+        if st in ("", "normal"):
+            out["status"] = []
+        else:
+            out["status"] = [st]
+    else:
+        out["status"] = list(st) if st else []
+    if user_id:
+        out["user_id"] = user_id
+    return out
 
 
 def api_get(base_url: str, path: str) -> dict | list:
@@ -71,9 +102,7 @@ def main():
     for date in dates:
         day_entries = [s for s in schedules if s["date"] == date]
         for entry in day_entries:
-            payload = {**entry}
-            if user_id:
-                payload["user_id"] = user_id
+            payload = _entry_to_api_payload(entry, user_id)
             try:
                 api_post(args.api, "/api/v1/schedules", payload)
                 total += 1

@@ -16,13 +16,14 @@ CHUNK = 400
 OBS_BATCH = 200
 
 # (hour, minute, location, description, is_home, calls, status_tags)
-_FAKE_SCHEDULE_DAY: list[tuple[int, int, str, str, bool, list, list[str]]] = [
-    (7, 0, "침실", "[가짜] 기상", True, [], ["수면"]),
+# 재실/부재는 is_home 만. 활동 태그는 수면·집안일(요리·청소·세탁 등)만. 기기 호출은 is_home true 일 때만.
+_FAKE_COMMUTER_DAY: list[tuple[int, int, str, str, bool, list, list[str]]] = [
+    (7, 0, "침실", "[가짜·출퇴근] 기상", True, [], []),
     (
         7,
         10,
         "화장실",
-        "[가짜] 세면",
+        "[가짜] 욕실 청소·샤워",
         True,
         [
             {
@@ -34,7 +35,7 @@ _FAKE_SCHEDULE_DAY: list[tuple[int, int, str, str, bool, list, list[str]]] = [
                 "result": "200 OK",
             }
         ],
-        ["요리"],
+        ["청소"],
     ),
     (
         7,
@@ -54,7 +55,7 @@ _FAKE_SCHEDULE_DAY: list[tuple[int, int, str, str, bool, list, list[str]]] = [
         ],
         ["요리"],
     ),
-    (8, 0, "부엌", "[가짜] 아침식사", True, [], []),
+    (8, 0, "부엌", "[가짜] 아침식사", True, [], ["요리"]),
     (
         8,
         30,
@@ -73,39 +74,136 @@ _FAKE_SCHEDULE_DAY: list[tuple[int, int, str, str, bool, list, list[str]]] = [
         ],
         [],
     ),
-    (
-        9,
-        15,
-        "집 밖",
-        "[가짜] 출근",
-        False,
-        [],
-        [],
-    ),
+    (9, 15, "집 밖", "[가짜] 출근", False, [], []),
     (12, 30, "집 밖", "[가짜] 점심", False, [], []),
     (18, 30, "집 밖", "[가짜] 퇴근", False, [], []),
+    (19, 30, "부엌", "[가짜] 저녁 준비", True, [], ["요리"]),
+    (20, 0, "부엌", "[가짜] 저녁식사", True, [], ["요리"]),
+    (20, 30, "거실", "[가짜] TV", True, [], []),
+    (
+        22,
+        30,
+        "베란다",
+        "[가짜] 세탁",
+        True,
+        [
+            {
+                "method": "POST",
+                "url": "/v1/devices/washer-a-001/commands",
+                "deviceId": "washer-a-001",
+                "commands": [{"capability": "switch", "command": "on"}],
+                "dsec": 0,
+                "result": "201 Created",
+            }
+        ],
+        ["세탁"],
+    ),
+    (23, 0, "침실", "[가짜] 취침 준비 (조명)", True, [], ["수면"]),
+    (23, 30, "침실", "[가짜] 취침 (조명 끄기)", True, [], ["수면"]),
+]
+
+_FAKE_WFH_DAY: list[tuple[int, int, str, str, bool, list, list[str]]] = [
+    (
+        6,
+        30,
+        "방1",
+        "[가짜·WFH] 기상",
+        True,
+        [
+            {
+                "method": "POST",
+                "url": "/v1/devices/plug-room1-b/commands",
+                "deviceId": "plug-room1-b",
+                "commands": [{"capability": "switch", "command": "on"}],
+                "dsec": 0,
+                "result": "200 OK",
+            }
+        ],
+        [],
+    ),
+    (
+        6,
+        45,
+        "욕실",
+        "[가짜] 샤워",
+        True,
+        [
+            {
+                "method": "POST",
+                "url": "/v1/devices/light-bathroom-b/commands",
+                "deviceId": "light-bathroom-b",
+                "commands": [{"capability": "switch", "command": "on"}],
+                "dsec": 0,
+                "result": "200 OK",
+            }
+        ],
+        [],
+    ),
+    (7, 30, "부엌", "[가짜] 아침·커피", True, [], ["요리"]),
+    (
+        8,
+        0,
+        "방1",
+        "[가짜] 재택 (화상)",
+        True,
+        [
+            {
+                "method": "POST",
+                "url": "/v1/devices/light-room1-b/commands",
+                "deviceId": "light-room1-b",
+                "commands": [{"capability": "switch", "command": "on"}],
+                "dsec": 0,
+                "result": "200 OK",
+            }
+        ],
+        [],
+    ),
+    (10, 0, "방1", "[가짜] 집중 작업", True, [], []),
+    (12, 0, "부엌", "[가짜] 점심", True, [], ["요리"]),
+    (
+        12,
+        50,
+        "거실",
+        "[가짜] 로봇청소",
+        True,
+        [
+            {
+                "method": "POST",
+                "url": "/v1/devices/vacuum-b-001/commands",
+                "deviceId": "vacuum-b-001",
+                "commands": [{"capability": "switch", "command": "on"}],
+                "dsec": 0,
+                "result": "200 OK",
+            }
+        ],
+        ["청소"],
+    ),
+    (15, 0, "집 밖", "[가짜] 은행·산책", False, [], []),
     (
         19,
-        30,
+        0,
         "부엌",
-        "[가짜] 저녁 준비",
+        "[가짜] 저녁 요리",
         True,
-        [],
+        [
+            {
+                "method": "POST",
+                "url": "/v1/devices/light-kitchen-b/commands",
+                "deviceId": "light-kitchen-b",
+                "commands": [{"capability": "switch", "command": "on"}],
+                "dsec": 0,
+                "result": "200 OK",
+            }
+        ],
         ["요리"],
     ),
-    (20, 0, "부엌", "[가짜] 저녁식사", True, [], ["요리"]),
-    (
-        20,
-        30,
-        "거실",
-        "[가짜] TV",
-        True,
-        [],
-        [],
-    ),
-    (22, 30, "베란다", "[가짜] 세탁", True, [], []),
-    (23, 0, "침실", "[가짜] 취침 준비", True, [], ["수면"]),
-    (23, 30, "침실", "[가짜] 취침", True, [], ["수면"]),
+    (20, 30, "거실", "[가짜] OTT", True, [], []),
+    (23, 0, "방1", "[가짜] 취침", True, [], ["수면"]),
+]
+
+_FAKE_DEMO_PERSONA_DAYS: list[list[tuple[int, int, str, str, bool, list, list[str]]]] = [
+    _FAKE_COMMUTER_DAY,
+    _FAKE_WFH_DAY,
 ]
 
 # (outcome, http_status, detail, description) — 가짜 API 점검 패턴 순환
@@ -360,11 +458,12 @@ class DemoSeedService:
         sched_deleted = 0
         sched_created = 0
         if seed_schedules:
-            for u in target_users:
+            for idx, u in enumerate(target_users):
                 if replace_schedules:
                     sched_deleted += await self._schedules.delete_by_user_date(u.id, tgt_start, tgt_end)
+                day_rows = _FAKE_DEMO_PERSONA_DAYS[idx % len(_FAKE_DEMO_PERSONA_DAYS)]
                 entries: list[dict] = []
-                for h, m, loc_name, desc, is_home, calls, tags in _FAKE_SCHEDULE_DAY:
+                for h, m, loc_name, desc, is_home, calls, tags in day_rows:
                     entries.append(
                         {
                             "user_id": u.id,

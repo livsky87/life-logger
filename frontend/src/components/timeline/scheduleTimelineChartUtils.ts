@@ -1,4 +1,5 @@
 import type { Schedule, ScheduleCall } from "@/domain/scheduleTypes";
+import type { ApiObservation } from "@/domain/apiObservationTypes";
 import type { ResultCategory, SegmentType } from "./scheduleTimelineChartTheme";
 
 /** 시간순 정렬 후, 인접 레코드의 동일 identity 구간을 하나로 합친 덩어리 */
@@ -224,3 +225,32 @@ export function buildHourBucketsForRange(
 }
 
 export { HOUR_MS };
+
+function parseProbabilityFromText(raw: string): number | null {
+  const direct = raw.match(/\bprob(?:ability)?\s*[:=]\s*(-?\d+(?:\.\d+)?)/i);
+  if (direct) {
+    const parsed = Number(direct[1]);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  const bracket = raw.match(/\bconfidence\s*[:=]\s*(-?\d+(?:\.\d+)?)/i);
+  if (bracket) {
+    const parsed = Number(bracket[1]);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+/**
+ * API 스키마를 바꾸지 않고 probability를 우선순위로 추출:
+ * 1) observation.probability
+ * 2) detail/description 문자열의 "probability: 0.75" 형태
+ */
+export function extractObservationProbability(observation: ApiObservation): number | null {
+  if (typeof observation.probability === "number" && Number.isFinite(observation.probability)) {
+    return observation.probability;
+  }
+  const fromDetail = parseProbabilityFromText(observation.detail);
+  if (fromDetail != null) return fromDetail;
+  const fromDescription = parseProbabilityFromText(observation.description);
+  return fromDescription;
+}

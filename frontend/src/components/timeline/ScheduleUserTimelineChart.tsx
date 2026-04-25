@@ -2,6 +2,7 @@
 
 import {
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -14,6 +15,7 @@ import {
   CartesianGrid,
   ComposedChart,
   LabelList,
+  Line,
   ReferenceArea,
   ReferenceLine,
   ResponsiveContainer,
@@ -42,6 +44,7 @@ import {
   buildMergedRuns,
   buildPerTagMergedRuns,
   collectDistinctStatusTags,
+  extractObservationProbability,
   HOUR_MS,
   laneTagToDisplayLabel,
   schedulePresenceIdentity,
@@ -113,6 +116,23 @@ interface HoverSnapshot {
   periodicObservations: ApiObservation[];
 }
 
+function findLastEntryAtOrBefore(entries: Schedule[], tMs: number): Schedule | null {
+  let lo = 0;
+  let hi = entries.length - 1;
+  let ans = -1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    const mt = new Date(entries[mid].datetime).getTime();
+    if (mt <= tMs) {
+      ans = mid;
+      lo = mid + 1;
+    } else {
+      hi = mid - 1;
+    }
+  }
+  return ans >= 0 ? entries[ans] : null;
+}
+
 function hoverMatchesEventTime(tMs: number, eventMs: number, timeZone: string): boolean {
   if (isSameWallClockMinute(tMs, eventMs, timeZone)) return true;
   return Math.abs(eventMs - tMs) <= HOVER_TIME_FALLBACK_MS;
@@ -122,14 +142,14 @@ function buildHoverSnapshot(
   tMs: number,
   ctx: {
     timeZone: string;
-    entries: Schedule[];
+    sortedEntries: Schedule[];
     presenceRuns: MergedRun[];
     runsByLane: Array<{ tag: string; laneIndex: number; runs: MergedRun[] }>;
     apiMarkers: ApiCallMarker[];
     periodicMarkers: Array<{ tMs: number; observation: ApiObservation }>;
   },
 ): HoverSnapshot {
-  const { timeZone, entries, presenceRuns, runsByLane, apiMarkers, periodicMarkers } = ctx;
+  const { timeZone, sortedEntries, presenceRuns, runsByLane, apiMarkers, periodicMarkers } = ctx;
 
   const presence =
     presenceRuns.find((r) => tMs >= r.tStart && tMs < r.tEnd) ?? null;
@@ -148,15 +168,9 @@ function buildHoverSnapshot(
     if (run) lanes.push({ tag, run, entry: run.entries[0] });
   }
 
-  const sorted = sortEntriesByTime(entries);
-  let contextEntry: Schedule | null = null;
-  for (const e of sorted) {
-    const et = new Date(e.datetime).getTime();
-    if (et <= tMs) contextEntry = e;
-    else break;
-  }
+  const contextEntry = findLastEntryAtOrBefore(sortedEntries, tMs);
 
-  const instantEntries = sorted.filter((e) => {
+  const instantEntries = sortedEntries.filter((e) => {
     const et = new Date(e.datetime).getTime();
     return hoverMatchesEventTime(tMs, et, timeZone);
   });
@@ -368,6 +382,11 @@ function TimelineHoverCardBody({
                   </div>
                   <div className="mt-0.5 font-mono text-[10px] text-teal-200/90">{obs.method}</div>
                   <div className="break-all text-[10px] text-stone-400">{obs.detail}</div>
+                  {extractObservationProbability(obs) != null && (
+                    <div className="mt-0.5 text-[10px] text-sky-300">
+                      probability: {String(extractObservationProbability(obs))}
+                    </div>
+                  )}
                   {obs.description && (
                     <div className="mt-1 text-[9px] leading-snug text-stone-500">{obs.description}</div>
                   )}
@@ -416,6 +435,12 @@ interface PeriodicObsPayload {
   kind: "periodic";
   observation: ApiObservation;
   timeZone: string;
+}
+
+interface ProbabilityPoint {
+  x: number;
+  probability: number;
+  outOfRange: boolean;
 }
 
 const PERIODIC_OUTCOME_LINE: Record<
@@ -492,6 +517,8 @@ interface Props {
   showXAxis: boolean;
   /** Device(스케줄) 마커와 동일 차트·시간축에 그릴 HDE 수집(위치 공통+사용자별 병합본) */
   periodicObservations?: ApiObservation[];
+  /** 확률 스트립/요약 노출 여부 */
+  showTopSummary?: boolean;
   /**
    * 구간 시작 직전 마지막 기록의 재실 여부. 있으면 재실 막대 병합에만 t0 가상 이벤트로 반영(점·히트맵·호버 문맥에는 미포함).
    */
@@ -563,6 +590,7 @@ export function ScheduleUserTimelineChart({
   timeZone,
   showXAxis,
   periodicObservations = [],
+  showTopSummary = true,
   presenceCarryInIsHome = null,
 }: Props) {
   const { theme: appTheme } = useAppTheme();
@@ -653,6 +681,7 @@ export function ScheduleUserTimelineChart({
   const apiMarkers = useMemo(() => {
     return buildApiCallMarkers(entries).filter((m) => m.tMs >= t0 && m.tMs < t1);
   }, [entries, t0, t1]);
+  const sortedEntries = useMemo(() => sortEntriesByTime(entries), [entries]);
 
   const apiScheduleHitY = layout.schedMid ?? 0;
 
@@ -700,6 +729,28 @@ export function ScheduleUserTimelineChart({
     }
     return m;
   }, [periodicMarkers]);
+
+  const periodicProbabilityPoints = useMemo((): ProbabilityPoint[] => {
+    if (!displayFilter.showPeriodicObservations) return [];
+    const out: ProbabilityPoint[] = [];
+    for (const { tMs, observation } of periodicMarkers) {
+      const p = extractObservationProbability(observation);
+      if (p == null) continue;
+      out.push({ x: tMs, probability: p, outOfRange: p < 0 || p > 1 });
+    }
+    return out;
+  }, [displayFilter.showPeriodicObservations, periodicMarkers]);
+
+  const probabilityStats = useMemo(() => {
+    let outOfRange = 0;
+    let sum = 0;
+    for (const p of periodicProbabilityPoints) {
+      if (p.outOfRange) outOfRange += 1;
+      sum += p.probability;
+    }
+    const avg = periodicProbabilityPoints.length > 0 ? sum / periodicProbabilityPoints.length : null;
+    return { avg, outOfRange, total: periodicProbabilityPoints.length };
+  }, [periodicProbabilityPoints]);
 
   const scatterData = useMemo((): DotPayload[] => {
     if (!displayFilter.showEntryDots || laneTags.length === 0) return [];
@@ -779,6 +830,16 @@ export function ScheduleUserTimelineChart({
     return m;
   }, [apiMarkers]);
 
+  const topSummary = useMemo(() => {
+    const success = periodicOutcomeCounts.success;
+    const warning = periodicOutcomeCounts.warning;
+    const failure = periodicOutcomeCounts.failure;
+    const total = success + warning + failure;
+    const successRate = total > 0 ? (success / total) * 100 : null;
+    const failureRate = total > 0 ? (failure / total) * 100 : null;
+    return { success, warning, failure, total, successRate, failureRate };
+  }, [periodicOutcomeCounts]);
+
   const laneYTicks = useMemo(
     () => laneTags.map((_, k) => k + 0.5),
     [laneTags],
@@ -839,18 +900,20 @@ export function ScheduleUserTimelineChart({
     cx: number;
     cy: number;
   } | null>(null);
+  const pointerRafRef = useRef<number | null>(null);
+  const pendingPointerRef = useRef<{ tMs: number; cx: number; cy: number } | null>(null);
 
   const hoverSnapshot = useMemo(() => {
     if (pointerHover == null) return null;
     return buildHoverSnapshot(pointerHover.tMs, {
       timeZone,
-      entries,
+      sortedEntries,
       presenceRuns,
       runsByLane,
       apiMarkers,
       periodicMarkers,
     });
-  }, [pointerHover, timeZone, entries, presenceRuns, runsByLane, apiMarkers, periodicMarkers]);
+  }, [pointerHover, timeZone, sortedEntries, presenceRuns, runsByLane, apiMarkers, periodicMarkers]);
 
   const hoverTooltipPos = useMemo(() => {
     if (pointerHover == null) return null;
@@ -907,7 +970,13 @@ export function ScheduleUserTimelineChart({
         setPointerHover(null);
         return;
       }
-      setPointerHover({ tMs, cx: clientX, cy: clientY });
+      pendingPointerRef.current = { tMs, cx: clientX, cy: clientY };
+      if (pointerRafRef.current == null) {
+        pointerRafRef.current = window.requestAnimationFrame(() => {
+          pointerRafRef.current = null;
+          setPointerHover(pendingPointerRef.current);
+        });
+      }
     },
     [t0, t1],
   );
@@ -927,11 +996,65 @@ export function ScheduleUserTimelineChart({
   );
 
   const handlePlotOverlayLeave = useCallback(() => {
+    if (pointerRafRef.current != null) {
+      window.cancelAnimationFrame(pointerRafRef.current);
+      pointerRafRef.current = null;
+    }
+    pendingPointerRef.current = null;
     setPointerHover(null);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (pointerRafRef.current != null) {
+        window.cancelAnimationFrame(pointerRafRef.current);
+      }
+    };
   }, []);
 
   return (
     <div className="flex min-h-[60px] min-w-0 flex-1 flex-col justify-center gap-1 overflow-visible">
+      {showTopSummary && displayFilter.showPeriodicObservations && (
+        <div className="mb-1 min-w-0" style={plotAlignPad}>
+          <div className="mb-1 flex min-w-0 flex-wrap items-center gap-1.5 text-[10px]">
+            <span className="rounded border border-emerald-400/30 bg-emerald-500/10 px-2 py-0.5 text-emerald-700 dark:text-emerald-300">
+              성공 {topSummary.success}
+            </span>
+            <span className="rounded border border-amber-400/30 bg-amber-500/10 px-2 py-0.5 text-amber-700 dark:text-amber-300">
+              주의 {topSummary.warning}
+            </span>
+            <span className="rounded border border-rose-400/30 bg-rose-500/10 px-2 py-0.5 text-rose-700 dark:text-rose-300">
+              실패 {topSummary.failure}
+            </span>
+            <span className="rounded border border-zinc-300/70 bg-zinc-100/60 px-2 py-0.5 text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
+              평균 {probabilityStats.avg != null ? probabilityStats.avg.toFixed(2) : "-"}
+            </span>
+            {probabilityStats.outOfRange > 0 && (
+              <span className="rounded border border-red-400/30 bg-red-500/10 px-2 py-0.5 text-red-700 dark:text-red-300">
+                범위 외 {probabilityStats.outOfRange}
+              </span>
+            )}
+          </div>
+          <div className="h-12 w-full min-w-0 rounded border border-zinc-200/80 bg-zinc-50/70 dark:border-zinc-800 dark:bg-zinc-900/40">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={periodicProbabilityPoints} margin={{ top: 4, right: 8, bottom: 4, left: 8 }}>
+                <XAxis type="number" dataKey="x" domain={domain} hide />
+                <YAxis type="number" domain={[0, 1]} hide />
+                <ReferenceLine y={0.5} stroke={cc.gridStrong} strokeDasharray="2 2" strokeOpacity={0.45} />
+                <Line
+                  type="monotone"
+                  dataKey="probability"
+                  stroke="#3b82f6"
+                  strokeWidth={1.25}
+                  dot={periodicProbabilityPoints.length <= 40 ? { r: 1.8, strokeWidth: 0 } : false}
+                  connectNulls={false}
+                  isAnimationActive={false}
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
         <div
           ref={chartPlotHostRef}
           className="relative z-0 w-full min-w-0 overflow-visible"
@@ -965,6 +1088,7 @@ export function ScheduleUserTimelineChart({
               axisLine={{ stroke: cc.gridStrong }}
             />
             <YAxis
+              yAxisId="lane"
               type="number"
               domain={[0, yDomainMax]}
               ticks={yAxisTicks}
@@ -988,6 +1112,7 @@ export function ScheduleUserTimelineChart({
               Array.from({ length: laneTags.length - 1 }, (_, i) => i + 1).map((yk) => (
                 <ReferenceLine
                   key={`lane-h-${yk}`}
+                  yAxisId="lane"
                   y={yk}
                   stroke={cc.grid}
                   strokeDasharray="2 6"
@@ -997,6 +1122,7 @@ export function ScheduleUserTimelineChart({
               ))}
             {showSchedApiBand && (
               <ReferenceArea
+                yAxisId="lane"
                 x1={t0}
                 x2={t1}
                 y1={layout.schedTop}
@@ -1009,6 +1135,7 @@ export function ScheduleUserTimelineChart({
             )}
             {showPeriodicBand && (
               <ReferenceArea
+                yAxisId="lane"
                 x1={t0}
                 x2={t1}
                 y1={layout.perTop}
@@ -1025,6 +1152,7 @@ export function ScheduleUserTimelineChart({
                 return (
                   <ReferenceArea
                     key={`pr-${run.key}`}
+                    yAxisId="lane"
                     x1={run.tStart}
                     x2={run.tEnd}
                     y1={presenceY.y1}
@@ -1047,6 +1175,7 @@ export function ScheduleUserTimelineChart({
                   return (
                     <ReferenceArea
                       key={`sr-${run.key}`}
+                      yAxisId="lane"
                       x1={run.tStart}
                       x2={run.tEnd}
                       y1={y1}
@@ -1067,6 +1196,7 @@ export function ScheduleUserTimelineChart({
                 return (
                   <ReferenceLine
                     key={marker.key}
+                    yAxisId="lane"
                     segment={[
                       { x: marker.tMs, y: layout.schedTop },
                       { x: marker.tMs, y: layout.schedBot },
@@ -1085,6 +1215,7 @@ export function ScheduleUserTimelineChart({
                 return (
                   <ReferenceLine
                     key={key}
+                    yAxisId="lane"
                     segment={[
                       { x: tMs, y: layout.perTop },
                       { x: tMs, y: layout.perBot },
@@ -1099,6 +1230,7 @@ export function ScheduleUserTimelineChart({
             {displayFilter.showNowLine && nowX != null && (
               <ReferenceLine
                 x={nowX}
+                yAxisId="lane"
                 stroke={cc.now}
                 strokeWidth={1}
                 strokeDasharray="3 3"
@@ -1108,6 +1240,7 @@ export function ScheduleUserTimelineChart({
             {pointerHover != null && (
               <ReferenceLine
                 x={pointerHover.tMs}
+                yAxisId="lane"
                 stroke={cc.gridStrong}
                 strokeWidth={1}
                 strokeOpacity={0.55}
@@ -1126,6 +1259,7 @@ export function ScheduleUserTimelineChart({
               name="api-hit"
               data={apiHitData}
               dataKey="y"
+              yAxisId="lane"
               fill="transparent"
               isAnimationActive={false}
               shape={ApiHitShape}
@@ -1134,6 +1268,7 @@ export function ScheduleUserTimelineChart({
               name="periodic-obs"
               data={periodicHitData}
               dataKey="y"
+              yAxisId="lane"
               fill="transparent"
               isAnimationActive={false}
               shape={PeriodicObsHitShape}
@@ -1141,6 +1276,7 @@ export function ScheduleUserTimelineChart({
             <Scatter
               data={scatterData}
               dataKey="y"
+              yAxisId="lane"
               fill="#4f46e5"
               isAnimationActive={false}
               shape={EntryDotShape}

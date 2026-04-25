@@ -5,6 +5,8 @@ export interface ApiObservation {
   observed_at: string;
   method: string;
   detail: string;
+  /** Optional confidence/probability from backend payload (0..1 expected). */
+  probability?: number | null;
   http_status: number | null;
   outcome: ApiObservationOutcome;
   description: string;
