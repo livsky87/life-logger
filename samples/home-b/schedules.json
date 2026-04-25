@@ -1,62 +1,70 @@
 [
-  {"date": 20260401, "hour": 6, "minute": 30, "location": "방1", "description": "기상 (재택근무 준비)", "is_home": true, "calls": [
-    {"method": "POST", "url": "/v1/devices/plug-room1-b/commands", "deviceId": "plug-room1-b", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": null}
-  ], "status": "normal"},
+  {"date": 20260401, "hour": 6, "minute": 30, "location": "방1", "description": "기상 (콘센트·책상 램프 — 재택)", "is_home": true, "calls": [
+    {"method": "POST", "url": "/v1/devices/plug-room1-b/commands", "deviceId": "plug-room1-b", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": "200 OK"}
+  ], "status": []},
   {"date": 20260401, "hour": 6, "minute": 45, "location": "욕실", "description": "샤워", "is_home": true, "calls": [
-    {"method": "POST", "url": "/v1/devices/light-bathroom-b/commands", "deviceId": "light-bathroom-b", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": null}
-  ], "status": "normal"},
-  {"date": 20260401, "hour": 7, "minute": 30, "location": "부엌", "description": "아침식사 (토스트)", "is_home": true, "calls": [
-    {"method": "POST", "url": "/v1/devices/light-kitchen-b/commands", "deviceId": "light-kitchen-b", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": null},
-    {"method": "POST", "url": "/v1/devices/fridge-b-001/commands", "deviceId": "fridge-b-001", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": null}
-  ], "status": "normal"},
+    {"method": "POST", "url": "/v1/devices/light-bathroom-b/commands", "deviceId": "light-bathroom-b", "commands": [{"capability": "switch", "command": "on"}], "dsec": 1, "result": "200 OK"}
+  ], "status": []},
+  {"date": 20260401, "hour": 7, "minute": 30, "location": "부엌", "description": "아침식사 (토스트·커피)", "is_home": true, "calls": [
+    {"method": "POST", "url": "/v1/devices/light-kitchen-b/commands", "deviceId": "light-kitchen-b", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": "200 OK"},
+    {"method": "POST", "url": "/v1/devices/fridge-b-001/commands", "deviceId": "fridge-b-001", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": "200 OK"}
+  ], "status": ["요리"]},
   {"date": 20260401, "hour": 8, "minute": 0, "location": "방1", "description": "재택근무 시작 (화상회의)", "is_home": true, "calls": [
-    {"method": "POST", "url": "/v1/devices/plug-room1-b/commands", "deviceId": "plug-room1-b", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": null},
-    {"method": "POST", "url": "/v1/devices/light-room1-b/commands", "deviceId": "light-room1-b", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": null}
-  ], "status": "normal"},
-  {"date": 20260401, "hour": 10, "minute": 0, "location": "방1", "description": "오전 집중 작업", "is_home": true, "calls": [], "status": "normal"},
+    {"method": "POST", "url": "/v1/devices/plug-room1-b/commands", "deviceId": "plug-room1-b", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": "200 OK"},
+    {"method": "POST", "url": "/v1/devices/light-room1-b/commands", "deviceId": "light-room1-b", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": "200 OK"}
+  ], "status": []},
+  {"date": 20260401, "hour": 10, "minute": 0, "location": "방1", "description": "오전 집중 작업 (노트북, 스마트플러그 유지)", "is_home": true, "calls": [
+    {"method": "POST", "url": "/v1/devices/plug-room1-b/commands", "deviceId": "plug-room1-b", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": "200 OK"}
+  ], "status": []},
   {"date": 20260401, "hour": 12, "minute": 0, "location": "부엌", "description": "점심식사 (배달)", "is_home": true, "calls": [
-    {"method": "POST", "url": "/v1/devices/light-kitchen-b/commands", "deviceId": "light-kitchen-b", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": null}
-  ], "status": "normal"},
-  {"date": 20260401, "hour": 13, "minute": 0, "location": "거실", "description": "점심 후 휴식 (음악 감상)", "is_home": true, "calls": [
-    {"method": "POST", "url": "/v1/devices/speaker-b-001/commands", "deviceId": "speaker-b-001", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": null}
-  ], "status": "normal"},
-  {"date": 20260401, "hour": 13, "minute": 30, "location": "방2", "description": "서재에서 문서 작업", "is_home": true, "calls": [
-    {"method": "POST", "url": "/v1/devices/light-room2-b/commands", "deviceId": "light-room2-b", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": null}
-  ], "status": "normal"},
-  {"date": 20260401, "hour": 16, "minute": 0, "location": "방1", "description": "오후 미팅 참여", "is_home": true, "calls": [], "status": "normal"},
-  {"date": 20260401, "hour": 18, "minute": 0, "location": "거실", "description": "퇴근 (재택) 후 휴식", "is_home": true, "calls": [
-    {"method": "POST", "url": "/v1/devices/tv-b-001/commands", "deviceId": "tv-b-001", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": null},
-    {"method": "POST", "url": "/v1/devices/plug-room1-b/commands", "deviceId": "plug-room1-b", "commands": [{"capability": "switch", "command": "off"}], "dsec": 0, "result": null}
-  ], "status": "normal"},
-  {"date": 20260401, "hour": 19, "minute": 30, "location": "부엌", "description": "저녁식사 준비 (직접 요리)", "is_home": true, "calls": [
-    {"method": "POST", "url": "/v1/devices/fridge-b-001/commands", "deviceId": "fridge-b-001", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": null},
-    {"method": "POST", "url": "/v1/devices/light-kitchen-b/commands", "deviceId": "light-kitchen-b", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": null}
-  ], "status": "normal"},
-  {"date": 20260401, "hour": 20, "minute": 30, "location": "거실", "description": "저녁식사 후 영상 시청", "is_home": true, "calls": [
-    {"method": "POST", "url": "/v1/devices/tv-b-001/commands", "deviceId": "tv-b-001", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": null},
-    {"method": "POST", "url": "/v1/devices/ac-b-001/commands", "deviceId": "ac-b-001", "commands": [{"capability": "switch", "command": "on"}], "dsec": 10, "result": null}
-  ], "status": "normal"},
-  {"date": 20260401, "hour": 23, "minute": 0, "location": "방1", "description": "취침", "is_home": true, "calls": [
-    {"method": "POST", "url": "/v1/devices/tv-b-001/commands", "deviceId": "tv-b-001", "commands": [{"capability": "switch", "command": "off"}], "dsec": 0, "result": null},
-    {"method": "POST", "url": "/v1/devices/ac-b-001/commands", "deviceId": "ac-b-001", "commands": [{"capability": "switch", "command": "off"}], "dsec": 0, "result": null},
-    {"method": "POST", "url": "/v1/devices/light-living-b/commands", "deviceId": "light-living-b", "commands": [{"capability": "switch", "command": "off"}], "dsec": 0, "result": null}
-  ], "status": "normal"},
+    {"method": "POST", "url": "/v1/devices/light-kitchen-b/commands", "deviceId": "light-kitchen-b", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": "200 OK"}
+  ], "status": ["요리"]},
+  {"date": 20260401, "hour": 12, "minute": 50, "location": "거실", "description": "점심 직후 로봇청소·음악", "is_home": true, "calls": [
+    {"method": "POST", "url": "/v1/devices/vacuum-b-001/commands", "deviceId": "vacuum-b-001", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": "200 OK"},
+    {"method": "POST", "url": "/v1/devices/speaker-b-001/commands", "deviceId": "speaker-b-001", "commands": [{"capability": "switch", "command": "on"}], "dsec": 3, "result": "200 OK"}
+  ], "status": ["청소"]},
+  {"date": 20260401, "hour": 13, "minute": 30, "location": "방2", "description": "서재 문서 작업", "is_home": true, "calls": [
+    {"method": "POST", "url": "/v1/devices/light-room2-b/commands", "deviceId": "light-room2-b", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": "200 OK"}
+  ], "status": []},
+  {"date": 20260401, "hour": 16, "minute": 0, "location": "방1", "description": "오후 미팅 (동일 셋업)", "is_home": true, "calls": [], "status": []},
+  {"date": 20260401, "hour": 18, "minute": 0, "location": "거실", "description": "퇴근 (재택) 후 TV·콘센트 정리", "is_home": true, "calls": [
+    {"method": "POST", "url": "/v1/devices/tv-b-001/commands", "deviceId": "tv-b-001", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": "200 OK"},
+    {"method": "POST", "url": "/v1/devices/plug-room1-b/commands", "deviceId": "plug-room1-b", "commands": [{"capability": "switch", "command": "off"}], "dsec": 0, "result": "200 OK"}
+  ], "status": []},
+  {"date": 20260401, "hour": 19, "minute": 30, "location": "부엌", "description": "저녁식사 직접 요리 (장보기·조리)", "is_home": true, "calls": [
+    {"method": "POST", "url": "/v1/devices/fridge-b-001/commands", "deviceId": "fridge-b-001", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": "200 OK"},
+    {"method": "POST", "url": "/v1/devices/light-kitchen-b/commands", "deviceId": "light-kitchen-b", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": "200 OK"}
+  ], "status": ["요리"]},
+  {"date": 20260401, "hour": 20, "minute": 30, "location": "거실", "description": "저녁 후 영상·에어컨", "is_home": true, "calls": [
+    {"method": "POST", "url": "/v1/devices/tv-b-001/commands", "deviceId": "tv-b-001", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": "200 OK"},
+    {"method": "POST", "url": "/v1/devices/ac-b-001/commands", "deviceId": "ac-b-001", "commands": [{"capability": "switch", "command": "on"}], "dsec": 6, "result": "200 OK"}
+  ], "status": []},
+  {"date": 20260401, "hour": 23, "minute": 0, "location": "방1", "description": "취침 (전원·조명·에어컨)", "is_home": true, "calls": [
+    {"method": "POST", "url": "/v1/devices/tv-b-001/commands", "deviceId": "tv-b-001", "commands": [{"capability": "switch", "command": "off"}], "dsec": 0, "result": "204 No Content"},
+    {"method": "POST", "url": "/v1/devices/ac-b-001/commands", "deviceId": "ac-b-001", "commands": [{"capability": "switch", "command": "off"}], "dsec": 0, "result": "200 OK"},
+    {"method": "POST", "url": "/v1/devices/light-living-b/commands", "deviceId": "light-living-b", "commands": [{"capability": "switch", "command": "off"}], "dsec": 0, "result": "200 OK"}
+  ], "status": ["수면"]},
 
-  {"date": 20260402, "hour": 6, "minute": 30, "location": "방1", "description": "기상", "is_home": true, "calls": [], "status": "normal"},
-  {"date": 20260402, "hour": 7, "minute": 0, "location": "욕실", "description": "세면", "is_home": true, "calls": [], "status": "normal"},
+  {"date": 20260402, "hour": 6, "minute": 30, "location": "방1", "description": "늦잠·기상", "is_home": true, "calls": [], "status": []},
+  {"date": 20260402, "hour": 7, "minute": 0, "location": "욕실", "description": "세면 (거울·바닥 물기) 청소", "is_home": true, "calls": [
+    {"method": "POST", "url": "/v1/devices/light-bathroom-b/commands", "deviceId": "light-bathroom-b", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": "200 OK"}
+  ], "status": ["청소"]},
   {"date": 20260402, "hour": 7, "minute": 45, "location": "부엌", "description": "아침식사", "is_home": true, "calls": [
-    {"method": "POST", "url": "/v1/devices/fridge-b-001/commands", "deviceId": "fridge-b-001", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": null}
-  ], "status": "normal"},
-  {"date": 20260402, "hour": 9, "minute": 0, "location": "집 밖", "description": "카페 방문 (외부 미팅)", "is_home": false, "calls": [], "status": "normal"},
-  {"date": 20260402, "hour": 12, "minute": 0, "location": "집 밖", "description": "점심식사 외출", "is_home": false, "calls": [], "status": "normal"},
-  {"date": 20260402, "hour": 14, "minute": 0, "location": "방1", "description": "귀가 후 오후 작업", "is_home": true, "calls": [
-    {"method": "POST", "url": "/v1/devices/plug-room1-b/commands", "deviceId": "plug-room1-b", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": null}
-  ], "status": "normal"},
-  {"date": 20260402, "hour": 18, "minute": 30, "location": "거실", "description": "저녁 휴식", "is_home": true, "calls": [
-    {"method": "POST", "url": "/v1/devices/tv-b-001/commands", "deviceId": "tv-b-001", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": null}
-  ], "status": "normal"},
-  {"date": 20260402, "hour": 19, "minute": 30, "location": "부엌", "description": "저녁식사 (간단하게)", "is_home": true, "calls": [], "status": "normal"},
+    {"method": "POST", "url": "/v1/devices/fridge-b-001/commands", "deviceId": "fridge-b-001", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": "200 OK"}
+  ], "status": ["요리"]},
+  {"date": 20260402, "hour": 9, "minute": 0, "location": "집 밖", "description": "카페 방문 (외부 미팅)", "is_home": false, "calls": [], "status": []},
+  {"date": 20260402, "hour": 12, "minute": 0, "location": "집 밖", "description": "점심식사 외출", "is_home": false, "calls": [], "status": []},
+  {"date": 20260402, "hour": 14, "minute": 0, "location": "방1", "description": "귀가 후 오후 작업 (플러그·책상 램프)", "is_home": true, "calls": [
+    {"method": "POST", "url": "/v1/devices/plug-room1-b/commands", "deviceId": "plug-room1-b", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": "200 OK"}
+  ], "status": []},
+  {"date": 20260402, "hour": 16, "minute": 0, "location": "욕실", "description": "빨래 널기 (세탁·건조 끄기)", "is_home": true, "calls": [
+    {"method": "POST", "url": "/v1/devices/dryer-b-001/commands", "deviceId": "dryer-b-001", "commands": [{"capability": "switch", "command": "off"}], "dsec": 0, "result": "200 OK"}
+  ], "status": ["세탁"]},
+  {"date": 20260402, "hour": 18, "minute": 30, "location": "거실", "description": "저녁 휴식 (TV)", "is_home": true, "calls": [
+    {"method": "POST", "url": "/v1/devices/tv-b-001/commands", "deviceId": "tv-b-001", "commands": [{"capability": "switch", "command": "on"}], "dsec": 0, "result": "200 OK"}
+  ], "status": []},
+  {"date": 20260402, "hour": 19, "minute": 30, "location": "부엌", "description": "간단 저녁 (설거지 위주)", "is_home": true, "calls": [], "status": ["요리"]},
   {"date": 20260402, "hour": 23, "minute": 30, "location": "방1", "description": "취침", "is_home": true, "calls": [
-    {"method": "POST", "url": "/v1/devices/tv-b-001/commands", "deviceId": "tv-b-001", "commands": [{"capability": "switch", "command": "off"}], "dsec": 0, "result": null}
-  ], "status": "normal"}
+    {"method": "POST", "url": "/v1/devices/tv-b-001/commands", "deviceId": "tv-b-001", "commands": [{"capability": "switch", "command": "off"}], "dsec": 0, "result": "200 OK"}
+  ], "status": ["수면"]}
 ]

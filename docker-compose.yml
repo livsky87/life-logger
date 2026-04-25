@@ -29,7 +29,8 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-life_logger}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DB:-life_logger}
       CORS_ORIGINS: http://localhost:3000
-      API_ADMIN_TOKEN: ${API_ADMIN_TOKEN:?Set API_ADMIN_TOKEN in .env - see .env.example}
+      # 보간 시 메시지에 `:`/`-`가 있으면 일부 Compose에서 값이 잘릴 수 있어 `.env`에 두고 여기는 단순 대입만
+      API_ADMIN_TOKEN: ${API_ADMIN_TOKEN}
     ports:
       - "8000:8000"
 

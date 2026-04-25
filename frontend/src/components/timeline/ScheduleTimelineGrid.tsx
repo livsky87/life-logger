@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useQueries } from "@tanstack/react-query";
 import { MapPin, ChevronDown, ChevronRight, Users } from "lucide-react";
 import { useScheduleTimeline } from "@/application/useSchedules";
@@ -17,6 +17,8 @@ interface Props {
   displayFilter: ScheduleTimelineDisplayFilter;
   locationId?: string;
 }
+
+const EMPTY_OBSERVATIONS: ApiObservation[] = [];
 
 function groupObservationsForLocation(observations: ApiObservation[]) {
   const system: ApiObservation[] = [];
@@ -40,6 +42,8 @@ function LocationBlock({
   days,
   displayFilter,
   observations,
+  collapsed,
+  onToggleCollapsed,
 }: {
   location: ScheduleTimelineLocation;
   dateInt: number;
@@ -48,8 +52,9 @@ function LocationBlock({
   days: number;
   displayFilter: ScheduleTimelineDisplayFilter;
   observations: ApiObservation[];
+  collapsed: boolean;
+  onToggleCollapsed: () => void;
 }) {
-  const [collapsed, setCollapsed] = useState(false);
   const { systemObs, obsByUserId } = useMemo(
     () => groupObservationsForLocation(observations),
     [observations],
@@ -61,7 +66,7 @@ function LocationBlock({
       <div className="flex h-10 select-none items-center bg-gradient-to-b from-stone-900 to-stone-950 text-white">
         <button
           type="button"
-          onClick={() => setCollapsed((c) => !c)}
+          onClick={onToggleCollapsed}
           className="flex h-full w-full min-w-0 items-center gap-2 px-3 transition-colors hover:bg-white/5"
         >
           {collapsed
@@ -118,17 +123,26 @@ export function ScheduleTimelineGrid({ dateInt, days, displayFilter, locationId 
   const endIso = rangeEnd.toISOString();
 
   const locations = data?.locations ?? [];
+  const [collapsedByLocation, setCollapsedByLocation] = useState<Record<string, boolean>>({});
+  const toggleCollapsed = useCallback((locationIdToToggle: string) => {
+    setCollapsedByLocation((prev) => ({
+      ...prev,
+      [locationIdToToggle]: !prev[locationIdToToggle],
+    }));
+  }, []);
 
   const obsQueries = useQueries({
     queries: locations.map((loc) => ({
       queryKey: apiObservationsQueryKey(loc.location_id, startIso, endIso),
       queryFn: () => fetchApiObservationsForLocation(startIso, endIso, loc.location_id),
-      enabled: !!data && displayFilter.showPeriodicObservations,
+      enabled:
+        !!data &&
+        displayFilter.showPeriodicObservations &&
+        !collapsedByLocation[loc.location_id],
       staleTime: 15_000,
       refetchInterval: 60_000 as const,
     })),
   });
-
   if (isLoading) {
     return (
       <div className="flex h-64 items-center justify-center gap-2 text-zinc-400 dark:text-zinc-500">
@@ -175,7 +189,9 @@ export function ScheduleTimelineGrid({ dateInt, days, displayFilter, locationId 
           rangeEnd={rangeEnd}
           days={days}
           displayFilter={displayFilter}
-          observations={obsQueries[i]?.data ?? []}
+          observations={obsQueries[i]?.data ?? EMPTY_OBSERVATIONS}
+          collapsed={!!collapsedByLocation[loc.location_id]}
+          onToggleCollapsed={() => toggleCollapsed(loc.location_id)}
         />
       ))}
     </div>
